@@ -6,4 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="3.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KahootClone.Domain\KahootClone.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
