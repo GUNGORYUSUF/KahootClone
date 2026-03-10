@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="KahootClone.Api/KahootClone.Api.csproj" />
+  <Project Path="KahootClone.Application/KahootClone.Application.csproj" />
+  <Project Path="KahootClone.Domain/KahootClone.Domain.csproj" />
+  <Project Path="KahootClone.Infrastructure/KahootClone.Infrastructure.csproj" />
+</Solution>
