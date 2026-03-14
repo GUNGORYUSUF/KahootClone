@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kahoot Clone - Öğretmen Ekranı</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light text-center mt-5">
+
+    <div class="container">
+        <h1 class="display-3 fw-bold text-primary mb-4">Bilgi Yarışması</h1>
+        
+        <button id="btnCreateGame" class="btn btn-success btn-lg px-5 py-3 fs-3 shadow">Yeni Oyun Kur</button>
+        
+        <div id="pinArea" class="mt-5" style="display: none;">
+            <h2 class="text-muted">Oyuncuların girmesi gereken PIN:</h2>
+            <h1 id="pinDisplay" class="display-1 fw-bold text-danger mt-3" style="letter-spacing: 10px;"></h1>
+        </div>
+
+        <div id="playersArea" class="mt-5" style="display: none;">
+            <h3 class="mb-3">Katılan Oyuncular (<span id="playerCount">0</span>)</h3>
+            <ul id="playersList" class="list-group w-50 mx-auto fs-4 shadow-sm">
+                </ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    
+    <script>
+        // SignalR iletişim kulesine (Hub) bağlantı köprüsü kurulur.
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/gamehub")
+            .build();
+
+        // Kuleye bağlantı işlemi başlatılır.
+        connection.start().then(() => {
+            console.log("Telsiz kulesine bağlantı sağlandı.");
+        }).catch(err => console.error("Bağlantı hatası:", err));
+
+        // Telsizden 'PlayerJoined' (Oyuncu Katıldı) sinyali geldiğinde listeye ekleme işlemi yapılır.
+        connection.on("PlayerJoined", (nickname) => {
+            const list = document.getElementById("playersList");
+            const li = document.createElement("li");
+            li.className = "list-group-item list-group-item-info fw-bold";
+            li.textContent = nickname;
+            list.appendChild(li);
+
+            // Oyuncu sayısı güncellenir.
+            const countSpan = document.getElementById("playerCount");
+            countSpan.textContent = parseInt(countSpan.textContent) + 1;
+        });
+
+        // Butona tıklandığında API'ye istek atılarak yeni oyun üretilmesi sağlanır.
+        document.getElementById("btnCreateGame").addEventListener("click", async () => {
+            const response = await fetch("/api/quiz/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: "Genel Kültür" })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Üretilen PIN kodu ekrana yansıtılır.
+                document.getElementById("pinDisplay").textContent = data.pin;
+                document.getElementById("btnCreateGame").style.display = "none";
+                document.getElementById("pinArea").style.display = "block";
+                document.getElementById("playersArea").style.display = "block";
+
+                // Öğretmen, üretilen PIN kodunun yayınına (odasına) dahil edilir.
+                await connection.invoke("JoinGame", data.pin.toString(), "Öğretmen");
+            }
+        });
+    </script>
+</body>
+</html>

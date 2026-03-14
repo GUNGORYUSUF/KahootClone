@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mongodb:
+    # MongoDB'nin en güncel resmi imajı internetten çekilir.
+    image: mongo:latest
+    
+    # Konteynerin adı belirlenir.
+    container_name: kahoot_mongo_db
+    
+    # Bilgisayarının 27017 portu, konteynerin 27017 portuyla eşleştirilir.
+    ports:
+      - "27017:27017"
+      
+    # Konteyner kapansa bile verilerin silinmemesi için kalıcı bir hafıza (volume) oluşturulur.
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  # Veritabanı dosyalarının fiziksel olarak tutulacağı alan tanımlanır.
+  mongo_data:

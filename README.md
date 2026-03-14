@@ -6,6 +6,7 @@ Bu proje, yapay zeka destekli yazılım geliştirme dersi kapsamında "Agentic E
 * **Backend:** C# .NET Core Web API
 * **Gerçek Zamanlı İletişim:** SignalR (WebSockets)
 * **Veritabanı:** MongoDB (Docker Konteyner)
+* **Frontend:** HTML5, Bootstrap 5, Vanilla JavaScript
 * **Mimari:** Clean Architecture (Temiz Mimari)
 
 ## Proje Klasör Yapısı (Temiz Mimari)
@@ -13,7 +14,7 @@ Proje, bağımlılıkları en aza indirmek ve sürdürülebilirliği artırmak i
 * **1. Domain (`KahootClone.Domain`):** Sistemin kalbidir. Oyun, Soru, Oyuncu gibi temel veri şablonları (Entity) burada tutulur. Dış dünyadan tamamen izoledir.
 * **2. Application (`KahootClone.Application`):** İş mantığı (Oyun kuralları, PIN üretme vb.) bu katmanda işlenir.
 * **3. Infrastructure (`KahootClone.Infrastructure`):** Veritabanı bağlantısı ve fiziksel veri kayıt işlemleri (MongoDB erişimi) burada yapılır.
-* **4. Api (`KahootClone.Api`):** Sistemin dışa açılan kapısıdır. İnternet tarayıcısından gelen istekleri karşılar ve ilgili servislere yönlendirir.
+* **4. Api (`KahootClone.Api`):** Sistemin dışa açılan kapısıdır. İnternet tarayıcısından gelen istekleri karşılar ve ilgili servislere yönlendirir. Görsel arayüzler (wwwroot) bu katmandan sunulur.
 
 ## Sistemi Lokal Ortamda Çalıştırma Rehberi
 
@@ -27,5 +28,8 @@ Docker Desktop uygulamasının çalıştığından emin olun. Ana proje dizinind
 Veritabanı hazır olduktan sonra, .NET uygulamasını ayağa kaldırmak için terminale şu komutu girin:
 `dotnet run --project KahootClone.Api`
 
-**Adım 3: Test Arayüzüne (Swagger) Erişim**
-Terminalde belirtilen adresi (Örn: `http://localhost:5xxx`) kopyalayın ve tarayıcınızın adres çubuğuna yapıştırın. Adresin sonuna `/swagger` ekleyerek test arayüzüne ulaşabilirsiniz. (Örn: `http://localhost:5245/swagger`). Bu ekran üzerinden "Yeni Oyun Kur" isteği gönderip PIN üretebilirsiniz.
+**Adım 3: Uygulamayı Test Etme (Gerçek Zamanlı Arayüzler)**
+Proje ayağa kalktıktan sonra tarayıcınızdan aşağıdaki adreslere giderek sistemi test edebilirsiniz (Port numaranızı terminaldeki çıktıya göre ayarlayınız):
+* **Öğretmen Ekranı (Yeni Oyun Kurma):** `http://localhost:5xxx/index.html`
+* **Öğrenci Ekranı (Oyuna Katılma):** `http://localhost:5xxx/student.html`
+* **Geliştirici Test Arayüzü (Swagger):** `http://localhost:5xxx/swagger`

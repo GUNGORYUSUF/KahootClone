@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kahoot Clone - Oyuncu Ekranı</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-warning text-center mt-5">
+
+    <div class="container" style="max-width: 400px;">
+        <h1 class="display-4 fw-bold text-white mb-4">Oyuna Katıl</h1>
+        
+        <div id="loginArea" class="card shadow p-4 rounded-4 border-0">
+            <input type="text" id="pinInput" class="form-control form-control-lg mb-3 text-center fw-bold" placeholder="PIN Kodu" maxlength="6">
+            <input type="text" id="nicknameInput" class="form-control form-control-lg mb-4 text-center" placeholder="Takma Adın">
+            <button id="btnJoin" class="btn btn-dark btn-lg w-100 fw-bold">Giriş Yap</button>
+        </div>
+
+        <div id="waitingArea" style="display: none;" class="mt-5">
+            <h2 class="text-white fw-bold">İçeridesin!</h2>
+            <p class="text-dark fs-5">Kendi ismini ana ekranda (öğretmenin ekranında) görüyor musun?<br>Oyunun başlaması bekleniyor...</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    
+    <script>
+        // Telsiz kulesine (Hub) bağlantı ayarlanır.
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/gamehub")
+            .build();
+
+        // Bağlantı başlatılır.
+        connection.start().then(() => {
+            console.log("Sunucuya başarıyla bağlanıldı.");
+        }).catch(err => console.error("Bağlantı hatası:", err));
+
+        // Katıl butonuna basıldığında çalışacak işlemler tanımlanır.
+        document.getElementById("btnJoin").addEventListener("click", async () => {
+            const pin = document.getElementById("pinInput").value;
+            const nickname = document.getElementById("nicknameInput").value;
+
+            if(pin && nickname) {
+                // Bilgiler SignalR üzerinden sunucuya (GameHub'a) fırlatılır.
+                await connection.invoke("JoinGame", pin, nickname);
+
+                // Giriş ekranı gizlenip, bekleme ekranı gösterilir.
+                document.getElementById("loginArea").style.display = "none";
+                document.getElementById("waitingArea").style.display = "block";
+            } else {
+                alert("Lütfen PIN kodunu ve isminizi giriniz!");
+            }
+        });
+    </script>
+</body>
+</html>

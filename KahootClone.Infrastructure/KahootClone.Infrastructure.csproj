@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KahootClone.Domain\KahootClone.Domain.csproj" />
+    <ProjectReference Include="..\KahootClone.Application\KahootClone.Application.csproj" />
   </ItemGroup>
 
 </Project>
