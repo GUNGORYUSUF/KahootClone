@@ -3,22 +3,29 @@
 Bu proje, yapay zeka destekli yazılım geliştirme dersi kapsamında "Agentic Engineering" yaklaşımları kullanılarak geliştirilen gerçek zamanlı bir bilgi yarışması uygulamasıdır. 
 
 ## Kullanılan Teknolojiler
+* **Backend:** C# .NET Core Web API
+* **Gerçek Zamanlı İletişim:** SignalR (WebSockets)
+* **Veritabanı:** MongoDB (Docker Konteyner)
+* **Mimari:** Clean Architecture (Temiz Mimari)
 
-* Backend: C# .NET Core Web API
-* Gerçek Zamanlı İletişim: SignalR (WebSockets)
-* Veritabanı: MongoDB (NoSQL)
-* Frontend: HTML5, CSS3 (Bootstrap), Vanilla JavaScript
-* Mimari: Clean Architecture
+## Proje Klasör Yapısı (Temiz Mimari)
+Proje, bağımlılıkları en aza indirmek ve sürdürülebilirliği artırmak için 4 ana katmana ayrılmıştır:
+* **1. Domain (`KahootClone.Domain`):** Sistemin kalbidir. Oyun, Soru, Oyuncu gibi temel veri şablonları (Entity) burada tutulur. Dış dünyadan tamamen izoledir.
+* **2. Application (`KahootClone.Application`):** İş mantığı (Oyun kuralları, PIN üretme vb.) bu katmanda işlenir.
+* **3. Infrastructure (`KahootClone.Infrastructure`):** Veritabanı bağlantısı ve fiziksel veri kayıt işlemleri (MongoDB erişimi) burada yapılır.
+* **4. Api (`KahootClone.Api`):** Sistemin dışa açılan kapısıdır. İnternet tarayıcısından gelen istekleri karşılar ve ilgili servislere yönlendirir.
 
-## Proje Kuralları ve Geliştirme Yaklaşımı
+## Sistemi Lokal Ortamda Çalıştırma Rehberi
 
-* Sistem, katılımcıların anlık olarak senkronize olduğu WebSockets altyapısı sunar.
-* Geliştirme sürecinde "Vibe Coding" yerine, YZ asistan olarak kullanılmış ve her adım insan denetiminden geçmiştir.
-* Güvenlik önlemleri (Injection zafiyetlerine karşı koruma) ve Clean Code prensipleri ön planda tutulmuştur.
-* Sırları (secret, password) gizlemek için güvenli ortam yapılandırmaları tercih edilmiştir.
+Projeyi bilgisayarınızda ayağa kaldırmak için aşağıdaki adımları sırasıyla uygulayınız:
 
-## Mevcut İlerleme
+**Adım 1: Veritabanını Başlatma**
+Docker Desktop uygulamasının çalıştığından emin olun. Ana proje dizininde bir terminal açın ve MongoDB'yi arka planda başlatmak için şu komutu girin:
+`docker-compose up -d`
 
-* Proje iskeleti oluşturuldu.
-* Temiz Mimari (Clean Architecture) katmanları (Domain, Application, Infrastructure, API) başarıyla kuruldu.
-* Git versiyon kontrol sistemi entegre edildi.
+**Adım 2: API Motorunu Çalıştırma**
+Veritabanı hazır olduktan sonra, .NET uygulamasını ayağa kaldırmak için terminale şu komutu girin:
+`dotnet run --project KahootClone.Api`
+
+**Adım 3: Test Arayüzüne (Swagger) Erişim**
+Terminalde belirtilen adresi (Örn: `http://localhost:5xxx`) kopyalayın ve tarayıcınızın adres çubuğuna yapıştırın. Adresin sonuna `/swagger` ekleyerek test arayüzüne ulaşabilirsiniz. (Örn: `http://localhost:5245/swagger`). Bu ekran üzerinden "Yeni Oyun Kur" isteği gönderip PIN üretebilirsiniz.
