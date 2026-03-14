@@ -1,6 +1,6 @@
 # Kahoot Clone - Gerçek Zamanlı Bilgi Yarışması
 
-Bu proje, yapay zeka destekli yazılım geliştirme dersi kapsamında "Agentic Engineering" yaklaşımları kullanılarak geliştirilen gerçek zamanlı bir bilgi yarışması uygulamasıdır. 
+Bu proje, yapay zeka destekli yazılım geliştirme dersi kapsamında "Agentic Engineering" yaklaşımları kullanılarak geliştirilen, yüksek performanslı ve gerçek zamanlı bir bilgi yarışması uygulamasıdır. Temiz Mimari (Clean Architecture) prensiplerine sadık kalınarak, tamamen kesintisiz bir kullanıcı deneyimi hedeflenmiştir.
 
 ## Kullanılan Teknolojiler
 * **Backend:** C# .NET Core Web API
@@ -9,16 +9,20 @@ Bu proje, yapay zeka destekli yazılım geliştirme dersi kapsamında "Agentic E
 * **Frontend:** HTML5, Bootstrap 5, Vanilla JavaScript
 * **Mimari:** Clean Architecture (Temiz Mimari)
 
-## Proje Klasör Yapısı (Temiz Mimari)
-Proje, bağımlılıkları en aza indirmek ve sürdürülebilirliği artırmak için 4 ana katmana ayrılmıştır:
-* **1. Domain (`KahootClone.Domain`):** Sistemin kalbidir. Oyun, Soru, Oyuncu gibi temel veri şablonları (Entity) burada tutulur. Dış dünyadan tamamen izoledir.
-* **2. Application (`KahootClone.Application`):** İş mantığı (Oyun kuralları, PIN üretme vb.) bu katmanda işlenir.
-* **3. Infrastructure (`KahootClone.Infrastructure`):** Veritabanı bağlantısı ve fiziksel veri kayıt işlemleri (MongoDB erişimi) burada yapılır.
-* **4. Api (`KahootClone.Api`):** Sistemin dışa açılan kapısıdır. İnternet tarayıcısından gelen istekleri karşılar ve ilgili servislere yönlendirir. Görsel arayüzler (wwwroot) bu katmandan sunulur.
+## Temel Özellikler ve Oyun Mekanikleri
+* **Gerçek Zamanlı Senkronizasyon:** Öğretmen ve öğrenci ekranlarındaki süreler milisaniyelik hassasiyetle aynı anda geriye sayar.
+* **Tam Otomatik Oyun Akışı:** Öğretmen oyunu başlattıktan sonra sistem; soruları, süreleri ve 5 saniyelik geçiş aralarını insan müdahalesi olmadan otomatik yönetir.
+* **Heyecan Mekanizması (Suspense):** Öğrenciler cevap verdiğinde anında sonucu görmek yerine, bekleme odasına alınır ve süre bittiğinde tüm sınıf sonucu aynı anda öğrenir.
+* **Çift Taraflı Liderlik Tablosu:** Oyun bittiğinde sadece öğretmen ekranında değil, her öğrencinin kendi cihazında da liderlik tablosu belirir ve öğrencinin kendi ismi yeşil renkle vurgulanır.
+* **Hile Koruması:** Doğru cevap verisi öğrencilere gönderilmez, doğrulama işlemi sunucunun (Backend) kalbinde güvenle yapılır.
+
+## Proje Klasör Yapısı
+* **1. Domain:** Sistemin kalbidir. Oyun, Soru, Oyuncu gibi temel veri şablonları burada tutulur. Dış dünyadan tamamen izoledir.
+* **2. Application:** İş mantığı, puanlama ve oyun akış kuralları bu katmanda işlenir.
+* **3. Infrastructure:** Veritabanı bağlantısı ve fiziksel veri kayıt işlemleri (MongoDB erişimi) burada yapılır.
+* **4. Api:** Sistemin dışa açılan kapısıdır. Görsel arayüzler (wwwroot) ve SignalR kulesi bu katmandan yönetilir.
 
 ## Sistemi Lokal Ortamda Çalıştırma Rehberi
-
-Projeyi bilgisayarınızda ayağa kaldırmak için aşağıdaki adımları sırasıyla uygulayınız:
 
 **Adım 1: Veritabanını Başlatma**
 Docker Desktop uygulamasının çalıştığından emin olun. Ana proje dizininde bir terminal açın ve MongoDB'yi arka planda başlatmak için şu komutu girin:
@@ -28,8 +32,8 @@ Docker Desktop uygulamasının çalıştığından emin olun. Ana proje dizinind
 Veritabanı hazır olduktan sonra, .NET uygulamasını ayağa kaldırmak için terminale şu komutu girin:
 `dotnet run --project KahootClone.Api`
 
-**Adım 3: Uygulamayı Test Etme (Gerçek Zamanlı Arayüzler)**
-Proje ayağa kalktıktan sonra tarayıcınızdan aşağıdaki adreslere giderek sistemi test edebilirsiniz (Port numaranızı terminaldeki çıktıya göre ayarlayınız):
-* **Öğretmen Ekranı (Yeni Oyun Kurma):** `http://localhost:5xxx/index.html`
-* **Öğrenci Ekranı (Oyuna Katılma):** `http://localhost:5xxx/student.html`
-* **Geliştirici Test Arayüzü (Swagger):** `http://localhost:5xxx/swagger`
+**Adım 3: Uygulamayı Test Etme**
+Tarayıcınızdan aşağıdaki adreslere giderek sistemi test edebilirsiniz (Port numaranızı terminaldeki çıktıya göre ayarlayınız):
+* **Öğretmen Ekranı:** `http://localhost:5xxx/index.html`
+* **Öğrenci Ekranı:** `http://localhost:5xxx/student.html`
+* **Geliştirici Arayüzü (Swagger):** `http://localhost:5xxx/swagger`

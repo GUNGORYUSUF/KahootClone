@@ -4,52 +4,192 @@
     <meta charset="UTF-8">
     <title>Kahoot Clone - Oyuncu Ekranı</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .option-btn { height: 150px; font-size: 1.5rem; transition: transform 0.1s; }
+        .option-btn:active { transform: scale(0.95); }
+        .disabled-btn { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    </style>
 </head>
-<body class="bg-warning text-center mt-5">
+<body class="bg-dark text-center mt-5" id="mainBody">
 
-    <div class="container" style="max-width: 400px;">
-        <h1 class="display-4 fw-bold text-white mb-4">Oyuna Katıl</h1>
+    <div class="container" style="max-width: 500px;">
         
-        <div id="loginArea" class="card shadow p-4 rounded-4 border-0">
-            <input type="text" id="pinInput" class="form-control form-control-lg mb-3 text-center fw-bold" placeholder="PIN Kodu" maxlength="6">
-            <input type="text" id="nicknameInput" class="form-control form-control-lg mb-4 text-center" placeholder="Takma Adın">
-            <button id="btnJoin" class="btn btn-dark btn-lg w-100 fw-bold">Giriş Yap</button>
+        <div id="loginArea">
+            <h1 class="display-4 fw-bold text-white mb-4">Oyuna Katıl</h1>
+            <div class="card shadow p-4 rounded-4 border-0 bg-light">
+                <input type="text" id="pinInput" class="form-control form-control-lg mb-3 text-center fw-bold" placeholder="PIN Kodu" maxlength="6">
+                <input type="text" id="nicknameInput" class="form-control form-control-lg mb-4 text-center" placeholder="Takma Adın">
+                <button id="btnJoin" class="btn btn-dark btn-lg w-100 fw-bold">Giriş Yap</button>
+            </div>
         </div>
 
-        <div id="waitingArea" style="display: none;" class="mt-5">
-            <h2 class="text-white fw-bold">İçeridesin!</h2>
-            <p class="text-dark fs-5">Kendi ismini ana ekranda (öğretmenin ekranında) görüyor musun?<br>Oyunun başlaması bekleniyor...</p>
+        <div id="waitingArea" style="display: none;" class="mt-5 text-white">
+            <h1 class="display-1 fw-bold mb-4">⏳</h1>
+            <h2 class="fw-bold">İçeridesin!</h2>
+            <p class="fs-5 mt-3">Öğretmenin oyunu başlatması bekleniyor...</p>
         </div>
+
+        <div id="questionArea" style="display: none;" class="mt-3">
+            <h4 id="studentTimerDisplay" class="text-warning mb-3 fw-bold"></h4>
+            <h3 id="studentQuestionText" class="text-white fw-bold mb-4"></h3>
+            <div class="row g-3" id="studentOptionsArea"></div>
+        </div>
+
+        <div id="answeredArea" style="display: none;" class="mt-5 text-white">
+            <h1 class="display-1 fw-bold mb-4">🤔</h1>
+            <h2 class="fw-bold">Cevabın Kaydedildi!</h2>
+            <p class="fs-5 mt-3">Sürenin dolması ve sonuçların açıklanması bekleniyor...</p>
+        </div>
+
+        <div id="resultArea" style="display: none;" class="mt-5 text-white">
+            <h1 id="resultIcon" class="display-1 mt-5"></h1>
+            <h2 id="resultText" class="mt-4 fw-bold"></h2>
+            <p id="nextQuestionText" class="text-light mt-3 fs-4 fw-bold"></p> 
+        </div>
+
+        <div id="leaderboardArea" class="mt-5" style="display: none;">
+            <h1 class="display-4 fw-bold text-white mb-4">🏆 Oyun Bitti! 🏆</h1>
+            <ul id="leaderboardList" class="list-group w-100 mx-auto fs-5 shadow-lg text-dark mb-5"></ul>
+            <button class="btn btn-light btn-lg w-100 fw-bold" onclick="location.reload()">Yeni Oyuna Katıl</button>
+        </div>
+        
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-    
     <script>
-        // Telsiz kulesine (Hub) bağlantı ayarlanır.
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/gamehub")
-            .build();
+        let currentPin = "";
+        let currentNickname = "";
+        let currentQuestionId = "";
+        let studentTimer;
+        let studentWaitTimer; 
+        let pendingResult = null; 
 
-        // Bağlantı başlatılır.
-        connection.start().then(() => {
-            console.log("Sunucuya başarıyla bağlanıldı.");
-        }).catch(err => console.error("Bağlantı hatası:", err));
+        const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub").build();
+        connection.start().catch(err => console.error(err));
 
-        // Katıl butonuna basıldığında çalışacak işlemler tanımlanır.
         document.getElementById("btnJoin").addEventListener("click", async () => {
-            const pin = document.getElementById("pinInput").value;
-            const nickname = document.getElementById("nicknameInput").value;
+            currentPin = document.getElementById("pinInput").value;
+            currentNickname = document.getElementById("nicknameInput").value;
 
-            if(pin && nickname) {
-                // Bilgiler SignalR üzerinden sunucuya (GameHub'a) fırlatılır.
-                await connection.invoke("JoinGame", pin, nickname);
-
-                // Giriş ekranı gizlenip, bekleme ekranı gösterilir.
+            if(currentPin && currentNickname) {
+                await connection.invoke("JoinGame", currentPin, currentNickname);
                 document.getElementById("loginArea").style.display = "none";
                 document.getElementById("waitingArea").style.display = "block";
-            } else {
-                alert("Lütfen PIN kodunu ve isminizi giriniz!");
             }
+        });
+
+        connection.on("ReceiveQuestion", (question) => {
+            currentQuestionId = question.id;
+            pendingResult = null; 
+            if(studentWaitTimer) clearInterval(studentWaitTimer); 
+            
+            document.getElementById("mainBody").className = "bg-dark text-center mt-5";
+            document.getElementById("waitingArea").style.display = "none";
+            document.getElementById("resultArea").style.display = "none";
+            document.getElementById("answeredArea").style.display = "none";
+            document.getElementById("leaderboardArea").style.display = "none";
+            document.getElementById("questionArea").style.display = "block";
+
+            document.getElementById("studentQuestionText").textContent = question.text;
+
+            let timeLeft = question.timeLimit;
+            document.getElementById("studentTimerDisplay").innerHTML = `Süre: <span id="studentTimeLimit" class="fs-2">${timeLeft}</span> saniye`;
+
+            if(studentTimer) clearInterval(studentTimer);
+
+            studentTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("studentTimeLimit").textContent = timeLeft;
+
+                if(timeLeft <= 0) {
+                    clearInterval(studentTimer);
+                    
+                    document.getElementById("questionArea").style.display = "none";
+                    document.getElementById("answeredArea").style.display = "none";
+                    document.getElementById("resultArea").style.display = "block";
+
+                    const body = document.getElementById("mainBody");
+
+                    if (pendingResult === true) {
+                        body.className = "bg-success text-center mt-5";
+                        document.getElementById("resultIcon").textContent = "✅";
+                        document.getElementById("resultText").textContent = "Doğru Cevap! +1000 Puan";
+                    } else if (pendingResult === false) {
+                        body.className = "bg-danger text-center mt-5";
+                        document.getElementById("resultIcon").textContent = "❌";
+                        document.getElementById("resultText").textContent = "Maalesef Yanlış!";
+                    } else {
+                        body.className = "bg-secondary text-center mt-5";
+                        document.getElementById("resultIcon").textContent = "⏰";
+                        document.getElementById("resultText").textContent = "Süre Bitti! Cevap Veremedin.";
+                    }
+
+                    let waitTime = 5;
+                    document.getElementById("nextQuestionText").textContent = `Sonraki soruya geçiliyor: ${waitTime} saniye...`;
+                    
+                    studentWaitTimer = setInterval(() => {
+                        waitTime--;
+                        if(waitTime > 0) {
+                            document.getElementById("nextQuestionText").textContent = `Sonraki soruya geçiliyor: ${waitTime} saniye...`;
+                        } else {
+                            clearInterval(studentWaitTimer);
+                            document.getElementById("nextQuestionText").textContent = "Soru yükleniyor...";
+                        }
+                    }, 1000);
+                }
+            }, 1000);
+
+            const optionsArea = document.getElementById("studentOptionsArea");
+            optionsArea.innerHTML = "";
+            const colors = ["btn-danger", "btn-primary", "btn-warning", "btn-success"];
+            
+            question.options.forEach((opt, index) => {
+                const col = document.createElement("div");
+                col.className = "col-6";
+                col.innerHTML = `<button class="btn ${colors[index % 4]} w-100 option-btn fw-bold text-white shadow rounded-4" onclick="sendAnswer('${opt.id}')">${opt.text}</button>`;
+                optionsArea.appendChild(col);
+            });
+        });
+
+        async function sendAnswer(optionId) {
+            document.getElementById("questionArea").style.display = "none";
+            document.getElementById("answeredArea").style.display = "block";
+            document.getElementById("mainBody").className = "bg-info text-center mt-5"; 
+
+            await connection.invoke("SubmitAnswer", currentPin, currentNickname, currentQuestionId, optionId);
+        }
+
+        connection.on("AnswerResult", (isCorrect) => {
+            pendingResult = isCorrect; 
+        });
+
+        // YENİ: Oyun bittiğinde öğrenci için liderlik tablosu çizilir
+        connection.on("GameEnded", (players) => {
+            if(studentTimer) clearInterval(studentTimer);
+            if(studentWaitTimer) clearInterval(studentWaitTimer);
+            
+            document.getElementById("mainBody").className = "bg-primary text-center mt-5";
+            document.getElementById("questionArea").style.display = "none";
+            document.getElementById("answeredArea").style.display = "none";
+            document.getElementById("resultArea").style.display = "none";
+            document.getElementById("leaderboardArea").style.display = "block";
+
+            const list = document.getElementById("leaderboardList");
+            list.innerHTML = "";
+            
+            players.forEach((p, index) => {
+                const li = document.createElement("li");
+                li.className = "list-group-item d-flex justify-content-between align-items-center fw-bold";
+                
+                // Kendi ismini yeşil renkle vurgula
+                if(p.nickname === currentNickname) {
+                    li.classList.add("list-group-item-success");
+                }
+
+                let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🔸";
+                li.innerHTML = `<span>${medal} ${p.nickname}</span> <span class="badge bg-primary rounded-pill fs-6">${p.score} Puan</span>`;
+                list.appendChild(li);
+            });
         });
     </script>
 </body>

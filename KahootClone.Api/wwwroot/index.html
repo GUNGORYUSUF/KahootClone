@@ -8,67 +8,150 @@
 <body class="bg-light text-center mt-5">
 
     <div class="container">
-        <h1 class="display-3 fw-bold text-primary mb-4">Bilgi Yarışması</h1>
-        
-        <button id="btnCreateGame" class="btn btn-success btn-lg px-5 py-3 fs-3 shadow">Yeni Oyun Kur</button>
-        
-        <div id="pinArea" class="mt-5" style="display: none;">
-            <h2 class="text-muted">Oyuncuların girmesi gereken PIN:</h2>
-            <h1 id="pinDisplay" class="display-1 fw-bold text-danger mt-3" style="letter-spacing: 10px;"></h1>
+        <div id="lobbyArea">
+            <h1 class="display-3 fw-bold text-primary mb-4">Bilgi Yarışması</h1>
+            <button id="btnCreateGame" class="btn btn-success btn-lg px-5 py-3 fs-3 shadow">Yeni Oyun Kur</button>
+            
+            <div id="pinArea" class="mt-4" style="display: none;">
+                <h2 class="text-muted">Oyuncuların girmesi gereken PIN:</h2>
+                <h1 id="pinDisplay" class="display-1 fw-bold text-danger mt-3" style="letter-spacing: 10px;"></h1>
+            </div>
+
+            <div id="playersArea" class="mt-5" style="display: none;">
+                <h3 class="mb-3">Katılan Oyuncular (<span id="playerCount">0</span>)</h3>
+                <ul id="playersList" class="list-group w-50 mx-auto fs-4 shadow-sm mb-4"></ul>
+                <button id="btnStartGame" class="btn btn-warning btn-lg px-5 py-3 fs-3 fw-bold shadow">🚀 Oyunu Başlat</button>
+            </div>
         </div>
 
-        <div id="playersArea" class="mt-5" style="display: none;">
-            <h3 class="mb-3">Katılan Oyuncular (<span id="playerCount">0</span>)</h3>
-            <ul id="playersList" class="list-group w-50 mx-auto fs-4 shadow-sm">
-                </ul>
+        <div id="questionArea" class="mt-5" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="text-secondary" id="questionCounter">Soru: -/-</h4>
+                <button id="btnEndGame" class="btn btn-danger fw-bold">🛑 Oyunu Bitir</button>
+            </div>
+
+            <h1 id="questionText" class="display-4 fw-bold mb-4 text-dark"></h1>
+            <h3 id="timerDisplay" class="text-danger mb-5">Süre: <span id="timeLimit" class="fw-bold fs-1"></span> saniye</h3>
+            
+            <div class="row w-75 mx-auto g-4" id="optionsArea"></div>
+        </div>
+
+        <div id="leaderboardArea" class="mt-5" style="display: none;">
+            <h1 class="display-2 fw-bold text-success mb-4">🏆 Oyun Bitti! 🏆</h1>
+            <h2 class="text-dark mb-4">Liderlik Tablosu</h2>
+            <ul id="leaderboardList" class="list-group w-50 mx-auto fs-3 shadow-lg"></ul>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-    
     <script>
-        // SignalR iletişim kulesine (Hub) bağlantı köprüsü kurulur.
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/gamehub")
-            .build();
+        let currentPin = "";
+        let currentQuestionIndex = 0; 
+        let questionTimer;
+        let waitTimer; // YENİ: Geçiş sayacı eklendi
 
-        // Kuleye bağlantı işlemi başlatılır.
-        connection.start().then(() => {
-            console.log("Telsiz kulesine bağlantı sağlandı.");
-        }).catch(err => console.error("Bağlantı hatası:", err));
+        const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub").build();
+        connection.start().catch(err => console.error(err));
 
-        // Telsizden 'PlayerJoined' (Oyuncu Katıldı) sinyali geldiğinde listeye ekleme işlemi yapılır.
         connection.on("PlayerJoined", (nickname) => {
             const list = document.getElementById("playersList");
             const li = document.createElement("li");
             li.className = "list-group-item list-group-item-info fw-bold";
             li.textContent = nickname;
             list.appendChild(li);
-
-            // Oyuncu sayısı güncellenir.
             const countSpan = document.getElementById("playerCount");
             countSpan.textContent = parseInt(countSpan.textContent) + 1;
         });
 
-        // Butona tıklandığında API'ye istek atılarak yeni oyun üretilmesi sağlanır.
-        document.getElementById("btnCreateGame").addEventListener("click", async () => {
-            const response = await fetch("/api/quiz/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title: "Genel Kültür" })
-            });
+        connection.on("ReceiveQuestion", (question) => {
+            if(waitTimer) clearInterval(waitTimer); // Yeni soru geldiğinde geçiş sayacı sıfırlanır
+            
+            document.getElementById("lobbyArea").style.display = "none";
+            document.getElementById("questionArea").style.display = "block";
 
+            document.getElementById("questionCounter").textContent = `Soru: ${question.currentIndex}/${question.totalQuestions}`;
+            document.getElementById("questionText").textContent = question.text;
+            
+            let timeLeft = question.timeLimit;
+            document.getElementById("timerDisplay").innerHTML = `Süre: <span id="timeLimit" class="fw-bold fs-1">${timeLeft}</span> saniye`;
+            
+            if(questionTimer) clearInterval(questionTimer);
+
+            questionTimer = setInterval(async () => {
+                timeLeft--;
+                document.getElementById("timeLimit").textContent = timeLeft;
+
+                if(timeLeft <= 0) {
+                    clearInterval(questionTimer);
+                    
+                    // YENİ: 5 saniyelik görsel sayaç başlatılır
+                    let waitTime = 5;
+                    document.getElementById("timerDisplay").innerHTML = `<span class='text-primary fw-bold'>Süre Bitti! Yeni soruya geçiliyor: <span id="waitCount" class="fs-1">${waitTime}</span> sn</span>`;
+                    
+                    waitTimer = setInterval(async () => {
+                        waitTime--;
+                        if(waitTime > 0) {
+                            document.getElementById("waitCount").textContent = waitTime;
+                        } else {
+                            clearInterval(waitTimer);
+                            document.getElementById("timerDisplay").innerHTML = "<span class='text-primary fw-bold'>Soru yükleniyor...</span>";
+                            currentQuestionIndex++;
+                            await connection.invoke("AskQuestion", currentPin.toString(), currentQuestionIndex);
+                        }
+                    }, 1000);
+                }
+            }, 1000);
+
+            const optionsArea = document.getElementById("optionsArea");
+            optionsArea.innerHTML = ""; 
+            const colors = ["bg-danger", "bg-primary", "bg-warning", "bg-success"];
+            
+            question.options.forEach((opt, index) => {
+                const col = document.createElement("div");
+                col.className = "col-6";
+                col.innerHTML = `<div class="card text-white ${colors[index % 4]} p-5 fs-2 fw-bold shadow rounded-4 h-100 d-flex align-items-center justify-content-center">${opt.text}</div>`;
+                optionsArea.appendChild(col);
+            });
+        });
+
+        connection.on("GameEnded", (players) => {
+            if(questionTimer) clearInterval(questionTimer);
+            if(waitTimer) clearInterval(waitTimer);
+            document.getElementById("questionArea").style.display = "none";
+            document.getElementById("leaderboardArea").style.display = "block";
+
+            const list = document.getElementById("leaderboardList");
+            list.innerHTML = "";
+            players.forEach((p, index) => {
+                const li = document.createElement("li");
+                li.className = "list-group-item d-flex justify-content-between align-items-center";
+                let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🔸";
+                li.innerHTML = `<span>${medal} ${p.nickname}</span> <span class="badge bg-primary rounded-pill">${p.score} Puan</span>`;
+                list.appendChild(li);
+            });
+        });
+
+        document.getElementById("btnCreateGame").addEventListener("click", async () => {
+            const response = await fetch("/api/quiz/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: "Genel Kültür" }) });
             if (response.ok) {
                 const data = await response.json();
-                
-                // Üretilen PIN kodu ekrana yansıtılır.
-                document.getElementById("pinDisplay").textContent = data.pin;
+                currentPin = data.pin;
+                document.getElementById("pinDisplay").textContent = currentPin;
                 document.getElementById("btnCreateGame").style.display = "none";
                 document.getElementById("pinArea").style.display = "block";
                 document.getElementById("playersArea").style.display = "block";
+                await connection.invoke("JoinGame", currentPin.toString(), "Öğretmen");
+            }
+        });
 
-                // Öğretmen, üretilen PIN kodunun yayınına (odasına) dahil edilir.
-                await connection.invoke("JoinGame", data.pin.toString(), "Öğretmen");
+        document.getElementById("btnStartGame").addEventListener("click", async () => {
+            currentQuestionIndex = 0;
+            await connection.invoke("AskQuestion", currentPin.toString(), currentQuestionIndex);
+        });
+
+        document.getElementById("btnEndGame").addEventListener("click", async () => {
+            if(confirm("Oyunu erken bitirmek istediğinize emin misiniz?")) {
+                await connection.invoke("EndGame", currentPin.toString());
             }
         });
     </script>
