@@ -34,6 +34,18 @@ public class QuizService : IQuizService
     {
         return _quizRepository.GetByPin(pin);
     }
+
+    // YENİ: Sorunun başlama zamanı kaydedilerek hıza dayalı puanlama için referans oluşturulur.
+    public void StartQuestion(string pin)
+    {
+        var quiz = _quizRepository.GetByPin(pin);
+        if (quiz != null)
+        {
+            quiz.CurrentQuestionStartTime = DateTime.UtcNow;
+            _quizRepository.Update(quiz);
+        }
+    }
+
     // Sistemin test edilebilmesi için varsayılan örnek sorular üretilir.
     private List<Question> GenerateSampleQuestions()
     {
@@ -74,6 +86,7 @@ public class QuizService : IQuizService
         if (quiz == null) return false;
 
         var question = quiz.Questions.FirstOrDefault(q => q.Id == questionId);
+        if (question == null) return false;
         var option = question?.Options.FirstOrDefault(o => o.Id == optionId);
         
         bool isCorrect = option != null && option.IsCorrect;
@@ -86,10 +99,19 @@ public class QuizService : IQuizService
             quiz.Players.Add(player);
         }
 
-        // Cevap doğruysa oyuncuya 1000 puan eklenir.
+        // Cevap doğruysa hıza dayalı dinamik puanlama yapılır.
         if (isCorrect)
         {
-            player.Score += 1000; 
+            var timeTaken = (DateTime.UtcNow - quiz.CurrentQuestionStartTime).TotalSeconds;
+            
+            if (timeTaken < 0) timeTaken = 0;
+            if (timeTaken > question.TimeLimitInSeconds) timeTaken = question.TimeLimitInSeconds;
+
+            // Puanlama Algoritması: Hızlı cevap veren daha yüksek puan alır (Maks: 1000, Min: 500)
+            double scoreFactor = 1.0 - (timeTaken / (question.TimeLimitInSeconds * 2.0));
+            int points = (int)Math.Round(1000 * scoreFactor);
+            
+            player.Score += points;
         }
 
         // Oyuncunun kazandığı yeni puanlar veritabanına kalıcı olarak kaydedilir.

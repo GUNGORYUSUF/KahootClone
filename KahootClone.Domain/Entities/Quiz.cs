@@ -19,4 +19,7 @@ public class Quiz
 
     // Oyuna katılan oyuncuların listesi barındırılır.
     public List<Player> Players { get; set; } = new();
+
+    // Hızlı cevap puanlaması için mevcut sorunun başlama zamanı tutulur.
+    public DateTime CurrentQuestionStartTime { get; set; }
 }

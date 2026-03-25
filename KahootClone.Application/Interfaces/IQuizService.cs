@@ -10,5 +10,6 @@ public interface IQuizService
     Quiz? GetQuizByPin(string pin);
     // Öğrencinin verdiği cevap kontrol edilerek puanlaması yapılır.
     bool SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId);
+    // Sorunun öğrencilere gönderildiği anın zamanı kaydedilir.
+    void StartQuestion(string pin);
 }
-

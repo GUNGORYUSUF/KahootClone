@@ -37,6 +37,8 @@ public class GameHub : Hub
                 TotalQuestions = quiz.Questions.Count
             };
 
+            // Zamanlayıcı başlatılır.
+            _quizService.StartQuestion(pin);
             await Clients.Group(pin).SendAsync("ReceiveQuestion", secureQuestionPacket);
         }
         else
