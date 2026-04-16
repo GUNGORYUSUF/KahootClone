@@ -4,6 +4,7 @@ using KahootClone.Infrastructure.Data;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
+using KahootClone.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 // MongoDB'nin Guid (Benzersiz Kimlik) veri tipini standart formatta kaydetmesi sağlanır.
@@ -30,6 +31,7 @@ builder.Services.AddSingleton<MongoDbContext>(sp =>
 builder.Services.AddScoped<IQuizService, QuizService>();
 // Veritabanı kasa işlemleri (Repository) sisteme tanımlanır.
 builder.Services.AddScoped<IQuizRepository, KahootClone.Infrastructure.Repositories.QuizRepository>();
+builder.Services.AddHostedService<GameFlowService>();
 var app = builder.Build();
 
 // Geliştirme ortamında test arayüzü (Swagger) aktif edilir.

@@ -2,6 +2,14 @@ using KahootClone.Domain.Entities;
 
 namespace KahootClone.Application.Interfaces;
 
+// AŞAMA 4: Arka plan servisinin SignalR üzerinden fırlatacağı veri paketi.
+public class GameTickEvent
+{
+    public string Pin { get; set; } = string.Empty;
+    public string EventName { get; set; } = string.Empty;
+    public object? Payload { get; set; }
+}
+
 public interface IQuizService
 {
     // Yeni bir oyun oluşturulur ve geriye PIN kodu döndürülür.
@@ -10,8 +18,18 @@ public interface IQuizService
     Quiz? GetQuizByPin(string pin);
     // Oyuncunun verdiği cevap kontrol edilerek puanlaması yapılır.
     bool SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId);
-    // Sorunun oyunculara gönderildiği anın zamanı kaydedilir.
-    void StartQuestion(string pin);
+    // Oyun akışını otomatik yönetecek döngüye ekler.
+    void StartGameFlow(string pin);
+    // Oyunu döngüden çıkarır (Bitirme).
+    void StopGameFlow(string pin);
+    // Her saniye çağrılır ve oyunların durumunu güncelleyip gerekli SignalR olaylarını döndürür.
+    List<GameTickEvent> ProcessTicks();
     // Oyuncunun oyuna ilk kez katılması veya kopup tekrar bağlanması durumunu yönetir.
-    Player? JoinOrRejoin(string pin, string nickname, string connectionId);
+    (Player? player, string? errorMessage) JoinOrRejoin(string pin, string nickname, string connectionId);
+    // Yöneticinin sayfayı yenilemesi durumunda oyunun tam durumunu getirir.
+    object? GetFullGameState(string pin);
+    // Bağlantısı kopan oyuncuyu kayıttan düşürür ve bilgi döndürür.
+    (string? Pin, string? Nickname) UnregisterPlayer(string connectionId);
+    // Oyun lobideyken yönetici tarafından iptal edilir.
+    void AbandonQuiz(string pin);
 }

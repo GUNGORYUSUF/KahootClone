@@ -11,16 +11,28 @@ public class QuizService : IQuizService
     // Eşzamanlılık (Concurrency) yönetimi için her PIN'e özel bir kilit (lock) nesnesi tutulur.
     private static readonly ConcurrentDictionary<string, object> _quizLocks = new();
 
+    // YENİ: AŞAMA 4 - Backend tabanlı otomatik oyun akışı durum takibi.
+    private class GameStateTracker
+    {
+        public string Phase { get; set; } = string.Empty;
+        public int CurrentQuestionIndex { get; set; }
+        public int TimeRemaining { get; set; }
+    }
+    private static readonly ConcurrentDictionary<string, GameStateTracker> _activeGames = new();
+    private static readonly Random _random = new();
+
+    // YENİ: Aktif bağlantıları (ConnectionId) oyuncu bilgileriyle eşleştiren harita.
+    private static readonly ConcurrentDictionary<string, (string Pin, string Nickname)> _connectionMap = new();
+
     // Kasa arayüzü (Repository) sisteme enjekte edilir.
     public QuizService(IQuizRepository quizRepository)
     {
         _quizRepository = quizRepository;
     }
-
     public string CreateQuiz(Quiz quiz)
     {
-        Random random = new Random();
-        string pin = random.Next(100000, 999999).ToString();
+        // PIN kodunun benzersiz olmasını sağlamak için bir döngü eklenebilir, ancak mevcut olasılıkla çakışma riski çok düşüktür.
+        string pin = _random.Next(100000, 999999).ToString();
         
         quiz.Pin = pin;
         quiz.IsActive = true;
@@ -39,30 +51,113 @@ public class QuizService : IQuizService
         return _quizRepository.GetByPin(pin);
     }
 
-    // YENİ: Sorunun başlama zamanı kaydedilerek hıza dayalı puanlama için referans oluşturulur.
-    public void StartQuestion(string pin)
+    // YENİ: AŞAMA 4 - Oyunun otomatik akışı (Zamanlayıcı) başlatılır.
+    public void StartGameFlow(string pin)
     {
-        // Sadece bu PIN'e ait işlemleri kilitle, diğer oyunları (farklı PIN) engelleme
         var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
         lock (quizLock)
         {
             var quiz = _quizRepository.GetByPin(pin);
-            if (quiz != null)
+            if (quiz != null && quiz.Questions.Count > 0)
             {
+                _activeGames[pin] = new GameStateTracker
+                {
+                    Phase = "Question",
+                    CurrentQuestionIndex = 0,
+                    TimeRemaining = quiz.Questions[0].TimeLimitInSeconds
+                };
                 quiz.CurrentQuestionStartTime = DateTime.UtcNow;
                 _quizRepository.Update(quiz);
             }
         }
     }
 
+    public void StopGameFlow(string pin)
+    {
+        _activeGames.TryRemove(pin, out _);
+    }
+
+    public List<GameTickEvent> ProcessTicks()
+    {
+        var events = new List<GameTickEvent>();
+        foreach (var kvp in _activeGames)
+        {
+            var pin = kvp.Key;
+            var state = kvp.Value;
+            var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+            
+            lock (quizLock)
+            {
+                state.TimeRemaining--;
+                
+                if (state.Phase == "Question")
+                {
+                    if (state.TimeRemaining <= 0)
+                    {
+                        state.Phase = "Transition";
+                        state.TimeRemaining = 5; // 5 saniye bekleme/geçiş süresi
+
+                        // Süre bitince doğru cevabın ID'sini de pakete ekle
+                        var quiz = _quizRepository.GetByPin(pin);
+                        var endedQuestion = quiz?.Questions[state.CurrentQuestionIndex];
+                        var correctOptionId = endedQuestion?.Options.FirstOrDefault(o => o.IsCorrect)?.Id;
+                        var waitPayload = new {
+                            WaitTime = 5,
+                            CorrectOptionId = correctOptionId
+                        };
+                        events.Add(new GameTickEvent { Pin = pin, EventName = "WaitPhase", Payload = waitPayload });
+                    }
+                    else
+                    {
+                        events.Add(new GameTickEvent { Pin = pin, EventName = "TimeUpdate", Payload = state.TimeRemaining });
+                    }
+                }
+                else if (state.Phase == "Transition")
+                {
+                    if (state.TimeRemaining <= 0)
+                    {
+                        state.CurrentQuestionIndex++;
+                        var quiz = _quizRepository.GetByPin(pin);
+                        if (quiz != null && quiz.Questions.Count > state.CurrentQuestionIndex)
+                        {
+                            state.Phase = "Question";
+                            var nextQ = quiz.Questions[state.CurrentQuestionIndex];
+                            state.TimeRemaining = nextQ.TimeLimitInSeconds;
+                            quiz.CurrentQuestionStartTime = DateTime.UtcNow;
+                            _quizRepository.Update(quiz);
+
+                            var payload = new {
+                                Id = nextQ.Id, Text = nextQ.Text, TimeLimit = nextQ.TimeLimitInSeconds,
+                                Options = nextQ.Options.Select(o => new { o.Id, o.Text }).ToList(),
+                                CurrentIndex = state.CurrentQuestionIndex + 1, TotalQuestions = quiz.Questions.Count
+                            };
+                            events.Add(new GameTickEvent { Pin = pin, EventName = "ReceiveQuestion", Payload = payload });
+                        }
+                        else
+                        {
+                            state.Phase = "Ended";
+                            _activeGames.TryRemove(pin, out _);
+                            events.Add(new GameTickEvent { Pin = pin, EventName = "GameEnded", Payload = quiz?.Players.OrderByDescending(p => p.Score).ToList() });
+                        }
+                    }
+                    else
+                    {
+                        events.Add(new GameTickEvent { Pin = pin, EventName = "WaitTimeUpdate", Payload = state.TimeRemaining });
+                    }
+                }
+            }
+        }
+        return events;
+    }
+
     // YENİ: Oyuncu oyuna katıldığında veya tekrar bağlandığında çalışır.
-    public Player? JoinOrRejoin(string pin, string nickname, string connectionId)
+    public (Player? player, string? errorMessage) JoinOrRejoin(string pin, string nickname, string connectionId)
     {
         var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
         lock (quizLock)
         {
             var quiz = _quizRepository.GetByPin(pin);
-            if (quiz == null || !quiz.IsActive) return null;
+            if (quiz == null || !quiz.IsActive) return (null, "Geçersiz PIN veya oyun aktif değil.");
 
             var player = quiz.Players.FirstOrDefault(p => p.Nickname == nickname);
             
@@ -71,16 +166,112 @@ public class QuizService : IQuizService
                 // Yeni oyuncu kaydı
                 player = new Player { Id = Guid.NewGuid(), Nickname = nickname, Score = 0, ConnectionId = connectionId };
                 quiz.Players.Add(player);
+                _connectionMap[connectionId] = (pin, nickname);
+                _quizRepository.Update(quiz);
+                return (player, null);
             }
             else
             {
-                // Yeniden bağlanma (Reconnection) senaryosu: Kopan oyuncunun yeni bağlantı kimliği güncellenir.
-                player.ConnectionId = connectionId;
+                // Takma ad zaten mevcut. Oyuncunun aktif olup olmadığını kontrol et.
+                if (!string.IsNullOrEmpty(player.ConnectionId))
+                {
+                    // Oyuncu zaten aktif (bağlı). Yeni girişi reddet.
+                    return (null, "Bu takma ad zaten kullanılıyor.");
+                }
+                else
+                {
+                    // Oyuncu daha önce bağlanmış ama kopmuş. Yeniden bağlanmasına izin ver.
+                    player.ConnectionId = connectionId;
+                    _connectionMap[connectionId] = (pin, nickname);
+                    _quizRepository.Update(quiz);
+                    return (player, null);
+                }
             }
-
-            _quizRepository.Update(quiz);
-            return player;
         }
+    }
+
+    public (string? Pin, string? Nickname) UnregisterPlayer(string connectionId)
+    {
+        if (_connectionMap.TryRemove(connectionId, out var info))
+        {
+            var (pin, nickname) = info;
+            var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+            lock (quizLock)
+            {
+                var quiz = _quizRepository.GetByPin(pin);
+                var player = quiz?.Players.FirstOrDefault(p => p.Nickname == nickname);
+                if (player != null)
+                {
+                    player.ConnectionId = string.Empty; // Oyuncuyu pasif olarak işaretle
+                    _quizRepository.Update(quiz);
+                    return (pin, nickname);
+                }
+            }
+        }
+        return (null, null);
+    }
+
+    public void AbandonQuiz(string pin)
+    {
+        var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+        lock (quizLock)
+        {
+            var quiz = _quizRepository.GetByPin(pin);
+            if (quiz != null)
+            {
+                // Mark quiz as inactive in DB
+                quiz.IsActive = false;
+                _quizRepository.Update(quiz);
+
+                // Remove players from the connection map
+                foreach (var player in quiz.Players)
+                {
+                    if (!string.IsNullOrEmpty(player.ConnectionId))
+                    {
+                        _connectionMap.TryRemove(player.ConnectionId, out _);
+                    }
+                }
+            }
+        }
+        // Clean up in-memory state
+        _quizLocks.TryRemove(pin, out _);
+    }
+
+    public object? GetFullGameState(string pin)
+    {
+        var quiz = _quizRepository.GetByPin(pin);
+        if (quiz == null) return null;
+
+        _activeGames.TryGetValue(pin, out var gameState);
+
+        Question? currentQuestion = null;
+        if (gameState != null && quiz.Questions.Count > gameState.CurrentQuestionIndex)
+        {
+            currentQuestion = quiz.Questions[gameState.CurrentQuestionIndex];
+        }
+
+        // İstemciye gönderilecek güvenli soru paketi (doğru cevap bilgisi olmadan)
+        object? secureCurrentQuestion = null;
+        if (currentQuestion != null)
+        {
+            secureCurrentQuestion = new {
+                Id = currentQuestion.Id,
+                Text = currentQuestion.Text,
+                TimeLimit = currentQuestion.TimeLimitInSeconds,
+                Options = currentQuestion.Options.Select(o => new { o.Id, o.Text }).ToList()
+            };
+        }
+
+        return new
+        {
+            Quiz = new {
+                Pin = quiz.Pin,
+                Players = quiz.Players,
+                QuestionsCount = quiz.Questions.Count
+            },
+            GameState = gameState,
+            CurrentQuestion = secureCurrentQuestion
+        };
     }
 
     // Sistemin test edilebilmesi için varsayılan örnek sorular üretilir.
@@ -131,12 +322,16 @@ public class QuizService : IQuizService
             
             bool isCorrect = option != null && option.IsCorrect;
 
-            // Oyuncu listesi kontrol edilir, yoksa listeye dahil edilir.
+            // AŞAMA 4: Hile Koruması - Süre bittiyse (veya geçiş aşamasındaysa) gönderilen cevaplar kesinlikle reddedilir.
+            if (_activeGames.TryGetValue(pin, out var state) && state.Phase != "Question")
+                return false;
+
+            // Oyuncu listesi kontrol edilir. Eğer oyuncu oyunda kayıtlı değilse, bu geçersiz bir istektir.
             var player = quiz.Players.FirstOrDefault(p => p.Nickname == nickname);
             if (player == null)
             {
-                player = new Player { Id = Guid.NewGuid(), Nickname = nickname, Score = 0 };
-                quiz.Players.Add(player);
+                // Oyuncu lobide kayıtlı değilse cevap gönderemez. Güvenlik için isteği sessizce yoksay.
+                return false;
             }
 
             // AŞAMA 1: Çift cevap kontrolü (Oyuncu bu soruyu daha önce cevapladıysa işlemi yoksay)

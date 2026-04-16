@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Kahoot Clone - Öğretmen Ekranı</title>
+    <title>Kahoot Clone - Yönetici Ekranı</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light text-center mt-5">
@@ -20,7 +20,10 @@
             <div id="playersArea" class="mt-5" style="display: none;">
                 <h3 class="mb-3">Katılan Oyuncular (<span id="playerCount">0</span>)</h3>
                 <ul id="playersList" class="list-group w-50 mx-auto fs-4 shadow-sm mb-4"></ul>
-                <button id="btnStartGame" class="btn btn-warning btn-lg px-5 py-3 fs-3 fw-bold shadow">🚀 Oyunu Başlat</button>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <button id="btnStartGame" class="btn btn-warning btn-lg px-5 py-3 fs-3 fw-bold shadow">🚀 Oyunu Başlat</button>
+                    <button id="btnResetLobby" class="btn btn-outline-danger btn-lg px-4 py-3 fs-4">Lobiyi İptal Et</button>
+                </div>
             </div>
         </div>
 
@@ -40,18 +43,14 @@
             <h1 class="display-2 fw-bold text-success mb-4">🏆 Oyun Bitti! 🏆</h1>
             <h2 class="text-dark mb-4">Liderlik Tablosu</h2>
             <ul id="leaderboardList" class="list-group w-50 mx-auto fs-3 shadow-lg"></ul>
+            <button id="btnPlayAgain" class="btn btn-primary btn-lg px-5 py-3 fs-3 fw-bold shadow mt-4" style="display: none;">🔄 Tekrar Oyna</button>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script>
         let currentPin = "";
-        let currentQuestionIndex = 0; 
-        let questionTimer;
-        let waitTimer; // YENİ: Geçiş sayacı eklendi
-
         const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub").build();
-        connection.start().catch(err => console.error(err));
 
         connection.on("PlayerJoined", (nickname) => {
             const list = document.getElementById("playersList");
@@ -63,44 +62,27 @@
             countSpan.textContent = parseInt(countSpan.textContent) + 1;
         });
 
+        connection.on("PlayerLeft", (nickname) => {
+            const list = document.getElementById("playersList");
+            const items = list.getElementsByTagName("li");
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].textContent === nickname) {
+                    list.removeChild(items[i]);
+                    break;
+                }
+            }
+            const countSpan = document.getElementById("playerCount");
+            countSpan.textContent = parseInt(countSpan.textContent) - 1;
+        });
+
         connection.on("ReceiveQuestion", (question) => {
-            if(waitTimer) clearInterval(waitTimer); // Yeni soru geldiğinde geçiş sayacı sıfırlanır
-            
             document.getElementById("lobbyArea").style.display = "none";
             document.getElementById("questionArea").style.display = "block";
 
             document.getElementById("questionCounter").textContent = `Soru: ${question.currentIndex}/${question.totalQuestions}`;
             document.getElementById("questionText").textContent = question.text;
             
-            let timeLeft = question.timeLimit;
-            document.getElementById("timerDisplay").innerHTML = `Süre: <span id="timeLimit" class="fw-bold fs-1">${timeLeft}</span> saniye`;
-            
-            if(questionTimer) clearInterval(questionTimer);
-
-            questionTimer = setInterval(async () => {
-                timeLeft--;
-                document.getElementById("timeLimit").textContent = timeLeft;
-
-                if(timeLeft <= 0) {
-                    clearInterval(questionTimer);
-                    
-                    // YENİ: 5 saniyelik görsel sayaç başlatılır
-                    let waitTime = 5;
-                    document.getElementById("timerDisplay").innerHTML = `<span class='text-primary fw-bold'>Süre Bitti! Yeni soruya geçiliyor: <span id="waitCount" class="fs-1">${waitTime}</span> sn</span>`;
-                    
-                    waitTimer = setInterval(async () => {
-                        waitTime--;
-                        if(waitTime > 0) {
-                            document.getElementById("waitCount").textContent = waitTime;
-                        } else {
-                            clearInterval(waitTimer);
-                            document.getElementById("timerDisplay").innerHTML = "<span class='text-primary fw-bold'>Soru yükleniyor...</span>";
-                            currentQuestionIndex++;
-                            await connection.invoke("AskQuestion", currentPin.toString(), currentQuestionIndex);
-                        }
-                    }, 1000);
-                }
-            }, 1000);
+            document.getElementById("timerDisplay").innerHTML = `Süre: <span id="timeLimit" class="fw-bold fs-1">${question.timeLimit}</span> saniye`;
 
             const optionsArea = document.getElementById("optionsArea");
             optionsArea.innerHTML = ""; 
@@ -109,19 +91,124 @@
             question.options.forEach((opt, index) => {
                 const col = document.createElement("div");
                 col.className = "col-6";
-                col.innerHTML = `<div class="card text-white ${colors[index % 4]} p-5 fs-2 fw-bold shadow rounded-4 h-100 d-flex align-items-center justify-content-center">${opt.text}</div>`;
+                col.innerHTML = `<div id="option-card-${opt.id}" class="card text-white ${colors[index % 4]} p-5 fs-2 fw-bold shadow rounded-4 h-100 d-flex align-items-center justify-content-center">${opt.text}</div>`;
                 optionsArea.appendChild(col);
             });
         });
 
+        connection.on("TimeUpdate", (timeLeft) => {
+            const timeSpan = document.getElementById("timeLimit");
+            if (timeSpan) timeSpan.textContent = timeLeft;
+        });
+
+        connection.on("WaitPhase", (data) => {
+            document.getElementById("timerDisplay").innerHTML = `<span class='text-primary fw-bold'>Süre Bitti! Yeni soruya geçiliyor: <span id="waitCount" class="fs-1">${data.waitTime}</span> sn</span>`;
+            
+            // Süre bitince doğru cevabı yeşil çerçeve ile vurgula
+            if (data.correctOptionId) {
+                const correctOptionCard = document.getElementById(`option-card-${data.correctOptionId}`);
+                if (correctOptionCard) {
+                    correctOptionCard.style.border = "10px solid lightgreen";
+                }
+            }
+        });
+
+        connection.on("WaitTimeUpdate", (waitTime) => {
+            const waitSpan = document.getElementById("waitCount");
+            if (waitSpan) waitSpan.textContent = waitTime;
+            if (waitTime <= 0) document.getElementById("timerDisplay").innerHTML = "<span class='text-primary fw-bold'>Soru yükleniyor...</span>";
+        });
+
+        connection.on("RestoreGameState", (state) => {
+            if (!state || !state.quiz) {
+                sessionStorage.removeItem('kahootClonePin');
+                alert("Oyun durumu geri yüklenemedi, oturum sonlandırıldı.");
+                location.reload();
+                return;
+            }
+
+            // --- Arayüzü Geri Yükle ---
+            document.getElementById("btnCreateGame").style.display = "none";
+            document.getElementById("pinArea").style.display = "block";
+            document.getElementById("playersArea").style.display = "block";
+            document.getElementById("pinDisplay").textContent = state.quiz.pin;
+
+            // Oyuncu listesini geri yükle
+            const list = document.getElementById("playersList");
+            list.innerHTML = "";
+            state.quiz.players.forEach(p => {
+                const li = document.createElement("li");
+                li.className = "list-group-item list-group-item-info fw-bold";
+                li.textContent = p.nickname;
+                list.appendChild(li);
+            });
+            document.getElementById("playerCount").textContent = state.quiz.players.length;
+
+            // Oyunun hangi aşamada olduğunu kontrol et
+            if (state.gameState) { // Oyun başlamış
+                document.getElementById("lobbyArea").style.display = "none";
+                document.getElementById("questionArea").style.display = "block";
+
+                const question = state.currentQuestion;
+                const gameState = state.gameState;
+
+                document.getElementById("questionCounter").textContent = `Soru: ${gameState.currentQuestionIndex + 1}/${state.quiz.questionsCount}`;
+                document.getElementById("questionText").textContent = question.text;
+
+                // Zamanlayıcıyı faza göre geri yükle
+                if (gameState.phase === 'Question') {
+                    document.getElementById("timerDisplay").innerHTML = `Süre: <span id="timeLimit" class="fw-bold fs-1">${gameState.timeRemaining}</span> saniye`;
+                } else if (gameState.phase === 'Transition') {
+                    document.getElementById("timerDisplay").innerHTML = `<span class='text-primary fw-bold'>Süre Bitti! Yeni soruya geçiliyor: <span id="waitCount" class="fs-1">${gameState.timeRemaining}</span> sn</span>`;
+                }
+                
+                // Şıkları geri yükle
+                const optionsArea = document.getElementById("optionsArea");
+                optionsArea.innerHTML = ""; 
+                const colors = ["bg-danger", "bg-primary", "bg-warning", "bg-success"];
+                question.options.forEach((opt, index) => {
+                    const col = document.createElement("div");
+                    col.className = "col-6";
+                    col.innerHTML = `<div id="option-card-${opt.id}" class="card text-white ${colors[index % 4]} p-5 fs-2 fw-bold shadow rounded-4 h-100 d-flex align-items-center justify-content-center">${opt.text}</div>`;
+                    optionsArea.appendChild(col);
+                });
+            }
+        });
+
+        connection.on("RedirectToNewGame", async (data) => {
+            // Yönetici yeni bir oyun başlattı, arayüzü lobiye döndür.
+            currentPin = data.newPin;
+            sessionStorage.setItem('kahootClonePin', currentPin);
+
+            // Arayüzü lobi durumuna sıfırla
+            document.getElementById("leaderboardArea").style.display = "none";
+            document.getElementById("lobbyArea").style.display = "block";
+            document.getElementById("questionArea").style.display = "none";
+            document.getElementById("btnPlayAgain").style.display = "none";
+
+            // Yeni PIN'i göster
+            document.getElementById("pinDisplay").textContent = currentPin;
+            document.getElementById("btnCreateGame").style.display = "none";
+            document.getElementById("pinArea").style.display = "block";
+            document.getElementById("playersArea").style.display = "block";
+
+            // Arayüzdeki eski listeyi temizle, öğrenciler SignalR üzerinden otomatik bağlandıkça (PlayerJoined) listeye eklenecek
+            const list = document.getElementById("playersList");
+            list.innerHTML = "";
+            document.getElementById("playerCount").textContent = "0";
+
+            // Yeni oyunun grubuna yönetici olarak katıl
+            await connection.invoke("JoinAsManager", currentPin);
+        });
+
         connection.on("GameEnded", (players) => {
-            if(questionTimer) clearInterval(questionTimer);
-            if(waitTimer) clearInterval(waitTimer);
+            sessionStorage.removeItem('kahootClonePin');
             document.getElementById("questionArea").style.display = "none";
             document.getElementById("leaderboardArea").style.display = "block";
 
             const list = document.getElementById("leaderboardList");
             list.innerHTML = "";
+            document.getElementById("btnPlayAgain").style.display = "inline-block";
             players.forEach((p, index) => {
                 const li = document.createElement("li");
                 li.className = "list-group-item d-flex justify-content-between align-items-center";
@@ -136,24 +223,56 @@
             if (response.ok) {
                 const data = await response.json();
                 currentPin = data.pin;
+                sessionStorage.setItem('kahootClonePin', currentPin);
                 document.getElementById("pinDisplay").textContent = currentPin;
                 document.getElementById("btnCreateGame").style.display = "none";
                 document.getElementById("pinArea").style.display = "block";
                 document.getElementById("playersArea").style.display = "block";
-                await connection.invoke("JoinGame", currentPin.toString(), "Öğretmen");
+                await connection.invoke("JoinAsManager", currentPin.toString());
             }
         });
 
         document.getElementById("btnStartGame").addEventListener("click", async () => {
-            currentQuestionIndex = 0;
-            await connection.invoke("AskQuestion", currentPin.toString(), currentQuestionIndex);
+            await connection.invoke("StartGame", currentPin.toString());
         });
 
         document.getElementById("btnEndGame").addEventListener("click", async () => {
             if(confirm("Oyunu erken bitirmek istediğinize emin misiniz?")) {
+                sessionStorage.removeItem('kahootClonePin');
                 await connection.invoke("EndGame", currentPin.toString());
             }
         });
+
+        document.getElementById("btnPlayAgain").addEventListener("click", async () => {
+            await connection.invoke("PlayAgain", currentPin);
+        });
+
+        document.getElementById("btnResetLobby").addEventListener("click", async () => {
+            if (confirm("Mevcut lobi iptal edilecek ve tüm oyuncular atılacak. Emin misiniz?")) {
+                await connection.invoke("ResetLobby", currentPin);
+            }
+        });
+
+        // Sayfa yüklendiğinde çalışacak ana fonksiyon
+        async function initialize() {
+            try {
+                await connection.start();
+                const storedPin = sessionStorage.getItem('kahootClonePin');
+                if (storedPin) {
+                    currentPin = storedPin;
+                    await connection.invoke("RejoinAsManager", currentPin);
+                }
+            } catch (err) {
+                console.error("SignalR bağlantı hatası: ", err);
+            }
+        }
+
+        connection.on("LobbyReset", () => {
+            sessionStorage.removeItem('kahootClonePin');
+            location.reload();
+        });
+
+        initialize();
     </script>
 </body>
 </html>

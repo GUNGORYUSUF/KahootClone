@@ -26,7 +26,7 @@
         <div id="waitingArea" style="display: none;" class="mt-5 text-white">
             <h1 class="display-1 fw-bold mb-4">⏳</h1>
             <h2 class="fw-bold">İçeridesin!</h2>
-            <p class="fs-5 mt-3">Öğretmenin oyunu başlatması bekleniyor...</p>
+            <p class="fs-5 mt-3">Yöneticinin oyunu başlatması bekleniyor...</p>
         </div>
 
         <div id="questionArea" style="display: none;" class="mt-3">
@@ -39,6 +39,7 @@
             <h1 class="display-1 fw-bold mb-4">🤔</h1>
             <h2 class="fw-bold">Cevabın Kaydedildi!</h2>
             <p class="fs-5 mt-3">Sürenin dolması ve sonuçların açıklanması bekleniyor...</p>
+            <h3 class="text-warning mt-4 fw-bold">Kalan Süre: <span id="answeredTimeLimit" class="fs-2"></span> saniye</h3>
         </div>
 
         <div id="resultArea" style="display: none;" class="mt-5 text-white">
@@ -60,19 +61,34 @@
         let currentPin = "";
         let currentNickname = "";
         let currentQuestionId = "";
-        let studentTimer;
-        let studentWaitTimer; 
-        let pendingResult = null; 
+        let currentOptions = [];
+        let pendingResult = null;
+        let hasJoinError = false;
 
         const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub").build();
         connection.start().catch(err => console.error(err));
+
+        connection.on("Error", (errorMessage) => {
+            // Hata geldiğinde bayrağı kaldır ve uyarıyı göster.
+            hasJoinError = true;
+            alert(errorMessage);
+        });
 
         document.getElementById("btnJoin").addEventListener("click", async () => {
             currentPin = document.getElementById("pinInput").value;
             currentNickname = document.getElementById("nicknameInput").value;
 
-            if(currentPin && currentNickname) {
+            if (currentPin && currentNickname) {
+                // Her denemeden önce hata bayrağını sıfırla.
+                hasJoinError = false;
                 await connection.invoke("JoinGame", currentPin, currentNickname);
+
+                // Sunucudan döndükten sonra hata bayrağını kontrol et.
+                if (hasJoinError) {
+                    // Hata oluştu, arayüzü giriş ekranında tut.
+                    return;
+                }
+                // Hata yoksa bekleme ekranına geç.
                 document.getElementById("loginArea").style.display = "none";
                 document.getElementById("waitingArea").style.display = "block";
             }
@@ -80,8 +96,8 @@
 
         connection.on("ReceiveQuestion", (question) => {
             currentQuestionId = question.id;
+            currentOptions = question.options;
             pendingResult = null; 
-            if(studentWaitTimer) clearInterval(studentWaitTimer); 
             
             document.getElementById("mainBody").className = "bg-dark text-center mt-5";
             document.getElementById("waitingArea").style.display = "none";
@@ -91,53 +107,9 @@
             document.getElementById("questionArea").style.display = "block";
 
             document.getElementById("studentQuestionText").textContent = question.text;
-
-            let timeLeft = question.timeLimit;
-            document.getElementById("studentTimerDisplay").innerHTML = `Süre: <span id="studentTimeLimit" class="fs-2">${timeLeft}</span> saniye`;
-
-            if(studentTimer) clearInterval(studentTimer);
-
-            studentTimer = setInterval(() => {
-                timeLeft--;
-                document.getElementById("studentTimeLimit").textContent = timeLeft;
-
-                if(timeLeft <= 0) {
-                    clearInterval(studentTimer);
-                    
-                    document.getElementById("questionArea").style.display = "none";
-                    document.getElementById("answeredArea").style.display = "none";
-                    document.getElementById("resultArea").style.display = "block";
-
-                    const body = document.getElementById("mainBody");
-
-                    if (pendingResult === true) {
-                        body.className = "bg-success text-center mt-5";
-                        document.getElementById("resultIcon").textContent = "✅";
-                        document.getElementById("resultText").textContent = "Doğru Cevap! +1000 Puan";
-                    } else if (pendingResult === false) {
-                        body.className = "bg-danger text-center mt-5";
-                        document.getElementById("resultIcon").textContent = "❌";
-                        document.getElementById("resultText").textContent = "Maalesef Yanlış!";
-                    } else {
-                        body.className = "bg-secondary text-center mt-5";
-                        document.getElementById("resultIcon").textContent = "⏰";
-                        document.getElementById("resultText").textContent = "Süre Bitti! Cevap Veremedin.";
-                    }
-
-                    let waitTime = 5;
-                    document.getElementById("nextQuestionText").textContent = `Sonraki soruya geçiliyor: ${waitTime} saniye...`;
-                    
-                    studentWaitTimer = setInterval(() => {
-                        waitTime--;
-                        if(waitTime > 0) {
-                            document.getElementById("nextQuestionText").textContent = `Sonraki soruya geçiliyor: ${waitTime} saniye...`;
-                        } else {
-                            clearInterval(studentWaitTimer);
-                            document.getElementById("nextQuestionText").textContent = "Soru yükleniyor...";
-                        }
-                    }, 1000);
-                }
-            }, 1000);
+            document.getElementById("studentTimerDisplay").innerHTML = `Süre: <span id="studentTimeLimit" class="fs-2">${question.timeLimit}</span> saniye`;
+            const answeredTimeSpan = document.getElementById("answeredTimeLimit");
+            if (answeredTimeSpan) answeredTimeSpan.textContent = question.timeLimit;
 
             const optionsArea = document.getElementById("studentOptionsArea");
             optionsArea.innerHTML = "";
@@ -163,11 +135,54 @@
             pendingResult = isCorrect; 
         });
 
+        connection.on("TimeUpdate", (timeLeft) => {
+            const timeSpan = document.getElementById("studentTimeLimit");
+            if (timeSpan) timeSpan.textContent = timeLeft;
+            
+            const answeredTimeSpan = document.getElementById("answeredTimeLimit");
+            if (answeredTimeSpan) answeredTimeSpan.textContent = timeLeft;
+        });
+
+        connection.on("WaitPhase", (data) => {
+            document.getElementById("questionArea").style.display = "none";
+            document.getElementById("answeredArea").style.display = "none";
+            document.getElementById("resultArea").style.display = "block";
+
+            const body = document.getElementById("mainBody");
+
+            if (pendingResult === true) {
+                body.className = "bg-success text-center mt-5";
+                document.getElementById("resultIcon").textContent = "✅";
+                document.getElementById("resultText").textContent = "Doğru Cevap! Puan Kazandın!";
+            } else if (pendingResult === false) {
+                body.className = "bg-danger text-center mt-5";
+                document.getElementById("resultIcon").textContent = "❌";
+                document.getElementById("resultText").textContent = "Maalesef Yanlış!";
+            } else {
+                body.className = "bg-secondary text-center mt-5";
+                document.getElementById("resultIcon").textContent = "⏰";
+                document.getElementById("resultText").textContent = "Süre Bitti! Cevap Veremedin.";
+            }
+
+            // Oyuncu yanlış cevap verdiyse veya cevap vermediyse, doğru cevabı göster
+            if (pendingResult !== true && data.correctOptionId) {
+                const correctOption = currentOptions.find(o => o.id === data.correctOptionId);
+                if (correctOption) {
+                    document.getElementById("resultText").innerHTML += `<br><small class="fw-normal mt-2 d-block">Doğru Cevap: <strong>${correctOption.text}</strong></small>`;
+                }
+            }
+
+            document.getElementById("nextQuestionText").textContent = `Sonraki soruya geçiliyor: ${data.waitTime} saniye...`;
+        });
+
+        connection.on("WaitTimeUpdate", (waitTime) => {
+            const waitText = document.getElementById("nextQuestionText");
+            if (waitText) waitText.textContent = `Sonraki soruya geçiliyor: ${waitTime} saniye...`;
+            if (waitTime <= 0) document.getElementById("nextQuestionText").textContent = "Soru yükleniyor...";
+        });
+
         // YENİ: Oyun bittiğinde öğrenci için liderlik tablosu çizilir
         connection.on("GameEnded", (players) => {
-            if(studentTimer) clearInterval(studentTimer);
-            if(studentWaitTimer) clearInterval(studentWaitTimer);
-            
             document.getElementById("mainBody").className = "bg-primary text-center mt-5";
             document.getElementById("questionArea").style.display = "none";
             document.getElementById("answeredArea").style.display = "none";
@@ -191,6 +206,27 @@
                 list.appendChild(li);
             });
         });
+
+        connection.on("RedirectToNewGame", async (data) => {
+            // Yönetici yeni bir oyun başlattı, otomatik olarak katıl.
+            currentPin = data.newPin;
+
+            // Arayüzü yeni oyunun bekleme lobisine döndür
+            document.getElementById("leaderboardArea").style.display = "none";
+            document.getElementById("waitingArea").style.display = "block";
+            document.getElementById("waitingArea").querySelector('p').textContent = "Yönetici yeni oyunu başlattı, bekleniyor...";
+
+            // Aynı takma ad ile yeni oyuna katıl
+            await connection.invoke("JoinGame", currentPin, currentNickname);
+        });
+
+        connection.on("LobbyReset", () => {
+            alert("Yönetici lobiyi iptal etti. Ana ekrana yönlendiriliyorsunuz.");
+            // Arayüzü başlangıç durumuna sıfırla
+            document.getElementById("waitingArea").style.display = "none";
+            document.getElementById("loginArea").style.display = "block";
+        });
+
     </script>
 </body>
 </html>
