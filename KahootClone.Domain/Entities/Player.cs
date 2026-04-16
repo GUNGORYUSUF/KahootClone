@@ -13,4 +13,7 @@ public class Player
 
     // SignalR üzerinden anlık iletişim kurmak için bağlantı kimliği saklanır.
     public string ConnectionId { get; set; } = string.Empty;
+
+    // Oyuncunun cevapladığı soruların kimlikleri tutulur (Çift cevap engelleme için).
+    public List<Guid> AnsweredQuestionIds { get; set; } = new List<Guid>();
 }

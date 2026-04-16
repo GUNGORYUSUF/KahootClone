@@ -10,11 +10,11 @@ Bu proje, yapay zeka destekli yazılım geliştirme dersi kapsamında "Agentic E
 * **Mimari:** Clean Architecture (Temiz Mimari)
 
 ## Temel Özellikler ve Oyun Mekanikleri
-* **Gerçek Zamanlı Senkronizasyon:** Öğretmen ve öğrenci ekranlarındaki süreler milisaniyelik hassasiyetle aynı anda geriye sayar.
-* **Tam Otomatik Oyun Akışı:** Öğretmen oyunu başlattıktan sonra sistem; soruları, süreleri ve 5 saniyelik geçiş aralarını insan müdahalesi olmadan otomatik yönetir.
-* **Heyecan Mekanizması (Suspense):** Öğrenciler cevap verdiğinde anında sonucu görmek yerine, bekleme odasına alınır ve süre bittiğinde tüm sınıf sonucu aynı anda öğrenir.
-* **Çift Taraflı Liderlik Tablosu:** Oyun bittiğinde sadece öğretmen ekranında değil, her öğrencinin kendi cihazında da liderlik tablosu belirir ve öğrencinin kendi ismi yeşil renkle vurgulanır.
-* **Hile Koruması:** Doğru cevap verisi öğrencilere gönderilmez, doğrulama işlemi sunucunun (Backend) kalbinde güvenle yapılır.
+* **Gerçek Zamanlı Senkronizasyon:** Yönetici ve oyuncu ekranlarındaki süreler milisaniyelik hassasiyetle aynı anda geriye sayar.
+* **Tam Otomatik Oyun Akışı:** Yönetici oyunu başlattıktan sonra sistem; soruları, süreleri ve 5 saniyelik geçiş aralarını insan müdahalesi olmadan otomatik yönetir.
+* **Heyecan Mekanizması (Suspense):** Oyuncular cevap verdiğinde anında sonucu görmek yerine, bekleme odasına alınır ve süre bittiğinde tüm sınıf sonucu aynı anda öğrenir.
+* **Çift Taraflı Liderlik Tablosu:** Oyun bittiğinde sadece yönetici ekranında değil, her oyuncunun kendi cihazında da liderlik tablosu belirir ve oyuncunun kendi ismi yeşil renkle vurgulanır.
+* **Hile Koruması:** Doğru cevap verisi oyunculara gönderilmez, doğrulama işlemi sunucunun (Backend) kalbinde güvenle yapılır.
 
 ## Proje Klasör Yapısı
 * **1. Domain:** Sistemin kalbidir. Oyun, Soru, Oyuncu gibi temel veri şablonları burada tutulur. Dış dünyadan tamamen izoledir.
@@ -34,6 +34,6 @@ Veritabanı hazır olduktan sonra, .NET uygulamasını ayağa kaldırmak için t
 
 **Adım 3: Uygulamayı Test Etme**
 Tarayıcınızdan aşağıdaki adreslere giderek sistemi test edebilirsiniz (Port numaranızı terminaldeki çıktıya göre ayarlayınız):
-* **Öğretmen Ekranı:** `http://localhost:5xxx/index.html`
-* **Öğrenci Ekranı:** `http://localhost:5xxx/student.html`
+* **Yönetici Ekranı:** `http://localhost:5xxx/index.html`
+* **Oyuncu Ekranı:** `http://localhost:5xxx/student.html`
 * **Geliştirici Arayüzü (Swagger):** `http://localhost:5xxx/swagger`
