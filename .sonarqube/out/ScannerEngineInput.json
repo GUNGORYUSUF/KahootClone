@@ -1,0 +1,224 @@
+{
+  "scannerProperties": [
+    {
+      "key": "sonar.scanner.app",
+      "value": "ScannerMSBuild"
+    },
+    {
+      "key": "sonar.scanner.appVersion",
+      "value": "11.2.1"
+    },
+    {
+      "key": "sonar.scanner.bootstrapStartTime",
+      "value": "1776462985000"
+    },
+    {
+      "key": "sonar.projectKey",
+      "value": "KahootProjesi"
+    },
+    {
+      "key": "sonar.working.directory",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\.sonar"
+    },
+    {
+      "key": "sonar.projectBaseDir",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi"
+    },
+    {
+      "key": "sonar.pullrequest.cache.basepath",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi"
+    },
+    {
+      "key": "sonar.sources",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\obj\\KahootClone.Tests.csproj.nuget.dgspec.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\obj\\project.assets.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\bin\\Debug\\net10.0\\appsettings.Development.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\bin\\Debug\\net10.0\\appsettings.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\bin\\Debug\\net10.0\\KahootClone.Api.deps.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\bin\\Debug\\net10.0\\KahootClone.Api.runtimeconfig.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\bin\\Debug\\net10.0\\KahootClone.Api.staticwebassets.endpoints.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\bin\\Debug\\net10.0\\KahootClone.Api.staticwebassets.runtime.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\bin\\Debug\\net10.0\\KahootClone.Tests.deps.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\bin\\Debug\\net10.0\\KahootClone.Tests.runtimeconfig.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Tests\\obj\\Debug\\net10.0\\KahootClone.Tests.sourcelink.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\docker-compose.yml"
+    },
+    {
+      "key": "sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "sonar.modules",
+      "value": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1,1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B,58EC8E46-4E00-FE4D-1F92-6F732A3A6545,E9D1A6F7-1A2E-B9BD-A35E-96D49025E977"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.projectKey",
+      "value": "KahootProjesi:BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.projectName",
+      "value": "KahootClone.Domain"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.projectBaseDir",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.working.directory",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\.sonar\\mod0"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.sources",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\Class1.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\Entities\\Option.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\Entities\\Player.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\Entities\\Question.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\Entities\\Quiz.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\obj\\KahootClone.Domain.csproj.nuget.dgspec.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\obj\\project.assets.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\bin\\Debug\\net10.0\\KahootClone.Domain.deps.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Domain\\obj\\Debug\\net10.0\\KahootClone.Domain.sourcelink.json"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.cs.analyzer.projectOutPaths",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\0"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.cs.roslyn.reportFilePaths",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\0\\Issues.json"
+    },
+    {
+      "key": "BB7880F0-5BE5-FDC1-9749-92F3BA46CAA1.sonar.cs.scanner.telemetry",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\0\\Telemetry.json"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.projectKey",
+      "value": "KahootProjesi:1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.projectName",
+      "value": "KahootClone.Application"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.projectBaseDir",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Application"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.working.directory",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\.sonar\\mod1"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.sources",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Application\\obj\\KahootClone.Application.csproj.nuget.dgspec.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Application\\obj\\project.assets.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Application\\bin\\Debug\\net10.0\\KahootClone.Application.deps.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Application\\obj\\Debug\\net10.0\\KahootClone.Application.sourcelink.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Application\\Interfaces\\IQuizRepository.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Application\\Interfaces\\IQuizService.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Application\\Services\\QuizService.cs"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.cs.analyzer.projectOutPaths",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\1"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.cs.roslyn.reportFilePaths",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\1\\Issues.json"
+    },
+    {
+      "key": "1F1FF55E-5EEF-B2E5-FBEB-0EBE5128E74B.sonar.cs.scanner.telemetry",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\1\\Telemetry.json"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.projectKey",
+      "value": "KahootProjesi:58EC8E46-4E00-FE4D-1F92-6F732A3A6545"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.projectName",
+      "value": "KahootClone.Infrastructure"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.projectBaseDir",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.working.directory",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\.sonar\\mod2"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.sources",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure\\obj\\KahootClone.Infrastructure.csproj.nuget.dgspec.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure\\obj\\project.assets.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure\\bin\\Debug\\net10.0\\KahootClone.Infrastructure.deps.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure\\obj\\Debug\\net10.0\\KahootClone.Infrastructure.sourcelink.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure\\Class1.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure\\Data\\MongoDbContext.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure\\Repositories\\QuizRepository.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Infrastructure\\Settings\\MongoDbSettings.cs"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.cs.analyzer.projectOutPaths",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\2"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.cs.roslyn.reportFilePaths",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\2\\Issues.json"
+    },
+    {
+      "key": "58EC8E46-4E00-FE4D-1F92-6F732A3A6545.sonar.cs.scanner.telemetry",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\2\\Telemetry.json"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.projectKey",
+      "value": "KahootProjesi:E9D1A6F7-1A2E-B9BD-A35E-96D49025E977"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.projectName",
+      "value": "KahootClone.Api"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.projectBaseDir",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.working.directory",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\.sonar\\mod3"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.sourceEncoding",
+      "value": "utf-8"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.tests",
+      "value": ""
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.sources",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\appsettings.Development.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\appsettings.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\KahootClone.Api.csproj.nuget.dgspec.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\project.assets.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\Properties\\launchSettings.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\wwwroot\\index.html,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\wwwroot\\student.html,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\bin\\Debug\\net10.0\\appsettings.Development.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\bin\\Debug\\net10.0\\appsettings.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\bin\\Debug\\net10.0\\KahootClone.Api.deps.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\bin\\Debug\\net10.0\\KahootClone.Api.runtimeconfig.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\bin\\Debug\\net10.0\\KahootClone.Api.staticwebassets.endpoints.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\bin\\Debug\\net10.0\\KahootClone.Api.staticwebassets.runtime.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\KahootClone.Api.sourcelink.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\rbcswa.dswa.cache.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\rjimswa.dswa.cache.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\rjsmcshtml.dswa.cache.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\rjsmrazor.dswa.cache.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\rpswa.dswa.cache.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\staticwebassets.build.endpoints.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\staticwebassets.build.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\staticwebassets.development.json,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\Controllers\\QuizController.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\Hubs\\GameHub.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\Program.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\Services\\GameFlowService.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\KahootClone.Api.GlobalUsings.g.cs,\"D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\.NETCoreApp,Version=v10.0.AssemblyAttributes.cs\",D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\KahootClone.Api.AssemblyInfo.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\obj\\Debug\\net10.0\\KahootClone.Api.MvcApplicationPartsAssemblyInfo.cs,D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\KahootClone.Api\\KahootClone.Api.http"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.cs.analyzer.projectOutPaths",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\3"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.cs.roslyn.reportFilePaths",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\3\\Issues.json"
+    },
+    {
+      "key": "E9D1A6F7-1A2E-B9BD-A35E-96D49025E977.sonar.cs.scanner.telemetry",
+      "value": "D:\\yusuf\\Desktop\\Student\\YapayZekaDYG\\KahootProjesi\\.sonarqube\\out\\3\\Telemetry.json"
+    },
+    {
+      "key": "sonar.login",
+      "value": "***"
+    },
+    {
+      "key": "sonar.host.url",
+      "value": "http://localhost:9000"
+    },
+    {
+      "key": "sonar.cs.opencover.reportsPaths",
+      "value": "**/*.opencover.xml"
+    },
+    {
+      "key": "sonar.exclusions",
+      "value": "**/*.opencover.xml"
+    },
+    {
+      "key": "sonar.visualstudio.enable",
+      "value": "false"
+    }
+  ]
+}

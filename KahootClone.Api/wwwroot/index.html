@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Kahoot Clone - Yönetici Ekranı</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 </head>
 <body class="bg-light text-center mt-5">
 
@@ -52,7 +52,7 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js" integrity="sha512-kZqT4wD+pMTL//0v7zN8U+XWp5b9Y+E6K1+R5x2W5g2K9Y2i+4x+R4k2T/w5H0L9H0F2w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         let currentPin = "";
         const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub").build();

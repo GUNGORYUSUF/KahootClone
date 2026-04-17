@@ -1,0 +1,4 @@
+﻿D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Infrastructure\Class1.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Infrastructure\Data\MongoDbContext.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Infrastructure\Repositories\QuizRepository.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Infrastructure\Settings\MongoDbSettings.cs

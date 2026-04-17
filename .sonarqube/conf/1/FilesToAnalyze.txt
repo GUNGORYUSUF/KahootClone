@@ -1,0 +1,3 @@
+﻿D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Application\Interfaces\IQuizRepository.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Application\Interfaces\IQuizService.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Application\Services\QuizService.cs

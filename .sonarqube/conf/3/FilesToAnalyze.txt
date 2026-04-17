@@ -1,0 +1,14 @@
+﻿D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\Controllers\QuizController.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\Hubs\GameHub.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\Program.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\Services\GameFlowService.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\obj\Debug\net10.0\KahootClone.Api.GlobalUsings.g.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\obj\Debug\net10.0\.NETCoreApp,Version=v10.0.AssemblyAttributes.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\obj\Debug\net10.0\KahootClone.Api.AssemblyInfo.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\obj\Debug\net10.0\KahootClone.Api.MvcApplicationPartsAssemblyInfo.cs
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\wwwroot\index.html
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\wwwroot\student.html
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\appsettings.Development.json
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\appsettings.json
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\KahootClone.Api.http
+D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Api\Properties\launchSettings.json

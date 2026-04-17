@@ -12,7 +12,7 @@ public class QuizService : IQuizService
     private static readonly ConcurrentDictionary<string, object> _quizLocks = new();
 
     // YENİ: AŞAMA 4 - Backend tabanlı otomatik oyun akışı durum takibi.
-    private class GameStateTracker
+    private sealed class GameStateTracker
     {
         public string Phase { get; set; } = string.Empty;
         public int CurrentQuestionIndex { get; set; }
@@ -93,67 +93,77 @@ public class QuizService : IQuizService
                 
                 if (state.Phase == "Question")
                 {
-                    if (state.TimeRemaining <= 0)
-                    {
-                        state.Phase = "Transition";
-                        state.TimeRemaining = 7; // 7 saniye bekleme/geçiş süresi (2 sn cevap, 5 sn tablo)
-
-                        // Süre bitince doğru cevabın ID'sini de pakete ekle
-                        var quiz = _quizRepository.GetByPin(pin);
-                        var endedQuestion = quiz?.Questions[state.CurrentQuestionIndex];
-                        var correctOptionId = endedQuestion?.Options.FirstOrDefault(o => o.IsCorrect)?.Id;
-                        var top5Players = quiz?.Players.OrderByDescending(p => p.Score).Take(5).ToList();
-                        var waitPayload = new {
-                            WaitTime = 7,  // 7 saniye (2 saniye cevap gosterimi, 5 saniye tablo gosterimi)
-                            CorrectOptionId = correctOptionId,
-                            Leaderboard = top5Players,
-                            AllAnswered = state.AllAnswered
-                        };
-                        events.Add(new GameTickEvent { Pin = pin, EventName = "WaitPhase", Payload = waitPayload });
-                        state.AllAnswered = false; // Bayrağı sıfırla
-                    }
-                    else
-                    {
-                        events.Add(new GameTickEvent { Pin = pin, EventName = "TimeUpdate", Payload = state.TimeRemaining });
-                    }
+                    ProcessQuestionPhase(pin, state, events);
                 }
                 else if (state.Phase == "Transition")
                 {
-                    if (state.TimeRemaining <= 0)
-                    {
-                        state.CurrentQuestionIndex++;
-                        var quiz = _quizRepository.GetByPin(pin);
-                        if (quiz != null && quiz.Questions.Count > state.CurrentQuestionIndex)
-                        {
-                            state.Phase = "Question";
-                            var nextQ = quiz.Questions[state.CurrentQuestionIndex];
-                            state.TimeRemaining = nextQ.TimeLimitInSeconds;
-                            quiz.CurrentQuestionStartTime = DateTime.UtcNow;
-                            _quizRepository.Update(quiz);
-
-                            var payload = new {
-                                Id = nextQ.Id, Text = nextQ.Text, TimeLimit = nextQ.TimeLimitInSeconds,
-                                Options = nextQ.Options.Select(o => new { o.Id, o.Text }).ToList(),
-                                CurrentIndex = state.CurrentQuestionIndex + 1, TotalQuestions = quiz.Questions.Count,
-                                TotalPlayers = quiz.Players.Count(p => !string.IsNullOrEmpty(p.ConnectionId))
-                            };
-                            events.Add(new GameTickEvent { Pin = pin, EventName = "ReceiveQuestion", Payload = payload });
-                        }
-                        else
-                        {
-                            state.Phase = "Ended";
-                            _activeGames.TryRemove(pin, out _);
-                            events.Add(new GameTickEvent { Pin = pin, EventName = "GameEnded", Payload = quiz?.Players.OrderByDescending(p => p.Score).ToList() });
-                        }
-                    }
-                    else
-                    {
-                        events.Add(new GameTickEvent { Pin = pin, EventName = "WaitTimeUpdate", Payload = state.TimeRemaining });
-                    }
+                    ProcessTransitionPhase(pin, state, events);
                 }
             }
         }
         return events;
+    }
+
+    private void ProcessQuestionPhase(string pin, GameStateTracker state, List<GameTickEvent> events)
+    {
+        if (state.TimeRemaining <= 0)
+        {
+            state.Phase = "Transition";
+            state.TimeRemaining = 7; // 7 saniye bekleme/geçiş süresi (2 sn cevap, 5 sn tablo)
+
+            // Süre bitince doğru cevabın ID'sini de pakete ekle
+            var quiz = _quizRepository.GetByPin(pin);
+            var endedQuestion = quiz?.Questions[state.CurrentQuestionIndex];
+            var correctOptionId = endedQuestion?.Options.FirstOrDefault(o => o.IsCorrect)?.Id;
+            var top5Players = quiz?.Players.OrderByDescending(p => p.Score).Take(5).ToList();
+            var waitPayload = new {
+                WaitTime = 7,  // 7 saniye (2 saniye cevap gosterimi, 5 saniye tablo gosterimi)
+                CorrectOptionId = correctOptionId,
+                Leaderboard = top5Players,
+                AllAnswered = state.AllAnswered
+            };
+            events.Add(new GameTickEvent { Pin = pin, EventName = "WaitPhase", Payload = waitPayload });
+            state.AllAnswered = false; // Bayrağı sıfırla
+        }
+        else
+        {
+            events.Add(new GameTickEvent { Pin = pin, EventName = "TimeUpdate", Payload = state.TimeRemaining });
+        }
+    }
+
+    private void ProcessTransitionPhase(string pin, GameStateTracker state, List<GameTickEvent> events)
+    {
+        if (state.TimeRemaining <= 0)
+        {
+            state.CurrentQuestionIndex++;
+            var quiz = _quizRepository.GetByPin(pin);
+            if (quiz != null && quiz.Questions.Count > state.CurrentQuestionIndex)
+            {
+                state.Phase = "Question";
+                var nextQ = quiz.Questions[state.CurrentQuestionIndex];
+                state.TimeRemaining = nextQ.TimeLimitInSeconds;
+                quiz.CurrentQuestionStartTime = DateTime.UtcNow;
+                _quizRepository.Update(quiz);
+
+                var payload = new {
+                    Id = nextQ.Id, Text = nextQ.Text, TimeLimit = nextQ.TimeLimitInSeconds,
+                    Options = nextQ.Options.Select(o => new { o.Id, o.Text }).ToList(),
+                    CurrentIndex = state.CurrentQuestionIndex + 1, TotalQuestions = quiz.Questions.Count,
+                    TotalPlayers = quiz.Players.Count(p => !string.IsNullOrEmpty(p.ConnectionId))
+                };
+                events.Add(new GameTickEvent { Pin = pin, EventName = "ReceiveQuestion", Payload = payload });
+            }
+            else
+            {
+                state.Phase = "Ended";
+                _activeGames.TryRemove(pin, out _);
+                events.Add(new GameTickEvent { Pin = pin, EventName = "GameEnded", Payload = quiz?.Players.OrderByDescending(p => p.Score).ToList() });
+            }
+        }
+        else
+        {
+            events.Add(new GameTickEvent { Pin = pin, EventName = "WaitTimeUpdate", Payload = state.TimeRemaining });
+        }
     }
 
     // YENİ: Oyuncu oyuna katıldığında veya tekrar bağlandığında çalışır.
@@ -205,12 +215,15 @@ public class QuizService : IQuizService
             lock (quizLock)
             {
                 var quiz = _quizRepository.GetByPin(pin);
-                var player = quiz?.Players.FirstOrDefault(p => p.Nickname == nickname);
-                if (player != null)
+                if (quiz != null)
                 {
-                    player.ConnectionId = string.Empty; // Oyuncuyu pasif olarak işaretle
-                    _quizRepository.Update(quiz);
-                    return (pin, nickname);
+                    var player = quiz.Players.FirstOrDefault(p => p.Nickname == nickname);
+                    if (player != null)
+                    {
+                        player.ConnectionId = string.Empty; // Oyuncuyu pasif olarak işaretle
+                        _quizRepository.Update(quiz);
+                        return (pin, nickname);
+                    }
                 }
             }
         }
@@ -230,12 +243,9 @@ public class QuizService : IQuizService
                 _quizRepository.Update(quiz);
 
                 // Remove players from the connection map
-                foreach (var player in quiz.Players)
+                foreach (var connectionId in quiz.Players.Select(p => p.ConnectionId).Where(id => !string.IsNullOrEmpty(id)))
                 {
-                    if (!string.IsNullOrEmpty(player.ConnectionId))
-                    {
-                        _connectionMap.TryRemove(player.ConnectionId, out _);
-                    }
+                    _connectionMap.TryRemove(connectionId, out _);
                 }
             }
         }
@@ -290,7 +300,7 @@ public class QuizService : IQuizService
     }
 
     // Sistemin test edilebilmesi için varsayılan örnek sorular üretilir.
-    private List<Question> GenerateSampleQuestions()
+    private static List<Question> GenerateSampleQuestions()
     {
         return new List<Question>
         {
@@ -333,7 +343,7 @@ public class QuizService : IQuizService
 
             var question = quiz.Questions.FirstOrDefault(q => q.Id == questionId);
             if (question == null) return (false, 0, 0, 0);
-            var option = question?.Options.FirstOrDefault(o => o.Id == optionId);
+            var option = question.Options.FirstOrDefault(o => o.Id == optionId);
             
             bool isCorrect = option != null && option.IsCorrect;
 
@@ -364,15 +374,7 @@ public class QuizService : IQuizService
             // Cevap doğruysa hıza dayalı dinamik puanlama yapılır.
             if (isCorrect)
             {
-                var timeTaken = (DateTime.UtcNow - quiz.CurrentQuestionStartTime).TotalSeconds;
-                
-                if (timeTaken < 0) timeTaken = 0;
-                if (timeTaken > question.TimeLimitInSeconds) timeTaken = question.TimeLimitInSeconds;
-
-                // Puanlama Algoritması: Hızlı cevap veren daha yüksek puan alır (Maks: 1000, Min: 500)
-                double scoreFactor = 1.0 - (timeTaken / (question.TimeLimitInSeconds * 2.0));
-                points = (int)Math.Round(1000 * scoreFactor);
-                
+                points = CalculatePoints(quiz.CurrentQuestionStartTime, question.TimeLimitInSeconds);
                 player.Score += points;
             }
 
@@ -385,17 +387,31 @@ public class QuizService : IQuizService
             int answeredCount = activePlayers.Count(p => p.AnsweredQuestionIds.Contains(questionId));
 
             // YENİ: Bütün aktif oyuncular cevap verdi mi kontrol et.
-            // Eğer herkes cevap verdiyse süreyi hemen bitir (Transition fazına geçişi tetikle).
-            if (state != null && state.Phase == "Question")
-            {
-                if (activePlayerCount > 0 && answeredCount >= activePlayerCount)
-                {
-                    state.TimeRemaining = 0;
-                    state.AllAnswered = true;
-                }
-            }
+            UpdateGameStateIfAllAnswered(state, activePlayerCount, answeredCount);
 
             return (isCorrect, answeredCount, activePlayerCount, points);
+        }
+    }
+
+    private static int CalculatePoints(DateTime startTime, double timeLimitInSeconds)
+    {
+        var timeTaken = (DateTime.UtcNow - startTime).TotalSeconds;
+        
+        if (timeTaken < 0) timeTaken = 0;
+        if (timeTaken > timeLimitInSeconds) timeTaken = timeLimitInSeconds;
+
+        // Puanlama Algoritması: Hızlı cevap veren daha yüksek puan alır (Maks: 1000, Min: 500)
+        double scoreFactor = 1.0 - (timeTaken / (timeLimitInSeconds * 2.0));
+        return (int)Math.Round(1000 * scoreFactor);
+    }
+
+    private static void UpdateGameStateIfAllAnswered(GameStateTracker? state, int activePlayerCount, int answeredCount)
+    {
+        // Eğer herkes cevap verdiyse süreyi hemen bitir (Transition fazına geçişi tetikle).
+        if (state != null && state.Phase == "Question" && activePlayerCount > 0 && answeredCount >= activePlayerCount)
+        {
+            state.TimeRemaining = 0;
+            state.AllAnswered = true;
         }
     }
 }
