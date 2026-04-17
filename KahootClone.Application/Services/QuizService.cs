@@ -95,15 +95,17 @@ public class QuizService : IQuizService
                     if (state.TimeRemaining <= 0)
                     {
                         state.Phase = "Transition";
-                        state.TimeRemaining = 5; // 5 saniye bekleme/geçiş süresi
+                        state.TimeRemaining = 7; // 7 saniye bekleme/geçiş süresi (2 sn cevap, 5 sn tablo)
 
                         // Süre bitince doğru cevabın ID'sini de pakete ekle
                         var quiz = _quizRepository.GetByPin(pin);
                         var endedQuestion = quiz?.Questions[state.CurrentQuestionIndex];
                         var correctOptionId = endedQuestion?.Options.FirstOrDefault(o => o.IsCorrect)?.Id;
+                        var top5Players = quiz?.Players.OrderByDescending(p => p.Score).Take(5).ToList();
                         var waitPayload = new {
-                            WaitTime = 5,
-                            CorrectOptionId = correctOptionId
+                            WaitTime = 7,  // 7 saniye (2 saniye cevap gosterimi, 5 saniye tablo gosterimi)
+                            CorrectOptionId = correctOptionId,
+                            Leaderboard = top5Players
                         };
                         events.Add(new GameTickEvent { Pin = pin, EventName = "WaitPhase", Payload = waitPayload });
                     }

@@ -45,6 +45,12 @@
         <div id="resultArea" style="display: none;" class="mt-5 text-white">
             <h1 id="resultIcon" class="display-1 mt-5"></h1>
             <h2 id="resultText" class="mt-4 fw-bold"></h2>
+            
+            <div id="studentTransitionLeaderboardArea" class="mt-4" style="display: none;">
+                <h4 class="text-white mb-3">🏆 İlk 5 Liderlik Tablosu</h4>
+                <ul id="studentTransitionLeaderboardList" class="list-group w-100 mx-auto shadow-lg text-dark"></ul>
+            </div>
+            
             <p id="nextQuestionText" class="text-light mt-3 fs-4 fw-bold"></p> 
         </div>
 
@@ -102,6 +108,8 @@
             document.getElementById("mainBody").className = "bg-dark text-center mt-5";
             document.getElementById("waitingArea").style.display = "none";
             document.getElementById("resultArea").style.display = "none";
+            const sLead = document.getElementById("studentTransitionLeaderboardArea");
+            if (sLead) sLead.style.display = "none";
             document.getElementById("answeredArea").style.display = "none";
             document.getElementById("leaderboardArea").style.display = "none";
             document.getElementById("questionArea").style.display = "block";
@@ -147,6 +155,9 @@
             document.getElementById("questionArea").style.display = "none";
             document.getElementById("answeredArea").style.display = "none";
             document.getElementById("resultArea").style.display = "block";
+            
+            document.getElementById("resultIcon").style.display = "block";
+            document.getElementById("resultText").style.display = "block";
 
             const body = document.getElementById("mainBody");
 
@@ -170,6 +181,28 @@
                 if (correctOption) {
                     document.getElementById("resultText").innerHTML += `<br><small class="fw-normal mt-2 d-block">Doğru Cevap: <strong>${correctOption.text}</strong></small>`;
                 }
+            }
+
+            // Liderlik tablosunu göster
+            if (data.leaderboard && data.leaderboard.length > 0) {
+                setTimeout(() => {
+                    document.getElementById("resultIcon").style.display = "none";
+                    document.getElementById("resultText").style.display = "none";
+                    document.getElementById("studentTransitionLeaderboardArea").style.display = "block";
+                    const list = document.getElementById("studentTransitionLeaderboardList");
+                    list.innerHTML = "";
+                    data.leaderboard.forEach((p, index) => {
+                        const li = document.createElement("li");
+                        li.className = "list-group-item d-flex justify-content-between align-items-center fw-bold";
+                        if(p.nickname === currentNickname) li.classList.add("list-group-item-success");
+                        let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🔸";
+                        li.innerHTML = `<span>${medal} ${p.nickname}</span> <span class="badge bg-primary rounded-pill fs-6">${p.score} Puan</span>`;
+                        list.appendChild(li);
+                    });
+                }, 2000); // 2 saniye sonra skoru/sonucu silip taboyu göster
+            } else {
+                document.getElementById("resultIcon").style.display = "block";
+                document.getElementById("resultText").style.display = "block";
             }
 
             document.getElementById("nextQuestionText").textContent = `Sonraki soruya geçiliyor: ${data.waitTime} saniye...`;

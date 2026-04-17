@@ -37,6 +37,11 @@
             <h3 id="timerDisplay" class="text-danger mb-5">Süre: <span id="timeLimit" class="fw-bold fs-1"></span> saniye</h3>
             
             <div class="row w-75 mx-auto g-4" id="optionsArea"></div>
+
+            <div id="transitionLeaderboardArea" class="mt-5" style="display: none;">
+                <h3 class="mb-3 text-secondary">🏆 İlk 5 Oyuncu</h3>
+                <ul id="transitionLeaderboardList" class="list-group w-50 mx-auto fs-3 shadow-lg mb-4"></ul>
+            </div>
         </div>
 
         <div id="leaderboardArea" class="mt-5" style="display: none;">
@@ -78,6 +83,9 @@
         connection.on("ReceiveQuestion", (question) => {
             document.getElementById("lobbyArea").style.display = "none";
             document.getElementById("questionArea").style.display = "block";
+            document.getElementById("optionsArea").style.display = "flex";
+            const transArea = document.getElementById("transitionLeaderboardArea");
+            if (transArea) transArea.style.display = "none";
 
             document.getElementById("questionCounter").textContent = `Soru: ${question.currentIndex}/${question.totalQuestions}`;
             document.getElementById("questionText").textContent = question.text;
@@ -110,6 +118,23 @@
                 if (correctOptionCard) {
                     correctOptionCard.style.border = "10px solid lightgreen";
                 }
+            }
+
+            // İlk 5 liderlik tablosunu göster
+            if (data.leaderboard && data.leaderboard.length > 0) {
+                setTimeout(() => {
+                    document.getElementById("optionsArea").style.display = "none";
+                    document.getElementById("transitionLeaderboardArea").style.display = "block";
+                    const list = document.getElementById("transitionLeaderboardList");
+                    list.innerHTML = "";
+                    data.leaderboard.forEach((p, index) => {
+                        const li = document.createElement("li");
+                        li.className = "list-group-item d-flex justify-content-between align-items-center";
+                        let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🔸";
+                        li.innerHTML = `<span>${medal} ${p.nickname}</span> <span class="badge bg-primary rounded-pill">${p.score} Puan</span>`;
+                        list.appendChild(li);
+                    });
+                }, 2000); // 2 saniye cevapları gördükten sonra liderliği göster
             }
         });
 
