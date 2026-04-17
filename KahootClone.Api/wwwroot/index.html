@@ -34,7 +34,7 @@
             </div>
 
             <h1 id="questionText" class="display-4 fw-bold mb-4 text-dark"></h1>
-            <h3 id="timerDisplay" class="text-danger mb-5">Süre: <span id="timeLimit" class="fw-bold fs-1"></span> saniye</h3>
+            <h3 id="timerDisplay" class="text-danger mb-5">Süre: <span id="timeLimit" class="fw-bold fs-1"></span> saniye | Cevaplar: <span id="answeredCount" class="text-primary fw-bold fs-1">0</span>/<span id="totalActiveCount" class="text-secondary fs-3">0</span></h3>
             
             <div class="row w-75 mx-auto g-4" id="optionsArea"></div>
 
@@ -90,7 +90,7 @@
             document.getElementById("questionCounter").textContent = `Soru: ${question.currentIndex}/${question.totalQuestions}`;
             document.getElementById("questionText").textContent = question.text;
             
-            document.getElementById("timerDisplay").innerHTML = `Süre: <span id="timeLimit" class="fw-bold fs-1">${question.timeLimit}</span> saniye`;
+            document.getElementById("timerDisplay").innerHTML = `Süre: <span id="timeLimit" class="fw-bold fs-1">${question.timeLimit}</span> saniye | Cevaplar: <span id="answeredCount" class="text-primary fw-bold fs-1">0</span>/<span id="totalActiveCount" class="text-secondary fs-3">${question.totalPlayers || 0}</span>`;
 
             const optionsArea = document.getElementById("optionsArea");
             optionsArea.innerHTML = ""; 
@@ -109,8 +109,16 @@
             if (timeSpan) timeSpan.textContent = timeLeft;
         });
 
+        connection.on("UpdateAnswerCount", (data) => {
+            const ansSpan = document.getElementById("answeredCount");
+            const totSpan = document.getElementById("totalActiveCount");
+            if (ansSpan) ansSpan.textContent = data.answeredCount;
+            if (totSpan) totSpan.textContent = data.totalCount;
+        });
+
         connection.on("WaitPhase", (data) => {
-            document.getElementById("timerDisplay").innerHTML = `<span class='text-primary fw-bold'>Süre Bitti! Yeni soruya geçiliyor: <span id="waitCount" class="fs-1">${data.waitTime}</span> sn</span>`;
+            const statusText = data.allAnswered ? "Herkes Cevapladı! 🏁" : "Süre Bitti! ⏰";
+            document.getElementById("timerDisplay").innerHTML = `<span class='text-primary fw-bold'>${statusText} Yeni soruya geçiliyor: <span id="waitCount" class="fs-1">${data.waitTime}</span> sn</span>`;
             
             // Süre bitince doğru cevabı yeşil çerçeve ile vurgula
             if (data.correctOptionId) {
@@ -182,7 +190,7 @@
 
                 // Zamanlayıcıyı faza göre geri yükle
                 if (gameState.phase === 'Question') {
-                    document.getElementById("timerDisplay").innerHTML = `Süre: <span id="timeLimit" class="fw-bold fs-1">${gameState.timeRemaining}</span> saniye`;
+                    document.getElementById("timerDisplay").innerHTML = `Süre: <span id="timeLimit" class="fw-bold fs-1">${gameState.timeRemaining}</span> saniye | Cevaplar: <span id="answeredCount" class="text-primary fw-bold fs-1">${state.answeredCount}</span>/<span id="totalActiveCount" class="text-secondary fs-3">${state.totalActiveCount}</span>`;
                 } else if (gameState.phase === 'Transition') {
                     document.getElementById("timerDisplay").innerHTML = `<span class='text-primary fw-bold'>Süre Bitti! Yeni soruya geçiliyor: <span id="waitCount" class="fs-1">${gameState.timeRemaining}</span> sn</span>`;
                 }

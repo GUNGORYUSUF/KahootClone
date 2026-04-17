@@ -16,8 +16,8 @@ public interface IQuizService
     string CreateQuiz(Quiz quiz);
     // PIN koduna göre oyun bilgileri getirilir.
     Quiz? GetQuizByPin(string pin);
-    // Oyuncunun verdiği cevap kontrol edilerek puanlaması yapılır.
-    bool SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId);
+    // Oyuncunun verdiği cevap kontrol edilerek puanlaması yapılır. Artik cevap sayilarini ve kazanilan puani da doner.
+    (bool IsCorrect, int AnsweredCount, int TotalCount, int PointsEarned) SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId);
     // Oyun akışını otomatik yönetecek döngüye ekler.
     void StartGameFlow(string pin);
     // Oyunu döngüden çıkarır (Bitirme).

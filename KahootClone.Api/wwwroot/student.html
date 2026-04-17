@@ -1,24 +1,40 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <title>Kahoot Clone - Oyuncu Ekranı</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .option-btn { height: 150px; font-size: 1.5rem; transition: transform 0.1s; }
-        .option-btn:active { transform: scale(0.95); }
-        .disabled-btn { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .option-btn {
+            height: 150px;
+            font-size: 1.5rem;
+            transition: transform 0.1s;
+        }
+
+        .option-btn:active {
+            transform: scale(0.95);
+        }
+
+        .disabled-btn {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
     </style>
 </head>
+
 <body class="bg-dark text-center mt-5" id="mainBody">
 
     <div class="container" style="max-width: 500px;">
-        
+
         <div id="loginArea">
             <h1 class="display-4 fw-bold text-white mb-4">Oyuna Katıl</h1>
             <div class="card shadow p-4 rounded-4 border-0 bg-light">
-                <input type="text" id="pinInput" class="form-control form-control-lg mb-3 text-center fw-bold" placeholder="PIN Kodu" maxlength="6">
-                <input type="text" id="nicknameInput" class="form-control form-control-lg mb-4 text-center" placeholder="Takma Adın">
+                <input type="text" id="pinInput" class="form-control form-control-lg mb-3 text-center fw-bold"
+                    placeholder="PIN Kodu" maxlength="6">
+                <input type="text" id="nicknameInput" class="form-control form-control-lg mb-4 text-center"
+                    placeholder="Takma Adın">
                 <button id="btnJoin" class="btn btn-dark btn-lg w-100 fw-bold">Giriş Yap</button>
             </div>
         </div>
@@ -39,19 +55,20 @@
             <h1 class="display-1 fw-bold mb-4">🤔</h1>
             <h2 class="fw-bold">Cevabın Kaydedildi!</h2>
             <p class="fs-5 mt-3">Sürenin dolması ve sonuçların açıklanması bekleniyor...</p>
-            <h3 class="text-warning mt-4 fw-bold">Kalan Süre: <span id="answeredTimeLimit" class="fs-2"></span> saniye</h3>
+            <h3 class="text-warning mt-4 fw-bold">Kalan Süre: <span id="answeredTimeLimit" class="fs-2"></span> saniye
+            </h3>
         </div>
 
         <div id="resultArea" style="display: none;" class="mt-5 text-white">
             <h1 id="resultIcon" class="display-1 mt-5"></h1>
             <h2 id="resultText" class="mt-4 fw-bold"></h2>
-            
+
             <div id="studentTransitionLeaderboardArea" class="mt-4" style="display: none;">
                 <h4 class="text-white mb-3">🏆 İlk 5 Liderlik Tablosu</h4>
                 <ul id="studentTransitionLeaderboardList" class="list-group w-100 mx-auto shadow-lg text-dark"></ul>
             </div>
-            
-            <p id="nextQuestionText" class="text-light mt-3 fs-4 fw-bold"></p> 
+
+            <p id="nextQuestionText" class="text-light mt-3 fs-4 fw-bold"></p>
         </div>
 
         <div id="leaderboardArea" class="mt-5" style="display: none;">
@@ -59,7 +76,7 @@
             <ul id="leaderboardList" class="list-group w-100 mx-auto fs-5 shadow-lg text-dark mb-5"></ul>
             <button class="btn btn-light btn-lg w-100 fw-bold" onclick="location.reload()">Yeni Oyuna Katıl</button>
         </div>
-        
+
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
@@ -68,7 +85,7 @@
         let currentNickname = "";
         let currentQuestionId = "";
         let currentOptions = [];
-        let pendingResult = null;
+        let pendingResult = { isCorrect: null, points: 0 };
         let hasJoinError = false;
 
         const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub").build();
@@ -103,8 +120,8 @@
         connection.on("ReceiveQuestion", (question) => {
             currentQuestionId = question.id;
             currentOptions = question.options;
-            pendingResult = null; 
-            
+            pendingResult = { isCorrect: null, points: 0 };
+
             document.getElementById("mainBody").className = "bg-dark text-center mt-5";
             document.getElementById("waitingArea").style.display = "none";
             document.getElementById("resultArea").style.display = "none";
@@ -122,7 +139,7 @@
             const optionsArea = document.getElementById("studentOptionsArea");
             optionsArea.innerHTML = "";
             const colors = ["btn-danger", "btn-primary", "btn-warning", "btn-success"];
-            
+
             question.options.forEach((opt, index) => {
                 const col = document.createElement("div");
                 col.className = "col-6";
@@ -134,19 +151,19 @@
         async function sendAnswer(optionId) {
             document.getElementById("questionArea").style.display = "none";
             document.getElementById("answeredArea").style.display = "block";
-            document.getElementById("mainBody").className = "bg-info text-center mt-5"; 
+            document.getElementById("mainBody").className = "bg-info text-center mt-5";
 
             await connection.invoke("SubmitAnswer", currentPin, currentNickname, currentQuestionId, optionId);
         }
 
-        connection.on("AnswerResult", (isCorrect) => {
-            pendingResult = isCorrect; 
+        connection.on("AnswerResult", (result) => {
+            pendingResult = { isCorrect: result.isCorrect, points: result.points };
         });
 
         connection.on("TimeUpdate", (timeLeft) => {
             const timeSpan = document.getElementById("studentTimeLimit");
             if (timeSpan) timeSpan.textContent = timeLeft;
-            
+
             const answeredTimeSpan = document.getElementById("answeredTimeLimit");
             if (answeredTimeSpan) answeredTimeSpan.textContent = timeLeft;
         });
@@ -155,28 +172,29 @@
             document.getElementById("questionArea").style.display = "none";
             document.getElementById("answeredArea").style.display = "none";
             document.getElementById("resultArea").style.display = "block";
-            
+
             document.getElementById("resultIcon").style.display = "block";
             document.getElementById("resultText").style.display = "block";
 
             const body = document.getElementById("mainBody");
+            const statusText = data.allAnswered ? "Herkes Cevapladı! 🏁" : "Süre Bitti! ⏰";
 
-            if (pendingResult === true) {
+            if (pendingResult.isCorrect === true) {
                 body.className = "bg-success text-center mt-5";
                 document.getElementById("resultIcon").textContent = "✅";
-                document.getElementById("resultText").textContent = "Doğru Cevap! Puan Kazandın!";
-            } else if (pendingResult === false) {
+                document.getElementById("resultText").innerHTML = `Tebrikler! <br><span class="display-3 fw-bold">+${pendingResult.points}</span><br>Puan Kazandın!`;
+            } else if (pendingResult.isCorrect === false) {
                 body.className = "bg-danger text-center mt-5";
                 document.getElementById("resultIcon").textContent = "❌";
                 document.getElementById("resultText").textContent = "Maalesef Yanlış!";
             } else {
                 body.className = "bg-secondary text-center mt-5";
-                document.getElementById("resultIcon").textContent = "⏰";
-                document.getElementById("resultText").textContent = "Süre Bitti! Cevap Veremedin.";
+                document.getElementById("resultIcon").textContent = data.allAnswered ? "🏁" : "⏰";
+                document.getElementById("resultText").textContent = `${statusText} Cevap Veremedin.`;
             }
 
             // Oyuncu yanlış cevap verdiyse veya cevap vermediyse, doğru cevabı göster
-            if (pendingResult !== true && data.correctOptionId) {
+            if (pendingResult.isCorrect !== true && data.correctOptionId) {
                 const correctOption = currentOptions.find(o => o.id === data.correctOptionId);
                 if (correctOption) {
                     document.getElementById("resultText").innerHTML += `<br><small class="fw-normal mt-2 d-block">Doğru Cevap: <strong>${correctOption.text}</strong></small>`;
@@ -194,7 +212,7 @@
                     data.leaderboard.forEach((p, index) => {
                         const li = document.createElement("li");
                         li.className = "list-group-item d-flex justify-content-between align-items-center fw-bold";
-                        if(p.nickname === currentNickname) li.classList.add("list-group-item-success");
+                        if (p.nickname === currentNickname) li.classList.add("list-group-item-success");
                         let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🔸";
                         li.innerHTML = `<span>${medal} ${p.nickname}</span> <span class="badge bg-primary rounded-pill fs-6">${p.score} Puan</span>`;
                         list.appendChild(li);
@@ -224,13 +242,13 @@
 
             const list = document.getElementById("leaderboardList");
             list.innerHTML = "";
-            
+
             players.forEach((p, index) => {
                 const li = document.createElement("li");
                 li.className = "list-group-item d-flex justify-content-between align-items-center fw-bold";
-                
+
                 // Kendi ismini yeşil renkle vurgula
-                if(p.nickname === currentNickname) {
+                if (p.nickname === currentNickname) {
                     li.classList.add("list-group-item-success");
                 }
 
@@ -262,4 +280,5 @@
 
     </script>
 </body>
+
 </html>

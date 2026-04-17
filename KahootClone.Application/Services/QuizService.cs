@@ -17,6 +17,7 @@ public class QuizService : IQuizService
         public string Phase { get; set; } = string.Empty;
         public int CurrentQuestionIndex { get; set; }
         public int TimeRemaining { get; set; }
+        public bool AllAnswered { get; set; }
     }
     private static readonly ConcurrentDictionary<string, GameStateTracker> _activeGames = new();
     private static readonly Random _random = new();
@@ -105,9 +106,11 @@ public class QuizService : IQuizService
                         var waitPayload = new {
                             WaitTime = 7,  // 7 saniye (2 saniye cevap gosterimi, 5 saniye tablo gosterimi)
                             CorrectOptionId = correctOptionId,
-                            Leaderboard = top5Players
+                            Leaderboard = top5Players,
+                            AllAnswered = state.AllAnswered
                         };
                         events.Add(new GameTickEvent { Pin = pin, EventName = "WaitPhase", Payload = waitPayload });
+                        state.AllAnswered = false; // Bayrağı sıfırla
                     }
                     else
                     {
@@ -131,7 +134,8 @@ public class QuizService : IQuizService
                             var payload = new {
                                 Id = nextQ.Id, Text = nextQ.Text, TimeLimit = nextQ.TimeLimitInSeconds,
                                 Options = nextQ.Options.Select(o => new { o.Id, o.Text }).ToList(),
-                                CurrentIndex = state.CurrentQuestionIndex + 1, TotalQuestions = quiz.Questions.Count
+                                CurrentIndex = state.CurrentQuestionIndex + 1, TotalQuestions = quiz.Questions.Count,
+                                TotalPlayers = quiz.Players.Count(p => !string.IsNullOrEmpty(p.ConnectionId))
                             };
                             events.Add(new GameTickEvent { Pin = pin, EventName = "ReceiveQuestion", Payload = payload });
                         }
@@ -264,6 +268,13 @@ public class QuizService : IQuizService
             };
         }
 
+        int answeredCount = 0;
+        int totalActiveCount = quiz.Players.Count(p => !string.IsNullOrEmpty(p.ConnectionId));
+        if (currentQuestion != null)
+        {
+            answeredCount = quiz.Players.Count(p => p.AnsweredQuestionIds.Contains(currentQuestion.Id) && !string.IsNullOrEmpty(p.ConnectionId));
+        }
+
         return new
         {
             Quiz = new {
@@ -272,7 +283,9 @@ public class QuizService : IQuizService
                 QuestionsCount = quiz.Questions.Count
             },
             GameState = gameState,
-            CurrentQuestion = secureCurrentQuestion
+            CurrentQuestion = secureCurrentQuestion,
+            AnsweredCount = answeredCount,
+            TotalActiveCount = totalActiveCount
         };
     }
 
@@ -310,39 +323,44 @@ public class QuizService : IQuizService
         };
     }
     // Oyuncunun verdiği cevap kontrol edilir ve puanı hesaplanır.
-    public bool SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId)
+    public (bool IsCorrect, int AnsweredCount, int TotalCount, int PointsEarned) SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId)
     {
         var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
         lock (quizLock)
         {
             var quiz = _quizRepository.GetByPin(pin);
-            if (quiz == null) return false;
+            if (quiz == null) return (false, 0, 0, 0);
 
             var question = quiz.Questions.FirstOrDefault(q => q.Id == questionId);
-            if (question == null) return false;
+            if (question == null) return (false, 0, 0, 0);
             var option = question?.Options.FirstOrDefault(o => o.Id == optionId);
             
             bool isCorrect = option != null && option.IsCorrect;
 
             // AŞAMA 4: Hile Koruması - Süre bittiyse (veya geçiş aşamasındaysa) gönderilen cevaplar kesinlikle reddedilir.
             if (_activeGames.TryGetValue(pin, out var state) && state.Phase != "Question")
-                return false;
+                return (false, 0, 0, 0);
 
             // Oyuncu listesi kontrol edilir. Eğer oyuncu oyunda kayıtlı değilse, bu geçersiz bir istektir.
             var player = quiz.Players.FirstOrDefault(p => p.Nickname == nickname);
             if (player == null)
             {
                 // Oyuncu lobide kayıtlı değilse cevap gönderemez. Güvenlik için isteği sessizce yoksay.
-                return false;
+                return (false, 0, 0, 0);
             }
 
             // AŞAMA 1: Çift cevap kontrolü (Oyuncu bu soruyu daha önce cevapladıysa işlemi yoksay)
             if (player.AnsweredQuestionIds.Contains(questionId))
-                return false; 
+            {
+                var apCount = quiz.Players.Count(p => !string.IsNullOrEmpty(p.ConnectionId));
+                var ansCount = quiz.Players.Count(p => p.AnsweredQuestionIds.Contains(questionId) && !string.IsNullOrEmpty(p.ConnectionId));
+                return (false, ansCount, apCount, 0);
+            }
 
             // Oyuncunun bu soruya cevap verdiğini listesine ekleyelim
             player.AnsweredQuestionIds.Add(questionId);
 
+            int points = 0;
             // Cevap doğruysa hıza dayalı dinamik puanlama yapılır.
             if (isCorrect)
             {
@@ -353,7 +371,7 @@ public class QuizService : IQuizService
 
                 // Puanlama Algoritması: Hızlı cevap veren daha yüksek puan alır (Maks: 1000, Min: 500)
                 double scoreFactor = 1.0 - (timeTaken / (question.TimeLimitInSeconds * 2.0));
-                int points = (int)Math.Round(1000 * scoreFactor);
+                points = (int)Math.Round(1000 * scoreFactor);
                 
                 player.Score += points;
             }
@@ -361,7 +379,23 @@ public class QuizService : IQuizService
             // Oyuncunun kazandığı yeni puanlar veritabanına kalıcı olarak kaydedilir.
             _quizRepository.Update(quiz);
 
-            return isCorrect;
+            // Güncel sayıları hesapla
+            var activePlayers = quiz.Players.Where(p => !string.IsNullOrEmpty(p.ConnectionId)).ToList();
+            int activePlayerCount = activePlayers.Count;
+            int answeredCount = activePlayers.Count(p => p.AnsweredQuestionIds.Contains(questionId));
+
+            // YENİ: Bütün aktif oyuncular cevap verdi mi kontrol et.
+            // Eğer herkes cevap verdiyse süreyi hemen bitir (Transition fazına geçişi tetikle).
+            if (state != null && state.Phase == "Question")
+            {
+                if (activePlayerCount > 0 && answeredCount >= activePlayerCount)
+                {
+                    state.TimeRemaining = 0;
+                    state.AllAnswered = true;
+                }
+            }
+
+            return (isCorrect, answeredCount, activePlayerCount, points);
         }
     }
 }

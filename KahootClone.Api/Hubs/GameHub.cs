@@ -89,7 +89,8 @@ public class GameHub : Hub
                 TimeLimit = question.TimeLimitInSeconds,
                 Options = question.Options.Select(o => new { o.Id, o.Text }).ToList(),
                 CurrentIndex = 1,
-                TotalQuestions = quiz.Questions.Count
+                TotalQuestions = quiz.Questions.Count,
+                TotalPlayers = quiz.Players.Count(p => !string.IsNullOrEmpty(p.ConnectionId))
             };
 
             // AŞAMA 4: Oyun sunucu döngüsüne eklenir
@@ -152,7 +153,12 @@ public class GameHub : Hub
             return;
         }
 
-        bool isCorrect = _quizService.SubmitAnswer(pin, nickname, qId, oId);
-        await Clients.Caller.SendAsync("AnswerResult", isCorrect);
+        var (isCorrect, answeredCount, totalCount, points) = _quizService.SubmitAnswer(pin, nickname, qId, oId);
+        
+        // Cevabı gönderen öğrenciye sonucunu ve kazandığı puanı bildir.
+        await Clients.Caller.SendAsync("AnswerResult", new { IsCorrect = isCorrect, Points = points });
+
+        // Yöneticiye (ve tüm gruba) o anki cevaplanma durumunu duyur.
+        await Clients.Group(pin).SendAsync("UpdateAnswerCount", new { AnsweredCount = answeredCount, TotalCount = totalCount });
     }
 }

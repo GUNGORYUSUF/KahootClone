@@ -12,7 +12,7 @@ Bu proje, yapay zeka destekli yazılım geliştirme dersi kapsamında "Agentic E
 ## Temel Özellikler ve Oyun Mekanikleri
 * **Gerçek Zamanlı Senkronizasyon:** Yönetici ve oyuncu ekranlarındaki süreler milisaniyelik hassasiyetle aynı anda geriye sayar.
 * **Tam Otomatik Oyun Akışı:** Yönetici oyunu başlattıktan sonra sistem; soruları, süreleri ve 5 saniyelik geçiş aralarını insan müdahalesi olmadan otomatik yönetir.
-* **Heyecan Mekanizması (Suspense):** Oyuncular cevap verdiğinde anında sonucu görmek yerine, bekleme odasına alınır ve süre bittiğinde tüm sınıf sonucu aynı anda öğrenir.
+* **Heyecan Mekanizması (Suspense):** Oyuncular cevap verdiğinde anında sonucu görmek yerine, bekleme odasına alınır ve süre bittiğinde tüm oyuncular sonucu aynı anda öğrenir.
 * **Çift Taraflı Liderlik Tablosu:** Oyun bittiğinde sadece yönetici ekranında değil, her oyuncunun kendi cihazında da liderlik tablosu belirir ve oyuncunun kendi ismi yeşil renkle vurgulanır.
 * **Hile Koruması:** Doğru cevap verisi oyunculara gönderilmez, doğrulama işlemi sunucunun (Backend) kalbinde güvenle yapılır.
 
@@ -37,3 +37,16 @@ Tarayıcınızdan aşağıdaki adreslere giderek sistemi test edebilirsiniz (Por
 * **Yönetici Ekranı:** `http://localhost:5xxx/index.html`
 * **Oyuncu Ekranı:** `http://localhost:5xxx/student.html`
 * **Geliştirici Arayüzü (Swagger):** `http://localhost:5xxx/swagger`
+
+## 🎮 Kullanıcı Rehberi (Nasıl Oynanır?)
+
+### 🏁 Oyun Nasıl Başlatılır? (Yönetici)
+1. **Yönetici Ekranını Açın:** Tarayıcıda `index.html` sayfasını (Yönetici Ekranı) açın.
+2. **Yeni Oyun Kur:** "Yeni Oyun Kur" butonuna basarak sistemi hazırlayın.
+3. **PIN Paylaşın:** Ekranda büyük harflerle beliren 6 haneli **PIN kodunu** oyuncularla paylaşın.
+4. **Oyuncuları Bekle ve Başlat:** Tüm oyuncular katıldığında "Oyunu Başlat" butonuna tıklayarak yarışı başlatın. Oyun bundan sonra otomatik olarak işleyecektir.
+
+### 🕹️ Oyuna Nasıl Katılınır? (Oyuncu)
+1. **Oyuncu Ekranını Açın:** Tarayıcıda `student.html` sayfasını açın.
+2. **Giriş Yapın:** Yöneticinin verdiği **PIN kodunu** ve kendinize bir **takma ad (Nickname)** girerek lobiye katılın.
+3. **Cevapları İşaretleyin:** Sorular ekranınızda belirir. Doğru cevabı en hızlı işaretleyen oyuncu en çok puanı toplar!
