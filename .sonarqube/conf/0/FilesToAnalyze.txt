@@ -1,5 +1,0 @@
-﻿D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Class1.cs
-D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Option.cs
-D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Player.cs
-D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Question.cs
-D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Quiz.cs

@@ -1,9 +1,0 @@
-Y
-PD:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Class1.csutf-8b
-YD:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Option.csutf-8b
-YD:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Player.csutf-8d
-[D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Question.csutf-8`
-WD:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Quiz.csutf-8ˆ
-}D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\obj\Debug\net10.0\KahootClone.Domain.GlobalUsings.g.csutf-8”
-ˆD:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\obj\Debug\net10.0\.NETCoreApp,Version=v10.0.AssemblyAttributes.csutf-8†
-{D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\obj\Debug\net10.0\KahootClone.Domain.AssemblyInfo.csutf-8
