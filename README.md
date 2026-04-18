@@ -4,8 +4,8 @@ Bu proje, yapay zeka destekli yazılım geliştirme ("Agentic Engineering") yakl
 
 ## Kullanılan Teknolojiler
 * **Backend:** C# .NET 10.0 Web API (Record ve Immutability patternleri)
-* **Gerçek Zamanlı İletişim:** SignalR (WebSockets) + **Redis Backplane**
-* **Durum (State) Yönetimi:** Dağıtık Önbellek olarak **Redis** (SETNX Dağıtık Kilit Mimarisi)
+* **Gerçek Zamanlı İletişim:** SignalR (WebSockets) + Redis Backplane
+* **Durum (State) Yönetimi:** Dağıtık Önbellek olarak Redis (SETNX Dağıtık Kilit Mimarisi)
 * **Veritabanı:** MongoDB (Docker)
 * **Güvenlik:** JWT (JSON Web Token) Kimlik Doğrulama ve DTO Doğrulamaları
 * **Frontend:** HTML5, Bootstrap 5, Vanilla JavaScript
@@ -27,26 +27,24 @@ Bu proje, yapay zeka destekli yazılım geliştirme ("Agentic Engineering") yakl
 
 ## 🚀 Kurulum ve Çalıştırma Rehberi
 
-### Gereksinimler
-* Sadece **Docker Desktop** (Başka hiçbir kuruluma gerek yoktur!)
+Sistemi bilgisayarınızda yerel olarak çalıştırmak için **Docker Desktop**'ın kurulu ve çalışır durumda olması yeterlidir. Ayrıca veritabanı veya Redis kurmanıza gerek yoktur.
 
-### Adım 1: Sistemi Tek Tuşla Ayağa Kaldırma (Magic Command)
-Proje tamamen Container (Konteyner) mimarisine uygun tasarlanmıştır. Veritabanı, Redis ve API sunucusunu kendi aralarında ağ kurarak otomatik başlatmak için ana dizinde şu komutu çalıştırmanız yeterlidir:
+### 1. Ön Gereksinimler
+- Docker Desktop
+- Git (Projeyi indirmek için)
+
+### 2. Adım Adım Çalıştırma
+Terminal (veya CMD/PowerShell) ekranını açın ve aşağıdaki komutları sırasıyla çalıştırarak tüm sistemi tek seferde ayağa kaldırın:
 ```bash
+git clone <projenin-github-linki>
+cd KahootProjesi
 docker-compose up --build -d
 ```
 
-### Adım 2: Sunucuyu (API) Başlatma
-Altyapı hazır olduktan sonra, .NET uygulamasını derleyip çalıştırmak için terminale şu komutu girin:
-```bash
-`dotnet run --project KahootClone.Api`
-```
-
-### Adım 3: Uygulamayı Test Etme
-Tarayıcınızdan aşağıdaki adreslere giderek sistemi test edebilirsiniz (Port numaranızı terminaldeki çıktıya göre ayarlayınız):
-* **Yönetici Ekranı:** `http://localhost:5xxx/index.html`
-* **Oyuncu Ekranı:** `http://localhost:5xxx/student.html`
-* **Geliştirici Arayüzü (Swagger):** `http://localhost:5xxx/swagger`
+### 3. Uygulamaya Erişim
+- **Yönetici (Host) Ekranı:** `http://localhost:5252/index.html`
+- **Öğrenci (Player) Ekranı:** `http://localhost:5252/student.html`
+- **Swagger API Dokümantasyonu:** `http://localhost:5252/swagger/index.html`
 
 ### 🛠️ Geliştirici Rehberi: Komutlar ve Docker Yönetimi (Cheat Sheet)
 Projeyi bilgisayarına indiren bir geliştiricinin arka planda sistemi yönetmek için ihtiyaç duyacağı tüm temel komutlar ve senaryolar aşağıda özetlenmiştir:
@@ -70,7 +68,7 @@ docker-compose up --build -d api
 
 **Arka Planda Çalışan API'nin Loglarını (Hatalarını) İzlemek İçin:**
 ```bash
-docker logs -f kahoot_api
+docker-compose logs -f api
 ```
 
 ---
