@@ -13,6 +13,7 @@ public class InMemoryGameStateRepository : IGameStateRepository
 
     public object GetQuizLock(string pin) => _quizLocks.GetOrAdd(pin, _ => new object());
     public void RemoveQuizLock(string pin) => _quizLocks.TryRemove(pin, out _);
+    public bool TryAcquireTickLock(string pin) => true; // Tek sunuculu sistemde her zaman true döner
 
     public GameStateTracker? GetGameState(string pin)
     {

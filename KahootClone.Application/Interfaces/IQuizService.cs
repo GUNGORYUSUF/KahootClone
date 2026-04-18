@@ -14,11 +14,11 @@ public enum GamePhase
 }
 
 // AŞAMA 4: Arka plan servisinin SignalR üzerinden fırlatacağı veri paketi.
-public class GameTickEvent
+public record GameTickEvent
 {
-    public string Pin { get; set; } = string.Empty;
-    public string EventName { get; set; } = string.Empty;
-    public object? Payload { get; set; }
+    public string Pin { get; init; } = string.Empty;
+    public string EventName { get; init; } = string.Empty;
+    public object? Payload { get; init; }
 }
 
 public interface IQuizService

@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   mongodb:
@@ -15,6 +14,32 @@ services:
     # Konteyner kapansa bile verilerin silinmemesi için kalıcı bir hafıza (volume) oluşturulur.
     volumes:
       - mongo_data:/data/db
+
+  redis:
+    # Redis'in hafif ve hızlı olan alpine sürümü çekilir.
+    image: redis:alpine
+    container_name: kahoot_redis
+    # Uygulamanın Redis'e bağlanabilmesi için varsayılan port dışarı açılır.
+    ports:
+      - "6379:6379"
+
+  api:
+    # API'mizi az önce yazdığımız Dockerfile üzerinden derlemesini söylüyoruz.
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Bilgisayarın 5252 portunu, konteynerin içindeki 8080 portuna bağlıyoruz.
+    ports:
+      - "5252-5253:8080"
+    # Uygulamanın localhost'a değil, diğer konteynerlere bağlanması için ayarları eziyoruz.
+    environment:
+      - MongoDbSettings__ConnectionString=mongodb://mongodb:27017
+      - Redis__ConnectionString=redis:6379
+      - ASPNETCORE_ENVIRONMENT=Development
+    # API'nin çalışması için önce DB ve Redis'in hazır olmasını bekliyoruz.
+    depends_on:
+      - mongodb
+      - redis
 
 volumes:
   # Veritabanı dosyalarının fiziksel olarak tutulacağı alan tanımlanır.

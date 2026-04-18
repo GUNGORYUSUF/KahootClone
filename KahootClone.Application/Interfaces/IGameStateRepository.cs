@@ -1,18 +1,19 @@
 namespace KahootClone.Application.Interfaces;
 
 // AŞAMA 4: State nesnesi dışarı çıkarıldı ve public yapıldı.
-public class GameStateTracker
+public record GameStateTracker
 {
-    public GamePhase Phase { get; set; }
-    public int CurrentQuestionIndex { get; set; }
-    public int TimeRemaining { get; set; }
-    public bool AllAnswered { get; set; }
+    public GamePhase Phase { get; init; }
+    public int CurrentQuestionIndex { get; init; }
+    public int TimeRemaining { get; init; }
+    public bool AllAnswered { get; init; }
 }
 
 public interface IGameStateRepository
 {
     object GetQuizLock(string pin);
     void RemoveQuizLock(string pin);
+    bool TryAcquireTickLock(string pin);
 
     GameStateTracker? GetGameState(string pin);
     void SetGameState(string pin, GameStateTracker state);

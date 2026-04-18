@@ -71,32 +71,47 @@ public class QuizService : IQuizService
         foreach (var kvp in _gameStateRepository.GetAllActiveGames())
         {
             var pin = kvp.Key;
+
+            // DAĞITIK SİSTEM KORUMASI: Bu saniye (Tick) için kilit alınamazsa, bu oyunu şu an başka bir sunucu işliyor demektir.
+            if (!_gameStateRepository.TryAcquireTickLock(pin)) continue;
+
             var state = kvp.Value;
             var quizLock = _gameStateRepository.GetQuizLock(pin);
             
             lock (quizLock)
             {
-                state.TimeRemaining--;
+                // YENİ VİZYON: Nesne değiştirilemez (Immutable)! 'with' ile yeni bir kopya üretilir.
+                var newState = state with { TimeRemaining = state.TimeRemaining - 1 };
                 
-                if (state.Phase == GamePhase.Question)
+                if (newState.Phase == GamePhase.Question)
                 {
-                    ProcessQuestionPhase(pin, state, events);
+                    newState = ProcessQuestionPhase(pin, newState, events);
                 }
-                else if (state.Phase == GamePhase.Transition)
+                else if (newState.Phase == GamePhase.Transition)
                 {
-                    ProcessTransitionPhase(pin, state, events);
+                    newState = ProcessTransitionPhase(pin, newState, events);
+                }
+
+                // AŞAMA 6 DÜZELTME: Bellek içi referans yerine Redis'ten JSON kopya aldığımız için,
+                // değişen süreyi ve durumu Redis'e geri kaydetmemiz gerekiyor. (Oyun bitmediyse)
+                if (newState.Phase != GamePhase.Ended)
+                {
+                    _gameStateRepository.SetGameState(pin, newState);
                 }
             }
         }
         return events;
     }
 
-    private void ProcessQuestionPhase(string pin, GameStateTracker state, List<GameTickEvent> events)
+    private GameStateTracker ProcessQuestionPhase(string pin, GameStateTracker state, List<GameTickEvent> events)
     {
         if (state.TimeRemaining <= 0)
         {
-            state.Phase = GamePhase.Transition;
-            state.TimeRemaining = 7; // 7 saniye bekleme/geçiş süresi (2 sn cevap, 5 sn tablo)
+            var newState = state with { 
+                Phase = GamePhase.Transition, 
+                TimeRemaining = 7, // 7 saniye bekleme/geçiş süresi (2 sn cevap, 5 sn tablo)
+                AllAnswered = false // Bayrağı sıfırla
+            };
 
             // Süre bitince doğru cevabın ID'sini de pakete ekle
             var quiz = _quizRepository.GetByPin(pin);
@@ -110,46 +125,53 @@ public class QuizService : IQuizService
                 AllAnswered = state.AllAnswered
             };
             events.Add(new GameTickEvent { Pin = pin, EventName = "WaitPhase", Payload = waitPayload });
-            state.AllAnswered = false; // Bayrağı sıfırla
+            return newState;
         }
         else
         {
             events.Add(new GameTickEvent { Pin = pin, EventName = "TimeUpdate", Payload = state.TimeRemaining });
+            return state;
         }
     }
 
-    private void ProcessTransitionPhase(string pin, GameStateTracker state, List<GameTickEvent> events)
+    private GameStateTracker ProcessTransitionPhase(string pin, GameStateTracker state, List<GameTickEvent> events)
     {
         if (state.TimeRemaining <= 0)
         {
-            state.CurrentQuestionIndex++;
+            var nextIndex = state.CurrentQuestionIndex + 1;
             var quiz = _quizRepository.GetByPin(pin);
-            if (quiz != null && quiz.Questions.Count > state.CurrentQuestionIndex)
+            if (quiz != null && quiz.Questions.Count > nextIndex)
             {
-                state.Phase = GamePhase.Question;
-                var nextQ = quiz.Questions[state.CurrentQuestionIndex];
-                state.TimeRemaining = nextQ.TimeLimitInSeconds;
+                var nextQ = quiz.Questions[nextIndex];
+                var newState = state with { 
+                    Phase = GamePhase.Question, 
+                    CurrentQuestionIndex = nextIndex,
+                    TimeRemaining = nextQ.TimeLimitInSeconds
+                };
                 quiz.CurrentQuestionStartTime = DateTime.UtcNow;
                 _quizRepository.Update(quiz);
 
                 var payload = new {
                     Id = nextQ.Id, Text = nextQ.Text, TimeLimit = nextQ.TimeLimitInSeconds,
                     Options = nextQ.Options.Select(o => new { o.Id, o.Text }).ToList(),
-                    CurrentIndex = state.CurrentQuestionIndex + 1, TotalQuestions = quiz.Questions.Count,
+                    CurrentIndex = nextIndex + 1, TotalQuestions = quiz.Questions.Count,
                     TotalPlayers = quiz.Players.Count(p => !string.IsNullOrEmpty(p.ConnectionId))
                 };
                 events.Add(new GameTickEvent { Pin = pin, EventName = "ReceiveQuestion", Payload = payload });
+                return newState;
             }
             else
             {
-                state.Phase = GamePhase.Ended;
+                var newState = state with { Phase = GamePhase.Ended };
             _gameStateRepository.RemoveGameState(pin);
                 events.Add(new GameTickEvent { Pin = pin, EventName = "GameEnded", Payload = quiz?.Players.OrderByDescending(p => p.Score).ToList() });
+                return newState;
             }
         }
         else
         {
             events.Add(new GameTickEvent { Pin = pin, EventName = "WaitTimeUpdate", Payload = state.TimeRemaining });
+            return state;
         }
     }
 
@@ -377,7 +399,13 @@ public class QuizService : IQuizService
             int answeredCount = activePlayers.Count(p => p.AnsweredQuestionIds.Contains(questionId));
 
             // YENİ: Bütün aktif oyuncular cevap verdi mi kontrol et.
-            UpdateGameStateIfAllAnswered(state, activePlayerCount, answeredCount);
+            var newState = UpdateGameStateIfAllAnswered(state, activePlayerCount, answeredCount);
+
+            // AŞAMA 6 DÜZELTME: Bütün oyuncular cevap verdiyse (süreyi 0 yaptıysa) bunu Redis'e yansıt.
+            if (newState != null)
+            {
+                _gameStateRepository.SetGameState(pin, newState);
+            }
 
             return (isCorrect, answeredCount, activePlayerCount, points);
         }
@@ -395,13 +423,13 @@ public class QuizService : IQuizService
         return (int)Math.Round(1000 * scoreFactor);
     }
 
-    private static void UpdateGameStateIfAllAnswered(GameStateTracker? state, int activePlayerCount, int answeredCount)
+    private static GameStateTracker? UpdateGameStateIfAllAnswered(GameStateTracker? state, int activePlayerCount, int answeredCount)
     {
         // Eğer herkes cevap verdiyse süreyi hemen bitir (Transition fazına geçişi tetikle).
         if (state != null && state.Phase == GamePhase.Question && activePlayerCount > 0 && answeredCount >= activePlayerCount)
         {
-            state.TimeRemaining = 0;
-            state.AllAnswered = true;
+            return state with { TimeRemaining = 0, AllAnswered = true };
         }
+        return state;
     }
 }

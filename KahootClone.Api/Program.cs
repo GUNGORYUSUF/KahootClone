@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 // MongoDB'nin Guid (Benzersiz Kimlik) veri tipini standart formatta kaydetmesi sağlanır.
@@ -18,9 +19,14 @@ BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard
 builder.Services.AddControllers();
 // Gerçek zamanlı iletişim servisi (SignalR) sisteme dahil edilir.
 // AŞAMA 2: SignalR hatalarını yakalamak için GlobalHubFilter eklendi.
+// AŞAMA 6: Redis Backplane için bağlantı dizesi (Connection String) yukarı taşındı.
+var redisConnectionString = builder.Configuration.GetSection("Redis:ConnectionString").Value ?? "localhost:6379";
+
 builder.Services.AddSignalR(options =>
 {
     options.AddFilter<KahootClone.Api.Hubs.Filters.GlobalHubFilter>();
+}).AddStackExchangeRedis(redisConnectionString, options => {
+    options.Configuration.ChannelPrefix = RedisChannel.Literal("KahootCloneApp"); // İsteğe bağlı: Redis içindeki mesajları diğer uygulamalardan ayırmak için ön ek
 });
 
 // Swagger (Test Arayüzü) sisteme eklenir.
@@ -71,8 +77,11 @@ builder.Services.AddSingleton<MongoDbContext>(sp =>
 builder.Services.AddScoped<IQuizService, QuizService>();
 // Veritabanı kasa işlemleri (Repository) sisteme tanımlanır.
 builder.Services.AddScoped<IQuizRepository, KahootClone.Infrastructure.Repositories.QuizRepository>();
-// AŞAMA 4: In-Memory (RAM) durum yönetimi sisteme Singleton (Tekil) olarak kaydedilir.
-builder.Services.AddSingleton<IGameStateRepository, KahootClone.Infrastructure.Repositories.InMemoryGameStateRepository>();
+
+// AŞAMA 6: Redis Bağlantısı ve Dağıtık Durum (State) Yönetimi sisteme dahil edilir.
+builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
+builder.Services.AddSingleton<IGameStateRepository, KahootClone.Infrastructure.Repositories.RedisGameStateRepository>();
+
 builder.Services.AddHostedService<GameFlowService>();
 var app = builder.Build();
 
