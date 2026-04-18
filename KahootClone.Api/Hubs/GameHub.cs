@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using KahootClone.Application.Interfaces;
 using KahootClone.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace KahootClone.Api.Hubs;
 
@@ -15,6 +16,7 @@ public class GameHub : Hub
 
     // YENİ: Yöneticinin (Host) oyuna oyuncu olarak dahil olmadan sadece gruba katılması sağlanır.
     // (Yöneticinin skor tablosunda 0 puanla listelenme hatasını düzeltir)
+    [Authorize(Roles = "Host")]
     public async Task JoinAsManager(string pin)
     {
         var quiz = _quizService.GetQuizByPin(pin);
@@ -27,6 +29,7 @@ public class GameHub : Hub
     }
 
     // YENİ: Sayfayı yenileyen yöneticinin oyuna tekrar dahil olmasını ve oyun durumunu almasını sağlar.
+    [Authorize(Roles = "Host")]
     public async Task RejoinAsManager(string pin)
     {
         // Önce gruba dahil et ki yayınları alabilsin.
@@ -75,6 +78,7 @@ public class GameHub : Hub
     }
 
     // YENİ: AŞAMA 4 - Oyunu Backend tarafında başlatır. Artık frontend index sormaz.
+    [Authorize(Roles = "Host")]
     public async Task StartGame(string pin)
     {
         var quiz = _quizService.GetQuizByPin(pin);
@@ -100,6 +104,7 @@ public class GameHub : Hub
     }
 
     // YENİ: Yönetici makro kontrol ile oyunu manuel bitirmek isterse tetiklenir.
+    [Authorize(Roles = "Host")]
     public async Task EndGame(string pin)
     {
         _quizService.StopGameFlow(pin); // Döngüden çıkar.
@@ -108,6 +113,7 @@ public class GameHub : Hub
     }
 
     // YENİ: Sorular arasında (veya istenilen anda) liderlik tablosunu yansıtmak için eklendi.
+    [Authorize(Roles = "Host")]
     public async Task ShowLeaderboard(string pin)
     {
         var quiz = _quizService.GetQuizByPin(pin);
@@ -115,6 +121,7 @@ public class GameHub : Hub
     }
 
     // YENİ: Yönetici lobiyi bekleme ekranındayken iptal eder.
+    [Authorize(Roles = "Host")]
     public async Task ResetLobby(string pin)
     {
         // Herkese lobinin kapandığını bildir.
@@ -124,6 +131,7 @@ public class GameHub : Hub
     }
 
     // YENİ: Oyun bittiğinde, yönetici aynı oyuncularla yeni bir oyun başlatabilir.
+    [Authorize(Roles = "Host")]
     public async Task PlayAgain(string oldPin)
     {
         var oldQuiz = _quizService.GetQuizByPin(oldPin);

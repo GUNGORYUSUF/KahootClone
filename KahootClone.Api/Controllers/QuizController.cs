@@ -1,6 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using KahootClone.Application.Interfaces;
 using KahootClone.Domain.Entities;
+using KahootClone.Application.DTOs;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace KahootClone.Api.Controllers;
 
@@ -10,21 +15,47 @@ namespace KahootClone.Api.Controllers;
 public class QuizController : ControllerBase
 {
     private readonly IQuizService _quizService;
+    private readonly IConfiguration _configuration;
 
     // İş mantığı servisi (QuizService) sisteme enjekte edilir.
-    public QuizController(IQuizService quizService)
+    public QuizController(IQuizService quizService, IConfiguration configuration)
     {
         _quizService = quizService;
+        _configuration = configuration;
     }
 
     // Yeni bir oyun oluşturmak için POST isteği karşılanır.
     [HttpPost("create")]
-    public IActionResult CreateQuiz([FromBody] Quiz quiz)
+    public IActionResult CreateQuiz([FromBody] CreateQuizRequestDto request)
     {
+        // AŞAMA 3: İstemciden gelen DTO nesnesi, güvenli bir şekilde Domain varlığına (Entity) dönüştürülür.
+        var quiz = new Quiz { Title = request.Title };
+
         // Gelen oyun bilgileriyle PIN üretme işlemi tetiklenir.
         string pin = _quizService.CreateQuiz(quiz);
 
+        // AŞAMA 5: Yönetici için "Host" yetkisine sahip bir JWT Token üretilir.
+        string token = GenerateJwtToken("Host", pin);
+
         // Üretilen PIN kodu ve başarı mesajı istemciye (tarayıcıya) döndürülür.
-        return Ok(new { Pin = pin, Message = "Oyun başarıyla oluşturuldu." });
+        return Ok(new { Pin = pin, Token = token, Message = "Oyun başarıyla oluşturuldu." });
+    }
+
+    // AŞAMA 5: İstenilen yetkiye (Role) göre şifreli bir JWT kimlik kartı üretir.
+    private string GenerateJwtToken(string role, string pin)
+    {
+        var jwtKey = _configuration["Jwt:Key"] ?? "KahootCloneSuperSecretKey_1234567890123456";
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, pin),
+            new Claim(ClaimTypes.Role, role), // Yetki (Host)
+            new Claim("Pin", pin)
+        };
+
+        var token = new JwtSecurityToken(claims: claims, expires: DateTime.UtcNow.AddHours(2), signingCredentials: credentials);
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

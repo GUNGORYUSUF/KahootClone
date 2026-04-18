@@ -55,7 +55,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script>
         let currentPin = "";
-        const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub").build();
+        // AŞAMA 5: SignalR bağlantısına JWT Token gönderimi eklendi
+        const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub", { accessTokenFactory: () => sessionStorage.getItem('kahootCloneToken') }).build();
 
         connection.on("PlayerJoined", (nickname) => {
             const list = document.getElementById("playersList");
@@ -155,6 +156,7 @@
         connection.on("RestoreGameState", (state) => {
             if (!state || !state.quiz) {
                 sessionStorage.removeItem('kahootClonePin');
+                sessionStorage.removeItem('kahootCloneToken');
                 alert("Oyun durumu geri yüklenemedi, oturum sonlandırıldı.");
                 location.reload();
                 return;
@@ -236,6 +238,7 @@
 
         connection.on("GameEnded", (players) => {
             sessionStorage.removeItem('kahootClonePin');
+            sessionStorage.removeItem('kahootCloneToken');
             document.getElementById("questionArea").style.display = "none";
             document.getElementById("leaderboardArea").style.display = "block";
 
@@ -257,10 +260,15 @@
                 const data = await response.json();
                 currentPin = data.pin;
                 sessionStorage.setItem('kahootClonePin', currentPin);
+                sessionStorage.setItem('kahootCloneToken', data.token); // AŞAMA 5: Token tarayıcı hafızasına kaydedildi
                 document.getElementById("pinDisplay").textContent = currentPin;
                 document.getElementById("btnCreateGame").style.display = "none";
                 document.getElementById("pinArea").style.display = "block";
                 document.getElementById("playersArea").style.display = "block";
+
+                // AŞAMA 5: Token ile kimlik doğrulaması yapmak için bağlantı yeniden başlatılır
+                await connection.stop();
+                await connection.start();
                 await connection.invoke("JoinAsManager", currentPin.toString());
             }
         });
@@ -272,6 +280,7 @@
         document.getElementById("btnEndGame").addEventListener("click", async () => {
             if(confirm("Oyunu erken bitirmek istediğinize emin misiniz?")) {
                 sessionStorage.removeItem('kahootClonePin');
+                sessionStorage.removeItem('kahootCloneToken');
                 await connection.invoke("EndGame", currentPin.toString());
             }
         });
@@ -302,6 +311,7 @@
 
         connection.on("LobbyReset", () => {
             sessionStorage.removeItem('kahootClonePin');
+            sessionStorage.removeItem('kahootCloneToken');
             location.reload();
         });
 

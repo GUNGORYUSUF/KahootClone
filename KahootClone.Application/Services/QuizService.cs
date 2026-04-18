@@ -8,27 +8,13 @@ namespace KahootClone.Application.Services;
 public class QuizService : IQuizService
 {
     private readonly IQuizRepository _quizRepository;
-
-    // Eşzamanlılık (Concurrency) yönetimi için her PIN'e özel bir kilit (lock) nesnesi tutulur.
-    private static readonly ConcurrentDictionary<string, object> _quizLocks = new();
-
-    // YENİ: AŞAMA 4 - Backend tabanlı otomatik oyun akışı durum takibi.
-    private sealed class GameStateTracker
-    {
-        public GamePhase Phase { get; set; } // AŞAMA 1: String yerine Enum kullanıldı
-        public int CurrentQuestionIndex { get; set; }
-        public int TimeRemaining { get; set; }
-        public bool AllAnswered { get; set; }
-    }
-    private static readonly ConcurrentDictionary<string, GameStateTracker> _activeGames = new();
-
-    // YENİ: Aktif bağlantıları (ConnectionId) oyuncu bilgileriyle eşleştiren harita.
-    private static readonly ConcurrentDictionary<string, (string Pin, string Nickname)> _connectionMap = new();
+    private readonly IGameStateRepository _gameStateRepository;
 
     // Kasa arayüzü (Repository) sisteme enjekte edilir.
-    public QuizService(IQuizRepository quizRepository)
+    public QuizService(IQuizRepository quizRepository, IGameStateRepository gameStateRepository)
     {
         _quizRepository = quizRepository;
+        _gameStateRepository = gameStateRepository;
     }
     public string CreateQuiz(Quiz quiz)
     {
@@ -56,18 +42,18 @@ public class QuizService : IQuizService
     // YENİ: AŞAMA 4 - Oyunun otomatik akışı (Zamanlayıcı) başlatılır.
     public void StartGameFlow(string pin)
     {
-        var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+        var quizLock = _gameStateRepository.GetQuizLock(pin);
         lock (quizLock)
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz != null && quiz.Questions.Count > 0)
             {
-                _activeGames[pin] = new GameStateTracker
+                _gameStateRepository.SetGameState(pin, new GameStateTracker
                 {
                     Phase = GamePhase.Question,
                     CurrentQuestionIndex = 0,
                     TimeRemaining = quiz.Questions[0].TimeLimitInSeconds
-                };
+                });
                 quiz.CurrentQuestionStartTime = DateTime.UtcNow;
                 _quizRepository.Update(quiz);
             }
@@ -76,17 +62,17 @@ public class QuizService : IQuizService
 
     public void StopGameFlow(string pin)
     {
-        _activeGames.TryRemove(pin, out _);
+        _gameStateRepository.RemoveGameState(pin);
     }
 
     public List<GameTickEvent> ProcessTicks()
     {
         var events = new List<GameTickEvent>();
-        foreach (var kvp in _activeGames)
+        foreach (var kvp in _gameStateRepository.GetAllActiveGames())
         {
             var pin = kvp.Key;
             var state = kvp.Value;
-            var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+            var quizLock = _gameStateRepository.GetQuizLock(pin);
             
             lock (quizLock)
             {
@@ -157,7 +143,7 @@ public class QuizService : IQuizService
             else
             {
                 state.Phase = GamePhase.Ended;
-                _activeGames.TryRemove(pin, out _);
+            _gameStateRepository.RemoveGameState(pin);
                 events.Add(new GameTickEvent { Pin = pin, EventName = "GameEnded", Payload = quiz?.Players.OrderByDescending(p => p.Score).ToList() });
             }
         }
@@ -170,7 +156,7 @@ public class QuizService : IQuizService
     // YENİ: Oyuncu oyuna katıldığında veya tekrar bağlandığında çalışır.
     public (Player? player, string? errorMessage) JoinOrRejoin(string pin, string nickname, string connectionId)
     {
-        var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+        var quizLock = _gameStateRepository.GetQuizLock(pin);
         lock (quizLock)
         {
             var quiz = _quizRepository.GetByPin(pin);
@@ -183,7 +169,7 @@ public class QuizService : IQuizService
                 // Yeni oyuncu kaydı
                 player = new Player { Id = Guid.NewGuid(), Nickname = nickname, Score = 0, ConnectionId = connectionId };
                 quiz.Players.Add(player);
-                _connectionMap[connectionId] = (pin, nickname);
+            _gameStateRepository.AddConnection(connectionId, pin, nickname);
                 _quizRepository.Update(quiz);
                 return (player, null);
             }
@@ -199,7 +185,7 @@ public class QuizService : IQuizService
                 {
                     // Oyuncu daha önce bağlanmış ama kopmuş. Yeniden bağlanmasına izin ver.
                     player.ConnectionId = connectionId;
-                    _connectionMap[connectionId] = (pin, nickname);
+                _gameStateRepository.AddConnection(connectionId, pin, nickname);
                     _quizRepository.Update(quiz);
                     return (player, null);
                 }
@@ -209,10 +195,12 @@ public class QuizService : IQuizService
 
     public (string? Pin, string? Nickname) UnregisterPlayer(string connectionId)
     {
-        if (_connectionMap.TryRemove(connectionId, out var info))
+        var info = _gameStateRepository.GetConnection(connectionId);
+        if (info != null)
         {
-            var (pin, nickname) = info;
-            var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+            _gameStateRepository.RemoveConnection(connectionId);
+            var (pin, nickname) = info.Value;
+            var quizLock = _gameStateRepository.GetQuizLock(pin);
             lock (quizLock)
             {
                 var quiz = _quizRepository.GetByPin(pin);
@@ -233,7 +221,7 @@ public class QuizService : IQuizService
 
     public void AbandonQuiz(string pin)
     {
-        var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+        var quizLock = _gameStateRepository.GetQuizLock(pin);
         lock (quizLock)
         {
             var quiz = _quizRepository.GetByPin(pin);
@@ -246,12 +234,12 @@ public class QuizService : IQuizService
                 // Remove players from the connection map
                 foreach (var connectionId in quiz.Players.Select(p => p.ConnectionId).Where(id => !string.IsNullOrEmpty(id)))
                 {
-                    _connectionMap.TryRemove(connectionId, out _);
+                    _gameStateRepository.RemoveConnection(connectionId);
                 }
             }
         }
         // Clean up in-memory state
-        _quizLocks.TryRemove(pin, out _);
+        _gameStateRepository.RemoveQuizLock(pin);
     }
 
     public object? GetFullGameState(string pin)
@@ -259,7 +247,7 @@ public class QuizService : IQuizService
         var quiz = _quizRepository.GetByPin(pin);
         if (quiz == null) return null;
 
-        _activeGames.TryGetValue(pin, out var gameState);
+        var gameState = _gameStateRepository.GetGameState(pin);
 
         Question? currentQuestion = null;
         if (gameState != null && quiz.Questions.Count > gameState.CurrentQuestionIndex)
@@ -336,7 +324,7 @@ public class QuizService : IQuizService
     // Oyuncunun verdiği cevap kontrol edilir ve puanı hesaplanır.
     public (bool IsCorrect, int AnsweredCount, int TotalCount, int PointsEarned) SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId)
     {
-        var quizLock = _quizLocks.GetOrAdd(pin, _ => new object());
+        var quizLock = _gameStateRepository.GetQuizLock(pin);
         lock (quizLock)
         {
             var quiz = _quizRepository.GetByPin(pin);
@@ -349,7 +337,8 @@ public class QuizService : IQuizService
             bool isCorrect = option != null && option.IsCorrect;
 
             // AŞAMA 4: Hile Koruması - Süre bittiyse (veya geçiş aşamasındaysa) gönderilen cevaplar kesinlikle reddedilir.
-            if (_activeGames.TryGetValue(pin, out var state) && state.Phase != GamePhase.Question)
+            var state = _gameStateRepository.GetGameState(pin);
+            if (state != null && state.Phase != GamePhase.Question)
                 return (false, 0, 0, 0);
 
             // Oyuncu listesi kontrol edilir. Eğer oyuncu oyunda kayıtlı değilse, bu geçersiz bir istektir.
