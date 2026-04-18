@@ -1,6 +1,7 @@
 using KahootClone.Domain.Entities;
 using KahootClone.Application.Interfaces;
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
 
 namespace KahootClone.Application.Services;
 
@@ -14,13 +15,12 @@ public class QuizService : IQuizService
     // YENİ: AŞAMA 4 - Backend tabanlı otomatik oyun akışı durum takibi.
     private sealed class GameStateTracker
     {
-        public string Phase { get; set; } = string.Empty;
+        public GamePhase Phase { get; set; } // AŞAMA 1: String yerine Enum kullanıldı
         public int CurrentQuestionIndex { get; set; }
         public int TimeRemaining { get; set; }
         public bool AllAnswered { get; set; }
     }
     private static readonly ConcurrentDictionary<string, GameStateTracker> _activeGames = new();
-    private static readonly Random _random = new();
 
     // YENİ: Aktif bağlantıları (ConnectionId) oyuncu bilgileriyle eşleştiren harita.
     private static readonly ConcurrentDictionary<string, (string Pin, string Nickname)> _connectionMap = new();
@@ -33,7 +33,8 @@ public class QuizService : IQuizService
     public string CreateQuiz(Quiz quiz)
     {
         // PIN kodunun benzersiz olmasını sağlamak için bir döngü eklenebilir, ancak mevcut olasılıkla çakışma riski çok düşüktür.
-        string pin = _random.Next(100000, 999999).ToString();
+        // AŞAMA 1: Tahmin edilebilir Random yerine kriptografik olarak güvenli PIN üretici (100000 ile 999999 arası)
+        string pin = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
         
         quiz.Pin = pin;
         quiz.IsActive = true;
@@ -63,7 +64,7 @@ public class QuizService : IQuizService
             {
                 _activeGames[pin] = new GameStateTracker
                 {
-                    Phase = "Question",
+                    Phase = GamePhase.Question,
                     CurrentQuestionIndex = 0,
                     TimeRemaining = quiz.Questions[0].TimeLimitInSeconds
                 };
@@ -91,11 +92,11 @@ public class QuizService : IQuizService
             {
                 state.TimeRemaining--;
                 
-                if (state.Phase == "Question")
+                if (state.Phase == GamePhase.Question)
                 {
                     ProcessQuestionPhase(pin, state, events);
                 }
-                else if (state.Phase == "Transition")
+                else if (state.Phase == GamePhase.Transition)
                 {
                     ProcessTransitionPhase(pin, state, events);
                 }
@@ -108,7 +109,7 @@ public class QuizService : IQuizService
     {
         if (state.TimeRemaining <= 0)
         {
-            state.Phase = "Transition";
+            state.Phase = GamePhase.Transition;
             state.TimeRemaining = 7; // 7 saniye bekleme/geçiş süresi (2 sn cevap, 5 sn tablo)
 
             // Süre bitince doğru cevabın ID'sini de pakete ekle
@@ -139,7 +140,7 @@ public class QuizService : IQuizService
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz != null && quiz.Questions.Count > state.CurrentQuestionIndex)
             {
-                state.Phase = "Question";
+                state.Phase = GamePhase.Question;
                 var nextQ = quiz.Questions[state.CurrentQuestionIndex];
                 state.TimeRemaining = nextQ.TimeLimitInSeconds;
                 quiz.CurrentQuestionStartTime = DateTime.UtcNow;
@@ -155,7 +156,7 @@ public class QuizService : IQuizService
             }
             else
             {
-                state.Phase = "Ended";
+                state.Phase = GamePhase.Ended;
                 _activeGames.TryRemove(pin, out _);
                 events.Add(new GameTickEvent { Pin = pin, EventName = "GameEnded", Payload = quiz?.Players.OrderByDescending(p => p.Score).ToList() });
             }
@@ -348,7 +349,7 @@ public class QuizService : IQuizService
             bool isCorrect = option != null && option.IsCorrect;
 
             // AŞAMA 4: Hile Koruması - Süre bittiyse (veya geçiş aşamasındaysa) gönderilen cevaplar kesinlikle reddedilir.
-            if (_activeGames.TryGetValue(pin, out var state) && state.Phase != "Question")
+            if (_activeGames.TryGetValue(pin, out var state) && state.Phase != GamePhase.Question)
                 return (false, 0, 0, 0);
 
             // Oyuncu listesi kontrol edilir. Eğer oyuncu oyunda kayıtlı değilse, bu geçersiz bir istektir.
@@ -408,7 +409,7 @@ public class QuizService : IQuizService
     private static void UpdateGameStateIfAllAnswered(GameStateTracker? state, int activePlayerCount, int answeredCount)
     {
         // Eğer herkes cevap verdiyse süreyi hemen bitir (Transition fazına geçişi tetikle).
-        if (state != null && state.Phase == "Question" && activePlayerCount > 0 && answeredCount >= activePlayerCount)
+        if (state != null && state.Phase == GamePhase.Question && activePlayerCount > 0 && answeredCount >= activePlayerCount)
         {
             state.TimeRemaining = 0;
             state.AllAnswered = true;

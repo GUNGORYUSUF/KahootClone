@@ -1,6 +1,17 @@
+using System.Text.Json.Serialization;
 using KahootClone.Domain.Entities;
 
 namespace KahootClone.Application.Interfaces;
+
+// AŞAMA 1: Magic string'leri (sihirli metinleri) engellemek için durumlar (Phase) tip güvenli hale getirildi.
+// JsonConverter sayesinde frontend'e (JavaScript) yine "Question", "Transition" şeklinde metin olarak gidecektir.
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum GamePhase
+{
+    Question,
+    Transition,
+    Ended
+}
 
 // AŞAMA 4: Arka plan servisinin SignalR üzerinden fırlatacağı veri paketi.
 public class GameTickEvent
