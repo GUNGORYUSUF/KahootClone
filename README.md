@@ -50,3 +50,35 @@ Tarayıcınızdan aşağıdaki adreslere giderek sistemi test edebilirsiniz (Por
 1. **Oyuncu Ekranını Açın:** Tarayıcıda `student.html` sayfasını açın.
 2. **Giriş Yapın:** Yöneticinin verdiği **PIN kodunu** ve kendinize bir **takma ad (Nickname)** girerek lobiye katılın.
 3. **Cevapları İşaretleyin:** Sorular ekranınızda belirir. Doğru cevabı en hızlı işaretleyen oyuncu en çok puanı toplar!
+
+## 📊 SonarQube Kod Analizi ve Test Kapsamı (Coverage)
+Projenin kod kalitesini, güvenliğini ve test kapsamını ölçmek için SonarQube entegrasyonu mevcuttur.
+
+### 1. Ön Hazırlık (Sadece İlk Kurulumda)
+Sistemin çalışabilmesi için bilgisayarınızda SonarScanner aracının global olarak kurulu olması gerekir. Terminalde şu komutu çalıştırarak kurabilirsiniz:
+```bash
+dotnet tool install --global dotnet-sonarscanner
+```
+*(Not: Test projesinin rapor üretebilmesi için gereken `coverlet.collector` paketi projede halihazırda yapılandırılmıştır.)*
+
+### 2. Standart Analiz Döngüsü (Kod Değiştikçe Tekrar Edilir)
+Ana proje dizininde (Solution `.sln` dosyasının bulunduğu klasör) terminali açıp sırasıyla aşağıdaki 3 adımı uygulamalısınız:
+
+**Adım A: Dinlemeyi Başlat (Begin)**
+Bu komut SonarQube'a analiz sürecinin başladığını ve test raporlarının `**/*.opencover.xml` yolunda bulunacağını bildirir:
+```bash
+dotnet sonarscanner begin /k:"KahootProjesi" /d:sonar.host.url="http://localhost:9000" /d:sonar.login="sqp_***" /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml"
+```
+
+**Adım B: Derle ve Test Et (Build & Test)**
+Önce proje derlenir (Derleme sırasında SonarScanner arka planda kod kokularını ve hataları inceler). Ardından test komutu çalışarak tüm Unit Test'leri koşar ve hangi satırların test edildiğini (`opencover.xml` formatında) hesaplar:
+```bash
+dotnet build
+dotnet test --collect:"XPlat Code Coverage;Format=opencover"
+```
+
+**Adım C: Raporu Gönder (End)**
+Tüm analizleri ve test kapsama dosyalarını paketleyip `localhost:9000` adresindeki SonarQube sunucusuna gönderir:
+```bash
+dotnet sonarscanner end /d:sonar.login="sqp_***"
+```
