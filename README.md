@@ -8,7 +8,9 @@ Bu proje, yapay zeka destekli yazılım geliştirme ("Agentic Engineering") yakl
 * **Durum (State) Yönetimi:** Dağıtık Önbellek olarak Redis (SETNX Dağıtık Kilit Mimarisi)
 * **Veritabanı:** MongoDB (Docker)
 * **Yük Dengeleyici (Load Balancer):** Nginx (Reverse Proxy, Sticky Sessions / ip_hash)
-* **Güvenlik:** JWT (JSON Web Token) Kimlik Doğrulama ve DTO Doğrulamaları
+* **Güvenlik & Dayanıklılık:** JWT Kimlik Doğrulama, .NET Rate Limiting (DDoS Koruması), Health Checks ve Polly (Hata Toleransı / Retry Mekanizması)
+* **Asenkron Mesajlaşma:** RabbitMQ (Olay Güdümlü Mimari)
+* **İzlenebilirlik (Observability):** OpenTelemetry, Prometheus, Grafana, Seq ve Serilog
 * **Frontend:** HTML5, Bootstrap 5, Vanilla JavaScript (FileReader API ile Dosya Okuma)
 * **Veri İşleme:** Özel Markdown Ayrıştırıcı (Dışarıdan `.md` / `.txt` Soru Yükleme)
 * **Mimari:** Clean Architecture, Single Responsibility, Yatay Ölçeklenebilirlik, **Tam Docker İzolasyonu**
@@ -20,6 +22,8 @@ Bu proje, yapay zeka destekli yazılım geliştirme ("Agentic Engineering") yakl
 * **Tam Otomatik Oyun Akışı:** Yönetici oyunu başlattıktan sonra sistem; soruları, süreleri ve geçiş aralarını insan müdahalesi olmadan arka plan servisleri (HostedService) ile otomatik yönetir.
 * **Heyecan Mekanizması (Suspense):** Oyuncular cevap verdiğinde anında sonucu görmek yerine, bekleme odasına alınır ve süre bittiğinde tüm oyuncular sonucu aynı anda öğrenir.
 * **Çift Taraflı Liderlik Tablosu:** Oyun bittiğinde sadece yönetici ekranında değil, her oyuncunun kendi cihazında da liderlik tablosu belirir ve oyuncunun kendi ismi yeşil renkle vurgulanır.
+* **Asenkron Yük Yönetimi:** Oyun bittiğinde veritabanı kilitlenmelerini önlemek için kayıt işlemleri RabbitMQ kuyruğuna atılır ve arka planda (Worker Service) sessizce işlenir.
+* **Kurumsal İzlenebilirlik ve Hata Toleransı:** Sistemdeki saniyelik ağ kopmalarında uygulamanın çökmesini engelleyen Polly zırhı bulunur. Tüm sistemin CPU/RAM metrikleri, hataları ve logları Grafana ve Seq üzerinden canlı izlenebilir.
 
 ## Proje Klasör Yapısı
 * **1. Domain:** Sistemin kalbidir. Oyun, Soru, Oyuncu gibi temel veri şablonları burada tutulur. Dış dünyadan tamamen izoledir.
@@ -48,6 +52,9 @@ Bağlantı sorunları yaşamamak adına `localhost` yerine doğrudan yerel IP ad
 - Yönetici (Host) Ekranı: `http://127.0.0.1:5252/index.html`
 - Öğrenci (Player) Ekranı: `http://127.0.0.1:5252/student.html`
 - Swagger API Dokümantasyonu: `http://127.0.0.1:5252/swagger/index.html`
+- Merkezi Loglama (Seq): `http://127.0.0.1:5341`
+- Metrik İşlemcisi (Prometheus): `http://127.0.0.1:9090`
+- Görsel Kokpit (Grafana): `http://127.0.0.1:3000` *(Kullanıcı: admin / Şifre: admin)*
 
 ### 🛠️ Geliştirici Rehberi: Komutlar ve Docker Yönetimi (Cheat Sheet)
 Projeyi bilgisayarına indiren bir geliştiricinin arka planda sistemi yönetmek için ihtiyaç duyacağı tüm temel komutlar ve senaryolar aşağıda özetlenmiştir:
@@ -90,16 +97,16 @@ Terminale bağlandıktan sonra MONITOR komutunu yazarak akan verileri canlı izl
 ---
 
 ## 🔥 Gelişmiş Test: Dağıtık Sistemi (Redis Backplane) Simüle Etme
-Sistemin tek bir bilgisayarda (RAM) değil, yatayda ölçeklenmiş (Horizontal Scaling) bir ağda nasıl kusursuz çalıştığını görmek isterseniz, uygulamayı iki farklı portta çalıştırarak test edebilirsiniz:
+Sistemin tek bir bilgisayarda (RAM) değil, yatayda ölçeklenmiş (Horizontal Scaling) bir ağda nasıl kusursuz çalıştığını görmek isterseniz, uygulamayı Nginx arkasında birden fazla API ile çalıştırarak test edebilirsiniz:
 
 1. Terminalde şu komutu çalıştırarak API sunucunuzun sayısını anında **2'ye çıkarın (Scale)**:
    ```bash
    docker-compose up --scale api=2 -d
    ```
-2. Tarayıcıda `http://localhost:5252/index.html` adresinden (Sunucu A üzerinden) bir oyun kurun.
-3. Farklı bir sekmede `http://localhost:5253/student.html` adresine giderek (Sunucu B üzerinden) ürettiğiniz PIN ile oyuna katılın.
+2. Tarayıcıda http://127.0.0.1:5252/index.html adresinden bir oyun kurun.
+3.  Farklı bir sekmede (veya gizli sekmede) yine http://127.0.0.1:5252/student.html adresine giderek ürettiğiniz PIN ile oyuna katılın.
 
-**Sonuç:** Öğrenci tamamen farklı bir sunucuya bağlı olmasına rağmen, Redis Backplane sayesinde yönetici ekranına anında düşecek ve oyun milisaniyelik gecikme olmadan iki farklı sunucu arasında senkronize akacaktır!
+**Sonuç:** Öğrenci ile Yönetici arka planda Nginx tarafından rastgele farklı API sunucularına (api-1 ve api-2) düşürülse bile, Redis Backplane sayesinde öğrenci anında yönetici ekranında belirecek ve oyun milisaniyelik gecikme olmadan senkronize akacaktır
 
 ---
 

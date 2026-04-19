@@ -9,12 +9,14 @@ public class QuizService : IQuizService
 {
     private readonly IQuizRepository _quizRepository;
     private readonly IGameStateRepository _gameStateRepository;
+    private readonly IMessagePublisher _messagePublisher;
 
     // Kasa arayüzü (Repository) sisteme enjekte edilir.
-    public QuizService(IQuizRepository quizRepository, IGameStateRepository gameStateRepository)
+    public QuizService(IQuizRepository quizRepository, IGameStateRepository gameStateRepository, IMessagePublisher messagePublisher)
     {
         _quizRepository = quizRepository;
         _gameStateRepository = gameStateRepository;
+        _messagePublisher = messagePublisher;
     }
     public string CreateQuiz(Quiz quiz)
     {
@@ -86,36 +88,49 @@ public class QuizService : IQuizService
     public List<GameTickEvent> ProcessTicks()
     {
         var events = new List<GameTickEvent>();
-        foreach (var kvp in _gameStateRepository.GetAllActiveGames())
+        try
         {
-            var pin = kvp.Key;
-
-            // DAĞITIK SİSTEM KORUMASI: Bu saniye (Tick) için kilit alınamazsa, bu oyunu şu an başka bir sunucu işliyor demektir.
-            if (!_gameStateRepository.TryAcquireTickLock(pin)) continue;
-
-            var state = kvp.Value;
-            
-            using (_gameStateRepository.AcquireQuizLock(pin))
+            foreach (var kvp in _gameStateRepository.GetAllActiveGames())
             {
-                // YENİ VİZYON: Nesne değiştirilemez (Immutable)! 'with' ile yeni bir kopya üretilir.
-                var newState = state with { TimeRemaining = state.TimeRemaining - 1 };
-                
-                if (newState.Phase == GamePhase.Question)
+                var pin = kvp.Key;
+                try
                 {
-                    newState = ProcessQuestionPhase(pin, newState, events);
-                }
-                else if (newState.Phase == GamePhase.Transition)
-                {
-                    newState = ProcessTransitionPhase(pin, newState, events);
-                }
+                    // DAĞITIK SİSTEM KORUMASI: Bu saniye (Tick) için kilit alınamazsa, bu oyunu şu an başka bir sunucu işliyor demektir.
+                    if (!_gameStateRepository.TryAcquireTickLock(pin)) continue;
 
-                // AŞAMA 6 DÜZELTME: Bellek içi referans yerine Redis'ten JSON kopya aldığımız için,
-                // değişen süreyi ve durumu Redis'e geri kaydetmemiz gerekiyor. (Oyun bitmediyse)
-                if (newState.Phase != GamePhase.Ended)
+                    var state = kvp.Value;
+                    
+                    using (_gameStateRepository.AcquireQuizLock(pin))
+                    {
+                        // YENİ VİZYON: Nesne değiştirilemez (Immutable)! 'with' ile yeni bir kopya üretilir.
+                        var newState = state with { TimeRemaining = state.TimeRemaining - 1 };
+                        
+                        if (newState.Phase == GamePhase.Question)
+                        {
+                            newState = ProcessQuestionPhase(pin, newState, events);
+                        }
+                        else if (newState.Phase == GamePhase.Transition)
+                        {
+                            newState = ProcessTransitionPhase(pin, newState, events);
+                        }
+
+                        // AŞAMA 6 DÜZELTME: Bellek içi referans yerine Redis'ten JSON kopya aldığımız için,
+                        // değişen süreyi ve durumu Redis'e geri kaydetmemiz gerekiyor. (Oyun bitmediyse)
+                        if (newState.Phase != GamePhase.Ended)
+                        {
+                            _gameStateRepository.SetGameState(pin, newState);
+                        }
+                    }
+                }
+                catch (Exception ex)
                 {
-                    _gameStateRepository.SetGameState(pin, newState);
+                    Console.WriteLine($"[HATA] Oyun dongusu (Tick) islenirken {pin} numarali oyunda hata olustu: {ex.Message}");
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[HATA] ProcessTicks ana dongusunde beklenmeyen kritik hata olustu: {ex.Message}");
         }
         return events;
     }
@@ -182,6 +197,12 @@ public class QuizService : IQuizService
                 var newState = state with { Phase = GamePhase.Ended };
             _gameStateRepository.RemoveGameState(pin);
                 events.Add(new GameTickEvent { Pin = pin, EventName = "GameEnded", Payload = quiz?.Players.OrderByDescending(p => p.Score).ToList() });
+            
+            // YENİ: Oyun bittiğinde veritabanı kayıt yükü ana akıştan koparılıp RabbitMQ kuyruğuna fırlatılır!
+            if (quiz != null)
+            {
+                _messagePublisher.Publish("game_ended_queue", quiz);
+            }
                 return newState;
             }
         }

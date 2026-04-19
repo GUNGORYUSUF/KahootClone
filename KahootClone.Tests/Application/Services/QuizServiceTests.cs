@@ -12,13 +12,19 @@ public class QuizServiceTests
 {
     // Bağımlılıkların (Dependencies) sahteleri (Mock) ve test edilecek servis
     private readonly Mock<IQuizRepository> _mockQuizRepository;
+    private readonly Mock<IGameStateRepository> _mockGameStateRepository;
+    private readonly Mock<IMessagePublisher> _mockMessagePublisher;
     private readonly QuizService _quizService;
 
     public QuizServiceTests()
     {
         // Ortak bağımlılıklar her test öncesi sıfırlanarak izolasyon sağlanır (Test Isolation).
         _mockQuizRepository = new Mock<IQuizRepository>();
-        _quizService = new QuizService(_mockQuizRepository.Object);
+        _mockGameStateRepository = new Mock<IGameStateRepository>();
+        _mockGameStateRepository.Setup(r => r.TryAcquireTickLock(It.IsAny<string>())).Returns(true);
+        _mockGameStateRepository.Setup(r => r.AcquireQuizLock(It.IsAny<string>())).Returns(new Mock<IDisposable>().Object);
+        _mockMessagePublisher = new Mock<IMessagePublisher>();
+        _quizService = new QuizService(_mockQuizRepository.Object, _mockGameStateRepository.Object, _mockMessagePublisher.Object);
     }
 
     [Fact]

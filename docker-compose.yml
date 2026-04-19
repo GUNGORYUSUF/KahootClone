@@ -23,6 +23,42 @@ services:
     ports:
       - "6379:6379"
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: kahoot_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # Tarayıcıdan izlenebilen Yönetim Paneli
+
+  # Merkezi Loglama Sunucusu (Serilog ile konuşur)
+  seq:
+    image: datalust/seq:latest
+    container_name: kahoot_seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_API_LISTEN_URIS=http://+:5341
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=True
+    ports:
+      - "5341:5341"
+
+  # Metrik Toplayıcı
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: kahoot_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  # Görsel Metrik Panelleri (Dashboard)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: kahoot_grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
   api:
     # API'mizi az önce yazdığımız Dockerfile üzerinden derlemesini söylüyoruz.
     build:
@@ -31,11 +67,13 @@ services:
     environment:
       - MongoDbSettings__ConnectionString=mongodb://mongodb:27017
       - Redis__ConnectionString=redis:6379
+      - RabbitMq__HostName=rabbitmq
       - ASPNETCORE_ENVIRONMENT=Development
     # API'nin çalışması için önce DB ve Redis'in hazır olmasını bekliyoruz.
     depends_on:
       - mongodb
       - redis
+      - rabbitmq
 
   # Yük Dengeleyici (Load Balancer) - Tüm dış trafiği bu servis karşılar
   nginx:

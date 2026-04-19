@@ -1,0 +1,45 @@
+name: .NET CI Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Kodu Indir (Checkout)
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # SonarQube analizi için tam geçmişi çeker
+
+    - name: .NET 10 Kurulumu
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Bagimliliklari Yukle (Restore)
+      run: dotnet restore
+
+    - name: Projeyi Derle (Build)
+      run: dotnet build --no-restore -c Release
+
+    - name: Birim Testlerini Calistir (Test)
+      run: dotnet test --no-build -c Release --verbosity normal --collect:"XPlat Code Coverage;Format=opencover"
+
+    # SONARQUBE ENTEGRASYONU 
+    # Not: Bu adımların çalışması için GitHub deponuzda Settings > Secrets and variables > Actions menüsüne
+    # SONAR_HOST_URL (örn: http://sunucu_ip:9000) ve SONAR_TOKEN eklemeniz gerekmektedir. 
+    # Şimdilik GitHub Actions'ın çökmemesi için bu adımları yorum satırı olarak bırakıyoruz. Hazır olduğunuzda '#' işaretlerini kaldırabilirsiniz.
+    #
+    # - name: SonarScanner Kurulumu
+    #   run: dotnet tool install --global dotnet-sonarscanner
+    # - name: SonarQube Analizini Baslat, Derle, Test Et ve Gonder
+    #   run: |
+    #     dotnet sonarscanner begin /k:"KahootProjesi" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml"
+    #     dotnet build
+    #     dotnet test --collect:"XPlat Code Coverage;Format=opencover"
+    #     dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"

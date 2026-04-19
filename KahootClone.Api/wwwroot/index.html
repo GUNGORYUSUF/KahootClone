@@ -81,7 +81,23 @@
             skipNegotiation: true,
             transport: signalR.HttpTransportType.WebSockets,
             accessTokenFactory: () => sessionStorage.getItem('kahootCloneToken') 
-        }).build();
+        })
+        .withAutomaticReconnect()
+        .build();
+
+        // YENİ: Sunucu çökerse otomatik bağlanma durumlarını yakala
+        connection.onreconnecting((error) => {
+            console.warn("Sunucu bağlantısı koptu, yeniden bağlanılıyor...", error);
+            const timer = document.getElementById("timerDisplay");
+            if (timer) timer.innerHTML = `<span class="text-danger fw-bold">Bağlantı koptu, kurtarılıyor...</span>`;
+        });
+
+        connection.onreconnected(async (connectionId) => {
+            console.log("Bağlantı kurtarıldı! Yeni yedek sunucuya geçildi.");
+            if (currentPin) {
+                await connection.invoke("RejoinAsManager", currentPin);
+            }
+        });
 
         connection.on("PlayerJoined", (nickname) => {
             const list = document.getElementById("playersList");
@@ -233,6 +249,26 @@
                     col.innerHTML = `<div id="option-card-${opt.id}" class="card text-white ${colors[index % 4]} p-5 fs-2 fw-bold shadow rounded-4 h-100 d-flex align-items-center justify-content-center">${opt.text}</div>`;
                     optionsArea.appendChild(col);
                 });
+            } else {
+                // YENİ: Failover (Çökme) anında yönetici geri döndüğünde oyun bitmişse tabloyu gösterir
+                if (!state.quiz.isActive || state.quiz.players.some(p => p.score > 0)) {
+                    document.getElementById("lobbyArea").style.display = "none";
+                    document.getElementById("questionArea").style.display = "none";
+                    document.getElementById("leaderboardArea").style.display = "block";
+
+                    const list = document.getElementById("leaderboardList");
+                    list.innerHTML = "";
+                    document.getElementById("btnPlayAgain").style.display = "inline-block";
+                    
+                    const sortedPlayers = state.quiz.players.sort((a, b) => b.score - a.score);
+                    sortedPlayers.forEach((p, index) => {
+                        const li = document.createElement("li");
+                        li.className = "list-group-item d-flex justify-content-between align-items-center";
+                        let medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🔸";
+                        li.innerHTML = `<span>${medal} ${p.nickname}</span> <span class="badge bg-primary rounded-pill">${p.score} Puan</span>`;
+                        list.appendChild(li);
+                    });
+                }
             }
         });
 

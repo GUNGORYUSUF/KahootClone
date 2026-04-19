@@ -10,8 +10,19 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using StackExchange.Redis;
+using System.Threading.RateLimiting;
+using Serilog;
+using OpenTelemetry.Metrics;
+
+// YENİ: Serilog yapılandırması - Logları konsola ve Docker içindeki Seq sunucusuna yollar
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.Seq("http://seq:5341") // Seq Docker konteyneri iç ağda 5341 portundan dinler
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog(); // Varsayılan loglayıcı olarak Serilog'u kullan
+
 // MongoDB'nin Guid (Benzersiz Kimlik) veri tipini standart formatta kaydetmesi sağlanır.
 BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
@@ -95,6 +106,43 @@ builder.Services.AddScoped<IQuizRepository, KahootClone.Infrastructure.Repositor
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
 builder.Services.AddSingleton<IGameStateRepository, KahootClone.Infrastructure.Repositories.RedisGameStateRepository>();
 
+// YENİ: Sistem Sağlık Kontrolleri (Health Checks) MongoDB ve Redis için yapılandırılır
+builder.Services.AddHealthChecks()
+    .AddMongoDb(mongoConnectionString ?? "mongodb://localhost:27017", name: "MongoDB")
+    .AddRedis(redisConnectionString, name: "Redis");
+
+// YENİ: RabbitMQ Mesajlaşma Servisi (Publisher) ve Arka Plan Tüketicisi (Consumer) eklendi
+var rabbitMqHost = builder.Configuration["RabbitMq:HostName"] ?? "localhost";
+builder.Services.AddSingleton<IMessagePublisher>(new KahootClone.Infrastructure.Messaging.RabbitMqPublisher(rabbitMqHost));
+builder.Services.AddHostedService<GameEndedConsumerService>();
+
+// YENİ: Rate Limiting (DDoS Koruması)
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        // Nginx arkasında olduğumuz için gerçek IP'yi X-Real-IP başlığından alıyoruz
+        var ip = context.Request.Headers["X-Real-IP"].FirstOrDefault() ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10, // Her IP için saniyede maksimum 10 istek izni verilir
+            Window = TimeSpan.FromSeconds(1),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 0 // Sınırı aşan istekler kuyruğa alınmaz, anında reddedilir
+        });
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests; // 429 Too Many Requests hatası döner
+});
+
+// YENİ: OpenTelemetry ve Prometheus Metrikleri Entegrasyonu
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation() // HTTP İstek metrikleri
+               .AddRuntimeInstrumentation()    // CPU, RAM, Çöp Toplayıcı (GC) metrikleri
+               .AddPrometheusExporter();       // Metrikleri Prometheus formatında dışa aktar
+    });
+
 builder.Services.AddHostedService<GameFlowService>();
 var app = builder.Build();
 
@@ -119,6 +167,9 @@ app.UseStaticFiles();
 // CORS izni, Kimlik Doğrulama (Authentication) işlemlerinden hemen önce devreye alınır.
 app.UseCors("AllowAll");
 
+// YENİ: Rate Limiter kalkanı aktif edilir.
+app.UseRateLimiter();
+
 // AŞAMA 5: Kimlik Doğrulama ve Yetkilendirme kalkanları aktif edilir.
 app.UseAuthentication();
 app.UseAuthorization();
@@ -126,4 +177,9 @@ app.UseAuthorization();
 app.MapControllers();
 // İstemcilerin bağlanacağı telsiz kulesinin (Hub) adresi belirlenir.
 app.MapHub<KahootClone.Api.Hubs.GameHub>("/gamehub");
+
+// YENİ: Sistem sağlık durumunu dışarıya açan uç nokta
+app.MapHealthChecks("/health");
+
+app.MapPrometheusScrapingEndpoint(); // Prometheus'un metrikleri çekeceği /metrics uç noktası açılır
 app.Run();

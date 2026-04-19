@@ -91,7 +91,20 @@
         const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub", {
             skipNegotiation: true,
             transport: signalR.HttpTransportType.WebSockets
-        }).build();
+        })
+        .withAutomaticReconnect()
+        .build();
+
+        // YENİ: Sunucu çökerse öğrencinin yedek sunucuya otomatik geçiş yapması sağlanır
+        connection.onreconnecting((error) => {
+            document.getElementById("studentTimerDisplay").innerHTML = `<span class="text-danger fw-bold">Bağlantı koptu, kurtarılıyor...</span>`;
+        });
+
+        connection.onreconnected(async (connectionId) => {
+            if (currentPin && currentNickname) {
+                await connection.invoke("JoinGame", currentPin, currentNickname);
+            }
+        });
         
         // YENİ: Bağlantı kurulana kadar butonu kilitli tutar, kurulduğunda açar.
         async function startConnection() {
