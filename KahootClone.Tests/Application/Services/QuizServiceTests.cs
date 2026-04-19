@@ -39,6 +39,25 @@ public class QuizServiceTests
     }
 
     [Fact]
+    public void CreateQuiz_WithExternalQuestions_UsesProvidedQuestionsAndAssignsGuids()
+    {
+        // Arrange (Hazırlık)
+        var externalQuestion = new Question { Text = "Dış Soru", Options = new List<Option> { new Option { Text = "Şık 1", IsCorrect = true } } };
+        var quiz = new Quiz { Title = "Dışarıdan Gelen", Questions = new List<Question> { externalQuestion } };
+
+        // Act (Eylem)
+        var pin = _quizService.CreateQuiz(quiz);
+
+        // Assert (Doğrulama)
+        Assert.Single(quiz.Questions);
+        Assert.Equal("Dış Soru", quiz.Questions[0].Text);
+        Assert.NotEqual(Guid.Empty, quiz.Questions[0].Id); // Guid atanmış olmalı
+        Assert.Single(quiz.Questions[0].Options);
+        Assert.NotEqual(Guid.Empty, quiz.Questions[0].Options[0].Id); // Şıklara da Guid atanmalı
+        _mockQuizRepository.Verify(repo => repo.Add(quiz), Times.Once);
+    }
+
+    [Fact]
     public void GetQuizByPin_ExistingPin_ReturnsQuizData()
     {
         // Arrange (Hazırlık)

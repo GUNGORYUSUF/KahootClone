@@ -7,8 +7,10 @@ Bu proje, yapay zeka destekli yazılım geliştirme ("Agentic Engineering") yakl
 * **Gerçek Zamanlı İletişim:** SignalR (WebSockets) + Redis Backplane
 * **Durum (State) Yönetimi:** Dağıtık Önbellek olarak Redis (SETNX Dağıtık Kilit Mimarisi)
 * **Veritabanı:** MongoDB (Docker)
+* **Yük Dengeleyici (Load Balancer):** Nginx (Reverse Proxy, Sticky Sessions / ip_hash)
 * **Güvenlik:** JWT (JSON Web Token) Kimlik Doğrulama ve DTO Doğrulamaları
-* **Frontend:** HTML5, Bootstrap 5, Vanilla JavaScript
+* **Frontend:** HTML5, Bootstrap 5, Vanilla JavaScript (FileReader API ile Dosya Okuma)
+* **Veri İşleme:** Özel Markdown Ayrıştırıcı (Dışarıdan `.md` / `.txt` Soru Yükleme)
 * **Mimari:** Clean Architecture, Single Responsibility, Yatay Ölçeklenebilirlik, **Tam Docker İzolasyonu**
 
 ## Temel Özellikler ve Oyun Mekanikleri
@@ -42,9 +44,10 @@ docker-compose up --build -d
 ```
 
 ### 3. Uygulamaya Erişim
-- **Yönetici (Host) Ekranı:** `http://localhost:5252/index.html`
-- **Öğrenci (Player) Ekranı:** `http://localhost:5252/student.html`
-- **Swagger API Dokümantasyonu:** `http://localhost:5252/swagger/index.html`
+Bağlantı sorunları yaşamamak adına `localhost` yerine doğrudan yerel IP adresi üzerinden erişilmesi tavsiye edilir:
+- Yönetici (Host) Ekranı: `http://127.0.0.1:5252/index.html`
+- Öğrenci (Player) Ekranı: `http://127.0.0.1:5252/student.html`
+- Swagger API Dokümantasyonu: `http://127.0.0.1:5252/swagger/index.html`
 
 ### 🛠️ Geliştirici Rehberi: Komutlar ve Docker Yönetimi (Cheat Sheet)
 Projeyi bilgisayarına indiren bir geliştiricinin arka planda sistemi yönetmek için ihtiyaç duyacağı tüm temel komutlar ve senaryolar aşağıda özetlenmiştir:
@@ -59,10 +62,11 @@ docker-compose up --build -d
 docker-compose down
 ```
 
-**3. Kod Değişikliği Sonrası Hızlı Güncelleme (Sadece API):**
-C# kodlarında bir değişiklik yaptığınızda tüm sistemi kapatmanıza gerek yoktur. Sadece API'yi yeniden derleyip başlatmak için:
+**3. Dağıtık Sistemi (2 Sunucu) Koruyarak Güncelleme Yapmak**
+Nginx yük dengeleyici (Load Balancer) arkasında 2 adet API sunucusu ile sistemi yeniden başlatmak için:
 ```bash
-docker-compose up --build -d api
+docker-compose down
+docker-compose up --scale api=2 --build -d
 ```
 *(Bu komut veritabanı ve Redis'e dokunmadan, sadece API imajınızı saniyeler içinde yenileyip ayağa kaldırır).*
 
@@ -70,6 +74,18 @@ docker-compose up --build -d api
 ```bash
 docker-compose logs -f api
 ```
+
+**4. Bozuk Docker Önbelleğini Tamamen Temizlemek**
+Eğer "parent snapshot does not exist" gibi önbellek hataları alırsanız, sistemi temizlemek için:
+```bash
+docker builder prune -a -f
+```
+
+**5. Projeyi Önbellek Kullanmadan (Sıfırdan) Tekrar Derleme ve Ayağa Kaldırma**
+```bash
+docker exec -it kahoot_redis redis-cli
+```
+Terminale bağlandıktan sonra MONITOR komutunu yazarak akan verileri canlı izleyebilir veya KEYS * komutuyla RAM'deki oyun durumlarını listeleyebilirsiniz.
 
 ---
 
@@ -88,6 +104,30 @@ Sistemin tek bir bilgisayarda (RAM) değil, yatayda ölçeklenmiş (Horizontal S
 ---
 
 ## 🎮 Kullanıcı Rehberi (Nasıl Oynanır?)
+
+### 📝 Kendi Sorularınızı Nasıl Eklersiniz?
+Sisteme kendi sorularınızı eklemek oldukça basittir. Yönetici ekranında yer alan metin kutusuna sorularınızı **Markdown** formatında yapıştırabilir veya hazır bir `.txt` / `.md` dosyasını yükleyebilirsiniz.
+
+**Örnek Soru Formatı:**
+```markdown
+# Soru: Güneş sistemindeki en büyük gezegen hangisidir?
+Süre: 20
+- Mars
+- Venüs
+- Jüpiter (*)
+- Satürn
+
+# Soru: "Sefiller" romanının ünlü yazarı kimdir?
+Süre: 30
+- Lev Tolstoy
+- Victor Hugo (*)
+- Fyodor Dostoyevski
+- Charles Dickens
+```
+* Her sorunun başına `#` veya `# Soru:` eklenmelidir.
+* `Süre: 20` satırı ile sorunun saniye cinsinden süresi belirlenir (Yazılmazsa sistem varsayılan olarak 20 saniye kabul eder).
+* Şıklar `-` veya `*` işareti ile alt alta yazılır.
+* Doğru cevabın sonuna bir boşluk bırakıp `(*)` işareti konulmalıdır.
 
 ### 🏁 Oyun Nasıl Başlatılır? (Yönetici)
 1. **Yönetici Ekranını Açın:** Tarayıcıda `index.html` sayfasını (Yönetici Ekranı) açın.

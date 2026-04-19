@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Threading;
 using KahootClone.Application.Interfaces;
 
 namespace KahootClone.Infrastructure.Repositories;
@@ -11,7 +12,12 @@ public class InMemoryGameStateRepository : IGameStateRepository
     private readonly ConcurrentDictionary<string, GameStateTracker> _activeGames = new();
     private readonly ConcurrentDictionary<string, (string Pin, string Nickname)> _connectionMap = new();
 
-    public object GetQuizLock(string pin) => _quizLocks.GetOrAdd(pin, _ => new object());
+    public IDisposable AcquireQuizLock(string pin)
+    {
+        var lockObj = _quizLocks.GetOrAdd(pin, _ => new object());
+        Monitor.Enter(lockObj);
+        return new DisposableLock(lockObj);
+    }
     public void RemoveQuizLock(string pin) => _quizLocks.TryRemove(pin, out _);
     public bool TryAcquireTickLock(string pin) => true; // Tek sunuculu sistemde her zaman true döner
 
@@ -36,4 +42,19 @@ public class InMemoryGameStateRepository : IGameStateRepository
     }
 
     public void RemoveConnection(string connectionId) => _connectionMap.TryRemove(connectionId, out _);
+
+    // In-Memory kilit işlemlerini "using" bloğuna uyumlu hale getiren yardımcı sınıf
+    private class DisposableLock : IDisposable
+    {
+        private readonly object _lockObj;
+        public DisposableLock(object lockObj)
+        {
+            _lockObj = lockObj;
+        }
+
+        public void Dispose()
+        {
+            Monitor.Exit(_lockObj);
+        }
+    }
 }

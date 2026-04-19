@@ -17,6 +17,19 @@ BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard
 
 // Controller (API Uç Noktaları) yapısı sisteme dahil edilir.
 builder.Services.AddControllers();
+
+// YENİ: Frontend (tarayıcı) üzerinden API'ye ve SignalR Hub'ına engelsiz erişim için CORS politikası eklendi.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.SetIsOriginAllowed(_ => true) // Tüm kaynaklara (file://, localhost vs) izin ver
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // SignalR (WebSockets) kimlik doğrulaması için zorunludur.
+    });
+});
+
 // Gerçek zamanlı iletişim servisi (SignalR) sisteme dahil edilir.
 // AŞAMA 2: SignalR hatalarını yakalamak için GlobalHubFilter eklendi.
 // AŞAMA 6: Redis Backplane için bağlantı dizesi (Connection String) yukarı taşındı.
@@ -95,9 +108,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// DOCKER ÇÖZÜMÜ: Sadece HTTP (8080) portunu kullandığımız için,
+// zorunlu HTTPS yönlendirmesi tarayıcıda bağlantı kopmasına (NetworkError) sebep olur.
+// Docker ortamında HTTPS tüneli proxy üzerinden yapıldığından bu yönlendirmeyi kapalı tutuyoruz.
+// app.UseHttpsRedirection();
+
 // Statik dosyaların (HTML, CSS, JS) dışarıya sunulması sağlanır.
 app.UseStaticFiles();
+
+// CORS izni, Kimlik Doğrulama (Authentication) işlemlerinden hemen önce devreye alınır.
+app.UseCors("AllowAll");
 
 // AŞAMA 5: Kimlik Doğrulama ve Yetkilendirme kalkanları aktif edilir.
 app.UseAuthentication();

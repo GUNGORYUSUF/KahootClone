@@ -29,8 +29,22 @@ public class QuizService : IQuizService
         quiz.Pin = pin;
         quiz.IsActive = true;
 
-        // Oyuna örnek sorular (Seed Data) otomatik olarak eklenir.
-        quiz.Questions = GenerateSampleQuestions();
+        // Dışarıdan soru gelmişse onları kullan, gelmemişse örnek soruları yükle (Geriye dönük uyumluluk)
+        if (quiz.Questions != null && quiz.Questions.Count > 0)
+        {
+            foreach (var q in quiz.Questions)
+            {
+                if (q.Id == Guid.Empty) q.Id = Guid.NewGuid();
+                foreach (var o in q.Options)
+                {
+                    if (o.Id == Guid.Empty) o.Id = Guid.NewGuid();
+                }
+            }
+        }
+        else
+        {
+            quiz.Questions = GenerateSampleQuestions();
+        }
 
         // Oluşturulan oyun bilgileri ve içindeki tüm sorular veritabanına kalıcı olarak kaydedilir.
         _quizRepository.Add(quiz);
@@ -46,8 +60,8 @@ public class QuizService : IQuizService
     // YENİ: AŞAMA 4 - Oyunun otomatik akışı (Zamanlayıcı) başlatılır.
     public void StartGameFlow(string pin)
     {
-        var quizLock = _gameStateRepository.GetQuizLock(pin);
-        lock (quizLock)
+        // Dağıtık (Redis) kilit mekanizması kullanılır. Blok bitince kilit salınır.
+        using (_gameStateRepository.AcquireQuizLock(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz != null && quiz.Questions.Count > 0)
@@ -80,9 +94,8 @@ public class QuizService : IQuizService
             if (!_gameStateRepository.TryAcquireTickLock(pin)) continue;
 
             var state = kvp.Value;
-            var quizLock = _gameStateRepository.GetQuizLock(pin);
             
-            lock (quizLock)
+            using (_gameStateRepository.AcquireQuizLock(pin))
             {
                 // YENİ VİZYON: Nesne değiştirilemez (Immutable)! 'with' ile yeni bir kopya üretilir.
                 var newState = state with { TimeRemaining = state.TimeRemaining - 1 };
@@ -182,8 +195,7 @@ public class QuizService : IQuizService
     // YENİ: Oyuncu oyuna katıldığında veya tekrar bağlandığında çalışır.
     public (Player? player, string? errorMessage) JoinOrRejoin(string pin, string nickname, string connectionId)
     {
-        var quizLock = _gameStateRepository.GetQuizLock(pin);
-        lock (quizLock)
+        using (_gameStateRepository.AcquireQuizLock(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz == null || !quiz.IsActive) return (null, "Geçersiz PIN veya oyun aktif değil.");
@@ -226,8 +238,7 @@ public class QuizService : IQuizService
         {
             _gameStateRepository.RemoveConnection(connectionId);
             var (pin, nickname) = info.Value;
-            var quizLock = _gameStateRepository.GetQuizLock(pin);
-            lock (quizLock)
+            using (_gameStateRepository.AcquireQuizLock(pin))
             {
                 var quiz = _quizRepository.GetByPin(pin);
                 if (quiz != null)
@@ -247,8 +258,7 @@ public class QuizService : IQuizService
 
     public void AbandonQuiz(string pin)
     {
-        var quizLock = _gameStateRepository.GetQuizLock(pin);
-        lock (quizLock)
+        using (_gameStateRepository.AcquireQuizLock(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz != null)
@@ -350,8 +360,7 @@ public class QuizService : IQuizService
     // Oyuncunun verdiği cevap kontrol edilir ve puanı hesaplanır.
     public (bool IsCorrect, int AnsweredCount, int TotalCount, int PointsEarned) SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId)
     {
-        var quizLock = _gameStateRepository.GetQuizLock(pin);
-        lock (quizLock)
+        using (_gameStateRepository.AcquireQuizLock(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz == null) return (false, 0, 0, 0);

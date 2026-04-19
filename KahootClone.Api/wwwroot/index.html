@@ -10,8 +10,27 @@
     <div class="container">
         <div id="lobbyArea">
             <h1 class="display-3 fw-bold text-primary mb-4">Bilgi Yarışması</h1>
-            <button id="btnCreateGame" class="btn btn-success btn-lg px-5 py-3 fs-3 shadow">Yeni Oyun Kur</button>
             
+            <div id="gameSetupArea" class="mb-4 text-start bg-white p-4 rounded shadow-sm mx-auto" style="max-width: 600px;">
+                <div class="mb-3">
+                    <label for="quizTitle" class="form-label fw-bold">Oyun Adı:</label>
+                    <input type="text" class="form-control form-control-lg" id="quizTitle" placeholder="Örn: Genel Kültür Testi" value="Genel Kültür">
+                </div>
+                <div class="mb-3">
+                    <label for="markdownFile" class="form-label fw-bold">Veya Dosya Yükleyin (.md / .txt):</label>
+                    <input class="form-control" type="file" id="markdownFile" accept=".md,.txt">
+                </div>
+                <div class="mb-3">
+                    <label for="markdownInput" class="form-label fw-bold">Soruları Buraya Yapıştırın (Markdown):</label>
+                    <textarea class="form-control" id="markdownInput" rows="6" placeholder="# Soru: Türkiye'nin başkenti neresidir?&#10;Süre: 20&#10;- İstanbul&#10;- Ankara (*)&#10;- İzmir&#10;- Bursa"></textarea>
+                    <div class="form-text">Doğru şıkkın sonuna (*) işareti koymayı unutmayın.</div>
+                </div>
+                <button type="button" class="btn btn-secondary w-100 mb-2 fw-bold" onclick="parseMarkdown()">1. Soruları Kontrol Et</button>
+                <div id="parseResult" class="text-center fw-bold mt-2 mb-3"></div>
+                <button id="btnCreateGame" class="btn btn-success btn-lg w-100 fs-3 shadow" disabled>2. Yeni Oyun Kur</button>
+                <button id="btnQuickStart" class="btn btn-outline-info btn-lg w-100 mt-2 fs-5 shadow-sm">🚀 Hızlı Başlat (Örnek Sorularla)</button>
+            </div>
+
             <div id="pinArea" class="mt-4" style="display: none;">
                 <h2 class="text-muted">Oyuncuların girmesi gereken PIN:</h2>
                 <h1 id="pinDisplay" class="display-1 fw-bold text-danger mt-3" style="letter-spacing: 10px;"></h1>
@@ -55,8 +74,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script>
         let currentPin = "";
+        let parsedQuestions = []; // YENİ: Dışarıdan gelen soruları hafızada tutar
+
         // AŞAMA 5: SignalR bağlantısına JWT Token gönderimi eklendi
-        const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub", { accessTokenFactory: () => sessionStorage.getItem('kahootCloneToken') }).build();
+        const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub", { 
+            skipNegotiation: true,
+            transport: signalR.HttpTransportType.WebSockets,
+            accessTokenFactory: () => sessionStorage.getItem('kahootCloneToken') 
+        }).build();
 
         connection.on("PlayerJoined", (nickname) => {
             const list = document.getElementById("playersList");
@@ -163,7 +188,8 @@
             }
 
             // --- Arayüzü Geri Yükle ---
-            document.getElementById("btnCreateGame").style.display = "none";
+            const setupArea = document.getElementById("gameSetupArea");
+            if(setupArea) setupArea.style.display = "none";
             document.getElementById("pinArea").style.display = "block";
             document.getElementById("playersArea").style.display = "block";
             document.getElementById("pinDisplay").textContent = state.quiz.pin;
@@ -223,7 +249,8 @@
 
             // Yeni PIN'i göster
             document.getElementById("pinDisplay").textContent = currentPin;
-            document.getElementById("btnCreateGame").style.display = "none";
+            const setupArea = document.getElementById("gameSetupArea");
+            if(setupArea) setupArea.style.display = "none";
             document.getElementById("pinArea").style.display = "block";
             document.getElementById("playersArea").style.display = "block";
 
@@ -254,26 +281,138 @@
             });
         });
 
+        // YENİ: Markdown metnini API'ye gönderip doğrulatır ve nesneye çevirir.
+        async function parseMarkdown() {
+            const markdownText = document.getElementById('markdownInput').value;
+            const resultDiv = document.getElementById('parseResult');
+            const btnCreate = document.getElementById('btnCreateGame');
+            
+            if (!markdownText || markdownText.trim() === '') {
+                resultDiv.className = "text-danger fw-bold mt-2 mb-3";
+                resultDiv.innerText = "Lütfen önce metin kutusuna soru yapıştırın.";
+                btnCreate.disabled = true;
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/Quiz/parse-markdown', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ markdownText: markdownText })
+                });
+
+                if (response.ok) {
+                    parsedQuestions = await response.json();
+                    if (parsedQuestions.length > 0) {
+                        resultDiv.className = "text-success fw-bold mt-2 mb-3";
+                        resultDiv.innerText = `Başarılı! Toplam ${parsedQuestions.length} soru algılandı. Oyunu kurabilirsiniz.`;
+                        btnCreate.disabled = false; // Oyunu Kur butonunu aktif et
+                    } else {
+                        resultDiv.className = "text-danger fw-bold mt-2 mb-3";
+                        resultDiv.innerText = "Soru bulunamadı. Lütfen formatı kontrol edin.";
+                        btnCreate.disabled = true;
+                    }
+                } else {
+                    const error = await response.json();
+                    resultDiv.className = "text-danger fw-bold mt-2 mb-3";
+                    resultDiv.innerText = "Ayrıştırma hatası: " + (error.Message || "Bilinmeyen bir hata oluştu.");
+                    btnCreate.disabled = true;
+                }
+            } catch (err) {
+                console.error(err);
+                resultDiv.className = "text-danger fw-bold mt-2 mb-3";
+                resultDiv.innerText = "Sunucuya bağlanılamadı.";
+                btnCreate.disabled = true;
+            }
+        }
+
+        // YENİ: Dosya seçildiğinde içeriğini okur, metin kutusuna yazar ve otomatik kontrol eder.
+        document.getElementById("markdownFile").addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                // Okunan metni kutuya yapıştır
+                document.getElementById('markdownInput').value = event.target.result;
+                // Otomatik olarak ayrıştırma (parse) işlemini tetikle
+                parseMarkdown();
+            };
+            reader.readAsText(file);
+        });
+
         document.getElementById("btnCreateGame").addEventListener("click", async () => {
-            const response = await fetch("/api/quiz/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: "Genel Kültür" }) });
+            const title = document.getElementById("quizTitle").value || "Genel Kültür";
+            
+            const payload = {
+                title: title,
+                questions: parsedQuestions
+            };
+
+            const response = await fetch("/api/quiz/create", { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify(payload) 
+            });
+
             if (response.ok) {
                 const data = await response.json();
                 currentPin = data.pin;
                 sessionStorage.setItem('kahootClonePin', currentPin);
                 sessionStorage.setItem('kahootCloneToken', data.token); // AŞAMA 5: Token tarayıcı hafızasına kaydedildi
                 document.getElementById("pinDisplay").textContent = currentPin;
-                document.getElementById("btnCreateGame").style.display = "none";
+                
+                document.getElementById("gameSetupArea").style.display = "none";
                 document.getElementById("pinArea").style.display = "block";
                 document.getElementById("playersArea").style.display = "block";
 
                 // AŞAMA 5: Token ile kimlik doğrulaması yapmak için bağlantı yeniden başlatılır
-                await connection.stop();
+                if (connection.state !== signalR.HubConnectionState.Disconnected) {
+                    await connection.stop();
+                }
+                await connection.start();
+                await connection.invoke("JoinAsManager", currentPin.toString());
+            }
+        });
+
+        // YENİ: Geliştirme ve test aşamasında zaman kazanmak için Markdown adımlarını atlar.
+        document.getElementById("btnQuickStart").addEventListener("click", async () => {
+            const title = document.getElementById("quizTitle").value || "Geliştirici Testi";
+            
+            const payload = {
+                title: title,
+                questions: [] // Boş liste gönderilir, böylece Backend gömülü örnek soruları (GenerateSampleQuestions) kullanır.
+            };
+
+            const response = await fetch("/api/quiz/create", { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify(payload) 
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                currentPin = data.pin;
+                sessionStorage.setItem('kahootClonePin', currentPin);
+                sessionStorage.setItem('kahootCloneToken', data.token);
+                document.getElementById("pinDisplay").textContent = currentPin;
+                
+                document.getElementById("gameSetupArea").style.display = "none";
+                document.getElementById("pinArea").style.display = "block";
+                document.getElementById("playersArea").style.display = "block";
+
+                if (connection.state !== signalR.HubConnectionState.Disconnected) {
+                    await connection.stop();
+                }
                 await connection.start();
                 await connection.invoke("JoinAsManager", currentPin.toString());
             }
         });
 
         document.getElementById("btnStartGame").addEventListener("click", async () => {
+            if (connection.state !== signalR.HubConnectionState.Connected) { 
+                alert("Sunucu ile bağlantınız koptu. Lütfen sayfayı yenileyin."); return; 
+            }
             await connection.invoke("StartGame", currentPin.toString());
         });
 
@@ -281,16 +420,23 @@
             if(confirm("Oyunu erken bitirmek istediğinize emin misiniz?")) {
                 sessionStorage.removeItem('kahootClonePin');
                 sessionStorage.removeItem('kahootCloneToken');
+                if (connection.state !== signalR.HubConnectionState.Connected) return;
                 await connection.invoke("EndGame", currentPin.toString());
             }
         });
 
         document.getElementById("btnPlayAgain").addEventListener("click", async () => {
+            if (connection.state !== signalR.HubConnectionState.Connected) { 
+                alert("Sunucu ile bağlantınız koptu. Lütfen sayfayı yenileyin."); return; 
+            }
             await connection.invoke("PlayAgain", currentPin);
         });
 
         document.getElementById("btnResetLobby").addEventListener("click", async () => {
             if (confirm("Mevcut lobi iptal edilecek ve tüm oyuncular atılacak. Emin misiniz?")) {
+                if (connection.state !== signalR.HubConnectionState.Connected) { 
+                    alert("Sunucu ile bağlantınız koptu. Lütfen sayfayı yenileyin."); return; 
+                }
                 await connection.invoke("ResetLobby", currentPin);
             }
         });
@@ -298,9 +444,11 @@
         // Sayfa yüklendiğinde çalışacak ana fonksiyon
         async function initialize() {
             try {
-                await connection.start();
+                if (connection.state === signalR.HubConnectionState.Disconnected) {
+                    await connection.start();
+                }
                 const storedPin = sessionStorage.getItem('kahootClonePin');
-                if (storedPin) {
+                if (storedPin && connection.state === signalR.HubConnectionState.Connected) {
                     currentPin = storedPin;
                     await connection.invoke("RejoinAsManager", currentPin);
                 }

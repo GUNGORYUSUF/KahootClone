@@ -1,26 +1,62 @@
+using System;
+using System.Threading;
 using System.Text.Json;
 using KahootClone.Application.Interfaces;
 using StackExchange.Redis;
-using System.Collections.Concurrent;
 
 namespace KahootClone.Infrastructure.Repositories;
+
+// YENİ: Redis üzerinden Redlock (Dağıtık Kilit) mekanizması
+public class RedisDistributedLock : IDisposable
+{
+    private readonly IDatabase _db;
+    private readonly string _key;
+    private readonly string _token;
+
+    public RedisDistributedLock(IDatabase db, string pin)
+    {
+        _db = db;
+        _key = $"quiz_lock:{pin}";
+        _token = Guid.NewGuid().ToString(); // Kilidi kimin aldığını belirtir
+
+        var timeout = TimeSpan.FromSeconds(10); 
+        var start = DateTime.UtcNow;
+
+        // Kilidi alana kadar tekrar dene (Spinning)
+        while (DateTime.UtcNow - start < timeout)
+        {
+            if (_db.LockTake(_key, _token, TimeSpan.FromSeconds(5)))
+            {
+                return; // Başarılı
+            }
+            Thread.Sleep(50);
+        }
+        throw new TimeoutException($"PIN {pin} için dağıtık kilit alınamadı.");
+    }
+
+    public void Dispose()
+    {
+        _db.LockRelease(_key, _token);
+    }
+}
 
 // AŞAMA 6: RAM yerine Redis (Dağıtık Önbellek) kullanan durum yönetimi sınıfı.
 public class RedisGameStateRepository : IGameStateRepository
 {
     private readonly IDatabase _db;
     
-    // Not: Eşzamanlılık kilitleri (lock) C# doğası gereği senkron çalışır. 
-    // Tam dağıtık kilit (RedLock) asenkron mimari gerektirdiği için kilitleri şimdilik yerel (In-Memory) tutuyoruz.
-    private static readonly ConcurrentDictionary<string, object> _localLocks = new();
-
     public RedisGameStateRepository(IConnectionMultiplexer redis)
     {
         _db = redis.GetDatabase();
     }
 
-    public object GetQuizLock(string pin) => _localLocks.GetOrAdd(pin, _ => new object());
-    public void RemoveQuizLock(string pin) => _localLocks.TryRemove(pin, out _);
+    // In-memory objesi yerine, Disposable Redis kilit nesnesini döndürüyoruz.
+    public IDisposable AcquireQuizLock(string pin) => new RedisDistributedLock(_db, pin);
+    
+    public void RemoveQuizLock(string pin) 
+    {
+        // Dispose anında LockRelease yapıldığı için özel bir temizliğe gerek kalmadı.
+    }
 
     public bool TryAcquireTickLock(string pin)
     {

@@ -11,7 +11,7 @@ public record GameStateTracker
 
 public interface IGameStateRepository
 {
-    object GetQuizLock(string pin);
+    IDisposable AcquireQuizLock(string pin);
     void RemoveQuizLock(string pin);
     bool TryAcquireTickLock(string pin);
 

@@ -35,7 +35,7 @@
                     placeholder="PIN Kodu" maxlength="6">
                 <input type="text" id="nicknameInput" class="form-control form-control-lg mb-4 text-center"
                     placeholder="Takma Adın">
-                <button id="btnJoin" class="btn btn-dark btn-lg w-100 fw-bold">Giriş Yap</button>
+                <button id="btnJoin" class="btn btn-dark btn-lg w-100 fw-bold" disabled>Bağlanıyor...</button>
             </div>
         </div>
 
@@ -88,8 +88,24 @@
         let pendingResult = { isCorrect: null, points: 0 };
         let hasJoinError = false;
 
-        const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub").build();
-        connection.start().catch(err => console.error(err));
+        const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub", {
+            skipNegotiation: true,
+            transport: signalR.HttpTransportType.WebSockets
+        }).build();
+        
+        // YENİ: Bağlantı kurulana kadar butonu kilitli tutar, kurulduğunda açar.
+        async function startConnection() {
+            try {
+                await connection.start();
+                const btnJoin = document.getElementById("btnJoin");
+                btnJoin.disabled = false;
+                btnJoin.innerText = "Giriş Yap";
+            } catch (err) {
+                console.error("SignalR Bağlantı Hatası:", err);
+                document.getElementById("btnJoin").innerText = "Bağlantı Hatası (Sayfayı Yenile)";
+            }
+        }
+        startConnection();
 
         connection.on("Error", (errorMessage) => {
             // Hata geldiğinde bayrağı kaldır ve uyarıyı göster.
@@ -98,6 +114,11 @@
         });
 
         document.getElementById("btnJoin").addEventListener("click", async () => {
+            if (connection.state !== signalR.HubConnectionState.Connected) {
+                alert("Sunucu ile bağlantınız koptu. Lütfen sayfayı yenileyin.");
+                return;
+            }
+
             currentPin = document.getElementById("pinInput").value;
             currentNickname = document.getElementById("nicknameInput").value;
 
