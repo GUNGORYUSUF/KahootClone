@@ -18,9 +18,13 @@ public class QuizService : IQuizService
     }
     public string CreateQuiz(Quiz quiz)
     {
-        // PIN kodunun benzersiz olmasını sağlamak için bir döngü eklenebilir, ancak mevcut olasılıkla çakışma riski çok düşüktür.
-        // AŞAMA 1: Tahmin edilebilir Random yerine kriptografik olarak güvenli PIN üretici (100000 ile 999999 arası)
-        string pin = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+        string pin;
+
+        // PIN kodunun benzersiz olmasını sağlamak için (Unique Check) veritabanı kontrolü yapılıyor.
+        do
+        {
+            pin = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+        } while (_quizRepository.GetByPin(pin) != null);
         
         quiz.Pin = pin;
         quiz.IsActive = true;
