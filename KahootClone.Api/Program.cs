@@ -58,8 +58,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // AŞAMA 5: JWT Kimlik Doğrulama (Authentication) Servisleri
-// Geliştirme ortamı için geçici bir gizli anahtar (Secret Key) belirlenir.
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "KahootCloneSuperSecretKey_1234567890123456";
+// JWT Anahtarı appsettings.json veya Environment Variables üzerinden (Örn: Docker) okunmalıdır.
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new InvalidOperationException("Kritik Güvenlik Hatası: JWT Secret Key (Jwt:Key) yapılandırmalarda bulunamadı!");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

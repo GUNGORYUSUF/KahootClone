@@ -11,9 +11,9 @@ public record GameStateTracker
 
 public interface IGameStateRepository
 {
-    IDisposable AcquireQuizLock(string pin);
+    Task<IAsyncDisposable> AcquireQuizLockAsync(string pin);
     void RemoveQuizLock(string pin);
-    bool TryAcquireTickLock(string pin);
+    Task<bool> TryAcquireTickLockAsync(string pin);
 
     GameStateTracker? GetGameState(string pin);
     void SetGameState(string pin, GameStateTracker state);

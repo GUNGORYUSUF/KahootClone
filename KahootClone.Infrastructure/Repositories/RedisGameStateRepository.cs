@@ -2,41 +2,47 @@ using System;
 using System.Threading;
 using System.Text.Json;
 using KahootClone.Application.Interfaces;
+using System.Threading.Tasks;
 using StackExchange.Redis;
 
 namespace KahootClone.Infrastructure.Repositories;
 
 // YENİ: Redis üzerinden Redlock (Dağıtık Kilit) mekanizması
-public class RedisDistributedLock : IDisposable
+public class RedisDistributedLock : IAsyncDisposable
 {
     private readonly IDatabase _db;
     private readonly string _key;
     private readonly string _token;
 
-    public RedisDistributedLock(IDatabase db, string pin)
+    private RedisDistributedLock(IDatabase db, string key, string token)
     {
         _db = db;
-        _key = $"quiz_lock:{pin}";
-        _token = Guid.NewGuid().ToString(); // Kilidi kimin aldığını belirtir
+        _key = key;
+        _token = token;
+    }
 
+    public static async Task<IAsyncDisposable> AcquireAsync(IDatabase db, string pin)
+    {
+        var key = $"quiz_lock:{pin}";
+        var token = Guid.NewGuid().ToString(); // Kilidi kimin aldığını belirtir
         var timeout = TimeSpan.FromSeconds(10); 
         var start = DateTime.UtcNow;
 
         // Kilidi alana kadar tekrar dene (Spinning)
         while (DateTime.UtcNow - start < timeout)
         {
-            if (_db.LockTake(_key, _token, TimeSpan.FromSeconds(5)))
+            if (await db.LockTakeAsync(key, token, TimeSpan.FromSeconds(5)))
             {
-                return; // Başarılı
+                return new RedisDistributedLock(db, key, token); // Başarılı
             }
-            Thread.Sleep(50);
+            await Task.Delay(50); // Sistemi dondurmayan (non-blocking) bekleme
         }
         throw new TimeoutException($"PIN {pin} için dağıtık kilit alınamadı.");
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        _db.LockRelease(_key, _token);
+        await _db.LockReleaseAsync(_key, _token);
     }
 }
 
@@ -50,18 +56,18 @@ public class RedisGameStateRepository : IGameStateRepository
         _db = redis.GetDatabase();
     }
 
-    // In-memory objesi yerine, Disposable Redis kilit nesnesini döndürüyoruz.
-    public IDisposable AcquireQuizLock(string pin) => new RedisDistributedLock(_db, pin);
+    // In-memory objesi yerine, Async Disposable Redis kilit nesnesini döndürüyoruz.
+    public Task<IAsyncDisposable> AcquireQuizLockAsync(string pin) => RedisDistributedLock.AcquireAsync(_db, pin);
     
     public void RemoveQuizLock(string pin) 
     {
         // Dispose anında LockRelease yapıldığı için özel bir temizliğe gerek kalmadı.
     }
 
-    public bool TryAcquireTickLock(string pin)
+    public Task<bool> TryAcquireTickLockAsync(string pin)
     {
         // SETNX: Anahtar (Key) Redis'te yoksa oluşturur ve true döner. 800ms sonra otomatik silinir.
-        return _db.StringSet($"tick_lock:{pin}", "locked", TimeSpan.FromMilliseconds(800), When.NotExists);
+        return _db.StringSetAsync($"tick_lock:{pin}", "locked", TimeSpan.FromMilliseconds(800), When.NotExists);
     }
 
     public GameStateTracker? GetGameState(string pin)

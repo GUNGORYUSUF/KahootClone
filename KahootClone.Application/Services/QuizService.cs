@@ -60,10 +60,10 @@ public class QuizService : IQuizService
     }
 
     // YENİ: AŞAMA 4 - Oyunun otomatik akışı (Zamanlayıcı) başlatılır.
-    public void StartGameFlow(string pin)
+    public async Task StartGameFlowAsync(string pin)
     {
         // Dağıtık (Redis) kilit mekanizması kullanılır. Blok bitince kilit salınır.
-        using (_gameStateRepository.AcquireQuizLock(pin))
+        await using (await _gameStateRepository.AcquireQuizLockAsync(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz != null && quiz.Questions.Count > 0)
@@ -85,22 +85,23 @@ public class QuizService : IQuizService
         _gameStateRepository.RemoveGameState(pin);
     }
 
-    public List<GameTickEvent> ProcessTicks()
+    public async Task<List<GameTickEvent>> ProcessTicksAsync()
     {
-        var events = new List<GameTickEvent>();
+        var events = new ConcurrentBag<GameTickEvent>();
         try
         {
-            foreach (var kvp in _gameStateRepository.GetAllActiveGames())
+            var activeGames = _gameStateRepository.GetAllActiveGames().ToList();
+            var tasks = activeGames.Select(async kvp =>
             {
                 var pin = kvp.Key;
                 try
                 {
                     // DAĞITIK SİSTEM KORUMASI: Bu saniye (Tick) için kilit alınamazsa, bu oyunu şu an başka bir sunucu işliyor demektir.
-                    if (!_gameStateRepository.TryAcquireTickLock(pin)) continue;
+                    if (!await _gameStateRepository.TryAcquireTickLockAsync(pin)) return;
 
                     var state = kvp.Value;
                     
-                    using (_gameStateRepository.AcquireQuizLock(pin))
+                    await using (await _gameStateRepository.AcquireQuizLockAsync(pin))
                     {
                         // YENİ VİZYON: Nesne değiştirilemez (Immutable)! 'with' ile yeni bir kopya üretilir.
                         var newState = state with { TimeRemaining = state.TimeRemaining - 1 };
@@ -126,16 +127,17 @@ public class QuizService : IQuizService
                 {
                     Console.WriteLine($"[HATA] Oyun dongusu (Tick) islenirken {pin} numarali oyunda hata olustu: {ex.Message}");
                 }
-            }
+            });
+            await Task.WhenAll(tasks);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[HATA] ProcessTicks ana dongusunde beklenmeyen kritik hata olustu: {ex.Message}");
         }
-        return events;
+        return events.ToList();
     }
 
-    private GameStateTracker ProcessQuestionPhase(string pin, GameStateTracker state, List<GameTickEvent> events)
+    private GameStateTracker ProcessQuestionPhase(string pin, GameStateTracker state, ConcurrentBag<GameTickEvent> events)
     {
         if (state.TimeRemaining <= 0)
         {
@@ -166,7 +168,7 @@ public class QuizService : IQuizService
         }
     }
 
-    private GameStateTracker ProcessTransitionPhase(string pin, GameStateTracker state, List<GameTickEvent> events)
+    private GameStateTracker ProcessTransitionPhase(string pin, GameStateTracker state, ConcurrentBag<GameTickEvent> events)
     {
         if (state.TimeRemaining <= 0)
         {
@@ -214,12 +216,12 @@ public class QuizService : IQuizService
     }
 
     // YENİ: Oyuncu oyuna katıldığında veya tekrar bağlandığında çalışır.
-    public (Player? player, string? errorMessage) JoinOrRejoin(string pin, string nickname, string connectionId)
+    public async Task<(Player? player, string? errorMessage, string? sessionToken)> JoinOrRejoinAsync(string pin, string nickname, string connectionId, string? sessionToken = null)
     {
-        using (_gameStateRepository.AcquireQuizLock(pin))
+        await using (await _gameStateRepository.AcquireQuizLockAsync(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
-            if (quiz == null || !quiz.IsActive) return (null, "Geçersiz PIN veya oyun aktif değil.");
+            if (quiz == null || !quiz.IsActive) return (null, "Geçersiz PIN veya oyun aktif değil.", null);
 
             var player = quiz.Players.FirstOrDefault(p => p.Nickname == nickname);
             
@@ -230,15 +232,14 @@ public class QuizService : IQuizService
                 quiz.Players.Add(player);
             _gameStateRepository.AddConnection(connectionId, pin, nickname);
                 _quizRepository.Update(quiz);
-                return (player, null);
+                return (player, null, player.Id.ToString());
             }
             else
             {
-                // Takma ad zaten mevcut. Oyuncunun aktif olup olmadığını kontrol et.
-                if (!string.IsNullOrEmpty(player.ConnectionId))
+                // Güvenlik Kontrolü (Session Hijacking): Gelen token oyuncunun gerçek ID'si ile eşleşiyor mu?
+                if (sessionToken != player.Id.ToString())
                 {
-                    // Oyuncu zaten aktif (bağlı). Yeni girişi reddet.
-                    return (null, "Bu takma ad zaten kullanılıyor.");
+                    return (null, "Bu takma ad şu anda başka bir oyuncu tarafından kullanılıyor.", null);
                 }
                 else
                 {
@@ -246,20 +247,20 @@ public class QuizService : IQuizService
                     player.ConnectionId = connectionId;
                 _gameStateRepository.AddConnection(connectionId, pin, nickname);
                     _quizRepository.Update(quiz);
-                    return (player, null);
+                return (player, null, player.Id.ToString());
                 }
             }
         }
     }
 
-    public (string? Pin, string? Nickname) UnregisterPlayer(string connectionId)
+    public async Task<(string? Pin, string? Nickname)> UnregisterPlayerAsync(string connectionId)
     {
         var info = _gameStateRepository.GetConnection(connectionId);
         if (info != null)
         {
             _gameStateRepository.RemoveConnection(connectionId);
             var (pin, nickname) = info.Value;
-            using (_gameStateRepository.AcquireQuizLock(pin))
+            await using (await _gameStateRepository.AcquireQuizLockAsync(pin))
             {
                 var quiz = _quizRepository.GetByPin(pin);
                 if (quiz != null)
@@ -277,9 +278,9 @@ public class QuizService : IQuizService
         return (null, null);
     }
 
-    public void AbandonQuiz(string pin)
+    public async Task AbandonQuizAsync(string pin)
     {
-        using (_gameStateRepository.AcquireQuizLock(pin))
+        await using (await _gameStateRepository.AcquireQuizLockAsync(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz != null)
@@ -297,6 +298,9 @@ public class QuizService : IQuizService
         }
         // Clean up in-memory state
         _gameStateRepository.RemoveQuizLock(pin);
+        
+        // YENİ DÜZELTME: Oyun terk edildiğinde aktif oyunlar listesinden (Redis) tamamen çıkarıyoruz.
+        _gameStateRepository.RemoveGameState(pin);
     }
 
     public object? GetFullGameState(string pin)
@@ -379,9 +383,9 @@ public class QuizService : IQuizService
         };
     }
     // Oyuncunun verdiği cevap kontrol edilir ve puanı hesaplanır.
-    public (bool IsCorrect, int AnsweredCount, int TotalCount, int PointsEarned) SubmitAnswer(string pin, string nickname, Guid questionId, Guid optionId)
+    public async Task<(bool IsCorrect, int AnsweredCount, int TotalCount, int PointsEarned)> SubmitAnswerAsync(string pin, string nickname, Guid questionId, Guid optionId)
     {
-        using (_gameStateRepository.AcquireQuizLock(pin))
+        await using (await _gameStateRepository.AcquireQuizLockAsync(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz == null) return (false, 0, 0, 0);

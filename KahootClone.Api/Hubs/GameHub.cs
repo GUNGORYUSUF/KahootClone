@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace KahootClone.Api.Hubs;
 
-public class GameHub : Hub
+public class GameHub : Hub<IGameClient>
 {
     private readonly IQuizService _quizService;
 
@@ -22,7 +22,7 @@ public class GameHub : Hub
         var quiz = _quizService.GetQuizByPin(pin);
         if (quiz == null || !quiz.IsActive)
         {
-            await Clients.Caller.SendAsync("Error", "Geçersiz PIN veya oyun aktif değil.");
+            await Clients.Caller.Error("Geçersiz PIN veya oyun aktif değil.");
             return;
         }
         await Groups.AddToGroupAsync(Context.ConnectionId, pin);
@@ -40,38 +40,42 @@ public class GameHub : Hub
         if (fullState != null)
         {
             // Durum bilgisini sadece yeniden bağlanan yöneticiye gönder.
-            await Clients.Caller.SendAsync("RestoreGameState", fullState);
+            await Clients.Caller.RestoreGameState(fullState);
         }
         else
         {
-            await Clients.Caller.SendAsync("Error", "Oyun bulunamadı veya sona erdi.");
+            await Clients.Caller.Error("Oyun bulunamadı veya sona erdi.");
         }
     }
 
-    public async Task JoinGame(string pin, string nickname)
+    public async Task<bool> JoinGame(string pin, string nickname, string? sessionToken = null)
     {
         // Oyuncuyu Backend'e kaydet veya var olan oyuncunun bağlantısını güncelle
-        var (player, errorMessage) = _quizService.JoinOrRejoin(pin, nickname, Context.ConnectionId);
+        var (player, errorMessage, newSessionToken) = await _quizService.JoinOrRejoinAsync(pin, nickname, Context.ConnectionId, sessionToken);
         
         if (player == null)
         {
-            await Clients.Caller.SendAsync("Error", errorMessage ?? "Bilinmeyen bir hata oluştu.");
-            return;
+            await Clients.Caller.Error(errorMessage ?? "Bilinmeyen bir hata oluştu.");
+            return false;
         }
 
+        // Yeni veya mevcut oturum token'ını öğrenciye gönder
+        await Clients.Caller.SessionTokenReceived(newSessionToken!);
+
         await Groups.AddToGroupAsync(Context.ConnectionId, pin);
-        await Clients.Group(pin).SendAsync("PlayerJoined", nickname);
+        await Clients.Group(pin).PlayerJoined(nickname);
+        return true;
     }
 
     // YENİ: Oyuncu veya yöneticinin bağlantısı koptuğunda tetiklenir.
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var (pin, nickname) = _quizService.UnregisterPlayer(Context.ConnectionId);
+        var (pin, nickname) = await _quizService.UnregisterPlayerAsync(Context.ConnectionId);
 
         if (pin != null && nickname != null)
         {
             // Diğer oyunculara ve yöneticiye oyuncunun ayrıldığı bilgisini gönder.
-            await Clients.Group(pin).SendAsync("PlayerLeft", nickname);
+            await Clients.Group(pin).PlayerLeft(nickname);
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -98,8 +102,8 @@ public class GameHub : Hub
             };
 
             // AŞAMA 4: Oyun sunucu döngüsüne eklenir
-            _quizService.StartGameFlow(pin);
-            await Clients.Group(pin).SendAsync("ReceiveQuestion", secureQuestionPacket);
+            await _quizService.StartGameFlowAsync(pin);
+            await Clients.Group(pin).ReceiveQuestion(secureQuestionPacket);
         }
     }
 
@@ -109,7 +113,7 @@ public class GameHub : Hub
     {
         _quizService.StopGameFlow(pin); // Döngüden çıkar.
         var quiz = _quizService.GetQuizByPin(pin);
-        await Clients.Group(pin).SendAsync("GameEnded", quiz?.Players.OrderByDescending(p => p.Score).ToList());
+        await Clients.Group(pin).GameEnded(quiz?.Players.OrderByDescending(p => p.Score).ToList()!);
     }
 
     // YENİ: Sorular arasında (veya istenilen anda) liderlik tablosunu yansıtmak için eklendi.
@@ -117,7 +121,7 @@ public class GameHub : Hub
     public async Task ShowLeaderboard(string pin)
     {
         var quiz = _quizService.GetQuizByPin(pin);
-        await Clients.Group(pin).SendAsync("UpdateLeaderboard", quiz?.Players.OrderByDescending(p => p.Score).ToList());
+        await Clients.Group(pin).UpdateLeaderboard(quiz?.Players.OrderByDescending(p => p.Score).ToList()!);
     }
 
     // YENİ: Yönetici lobiyi bekleme ekranındayken iptal eder.
@@ -125,9 +129,9 @@ public class GameHub : Hub
     public async Task ResetLobby(string pin)
     {
         // Herkese lobinin kapandığını bildir.
-        await Clients.Group(pin).SendAsync("LobbyReset");
+        await Clients.Group(pin).LobbyReset();
         // Sunucu tarafındaki oyunu ve durumu temizle.
-        _quizService.AbandonQuiz(pin);
+        await _quizService.AbandonQuizAsync(pin);
     }
 
     // YENİ: Oyun bittiğinde, yönetici aynı oyuncularla yeni bir oyun başlatabilir.
@@ -149,7 +153,7 @@ public class GameHub : Hub
         };
 
         // Eski oyundaki tüm istemcilere (yönetici dahil) yeni oyuna geçme komutu gönderilir.
-        await Clients.Group(oldPin).SendAsync("RedirectToNewGame", payload);
+        await Clients.Group(oldPin).RedirectToNewGame(payload);
     }
 
     public async Task SubmitAnswer(string pin, string nickname, string questionId, string optionId)
@@ -157,16 +161,16 @@ public class GameHub : Hub
         // Girdi Doğrulaması (Validation): Geçersiz bir ID gelirse sunucunun çökmesi engellenir.
         if (!Guid.TryParse(questionId, out Guid qId) || !Guid.TryParse(optionId, out Guid oId))
         {
-            await Clients.Caller.SendAsync("AnswerResult", false);
+            await Clients.Caller.AnswerResult(false);
             return;
         }
 
-        var (isCorrect, answeredCount, totalCount, points) = _quizService.SubmitAnswer(pin, nickname, qId, oId);
+        var (isCorrect, answeredCount, totalCount, points) = await _quizService.SubmitAnswerAsync(pin, nickname, qId, oId);
         
         // Cevabı gönderen öğrenciye sonucunu ve kazandığı puanı bildir.
-        await Clients.Caller.SendAsync("AnswerResult", new { IsCorrect = isCorrect, Points = points });
+        await Clients.Caller.AnswerResult(new { IsCorrect = isCorrect, Points = points });
 
         // Yöneticiye (ve tüm gruba) o anki cevaplanma durumunu duyur.
-        await Clients.Group(pin).SendAsync("UpdateAnswerCount", new { AnsweredCount = answeredCount, TotalCount = totalCount });
+        await Clients.Group(pin).UpdateAnswerCount(new { AnsweredCount = answeredCount, TotalCount = totalCount });
     }
 }

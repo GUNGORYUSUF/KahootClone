@@ -21,8 +21,8 @@ public class QuizServiceTests
         // Ortak bağımlılıklar her test öncesi sıfırlanarak izolasyon sağlanır (Test Isolation).
         _mockQuizRepository = new Mock<IQuizRepository>();
         _mockGameStateRepository = new Mock<IGameStateRepository>();
-        _mockGameStateRepository.Setup(r => r.TryAcquireTickLock(It.IsAny<string>())).Returns(true);
-        _mockGameStateRepository.Setup(r => r.AcquireQuizLock(It.IsAny<string>())).Returns(new Mock<IDisposable>().Object);
+        _mockGameStateRepository.Setup(r => r.TryAcquireTickLockAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockGameStateRepository.Setup(r => r.AcquireQuizLockAsync(It.IsAny<string>())).ReturnsAsync(new Mock<IAsyncDisposable>().Object);
         _mockMessagePublisher = new Mock<IMessagePublisher>();
         _quizService = new QuizService(_mockQuizRepository.Object, _mockGameStateRepository.Object, _mockMessagePublisher.Object);
     }
@@ -94,13 +94,13 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void JoinOrRejoin_InvalidPin_ReturnsErrorMessage()
+    public async Task JoinOrRejoin_InvalidPin_ReturnsErrorMessage()
     {
         // Arrange (Hazırlık)
         _mockQuizRepository.Setup(repo => repo.GetByPin(It.IsAny<string>())).Returns((Quiz?)null);
 
         // Act (Eylem)
-        var (player, errorMessage) = _quizService.JoinOrRejoin("invalid_pin", "Oyuncu1", "conn_id_1");
+        var (player, errorMessage, _) = await _quizService.JoinOrRejoinAsync("invalid_pin", "Oyuncu1", "conn_id_1");
 
         // Assert (Doğrulama)
         Assert.Null(player);
@@ -108,7 +108,7 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void JoinOrRejoin_NewPlayer_AddsPlayerAndReturnsSuccess()
+    public async Task JoinOrRejoin_NewPlayer_AddsPlayerAndReturnsSuccess()
     {
         // Arrange (Hazırlık)
         string pin = "123456";
@@ -116,7 +116,7 @@ public class QuizServiceTests
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
 
         // Act (Eylem)
-        var (player, errorMessage) = _quizService.JoinOrRejoin(pin, "YeniOyuncu", "conn_id_1");
+        var (player, errorMessage, _) = await _quizService.JoinOrRejoinAsync(pin, "YeniOyuncu", "conn_id_1");
 
         // Assert (Doğrulama)
         Assert.Null(errorMessage);
@@ -127,25 +127,25 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void JoinOrRejoin_ExistingActivePlayer_ReturnsErrorMessage()
+    public async Task JoinOrRejoin_ExistingPlayerWithWrongToken_ReturnsErrorMessage()
     {
         // Arrange (Hazırlık)
         string pin = "123456";
-        var existingPlayer = new Player { Nickname = "KopyaOyuncu", ConnectionId = "conn_id_1" };
+        var existingPlayer = new Player { Id = Guid.NewGuid(), Nickname = "KopyaOyuncu", ConnectionId = "conn_id_1" };
         var quiz = new Quiz { Pin = pin, IsActive = true, Players = new List<Player> { existingPlayer } };
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
 
         // Act (Eylem)
-        var (player, errorMessage) = _quizService.JoinOrRejoin(pin, "KopyaOyuncu", "conn_id_2");
+        var (player, errorMessage, _) = await _quizService.JoinOrRejoinAsync(pin, "KopyaOyuncu", "conn_id_2", "wrong_token");
 
         // Assert (Doğrulama)
         Assert.Null(player);
-        Assert.Equal("Bu takma ad zaten kullanılıyor.", errorMessage);
+        Assert.Equal("Bu takma ad şu anda başka bir oyuncu tarafından kullanılıyor.", errorMessage);
         _mockQuizRepository.Verify(repo => repo.Update(It.IsAny<Quiz>()), Times.Never);
     }
 
     [Fact]
-    public void JoinOrRejoin_DisconnectedPlayer_UpdatesConnectionIdAndReturnsPlayer()
+    public async Task JoinOrRejoin_DisconnectedPlayer_UpdatesConnectionIdAndReturnsPlayer()
     {
         // Arrange (Hazırlık)
         string pin = "123456";
@@ -155,7 +155,7 @@ public class QuizServiceTests
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
 
         // Act (Eylem)
-        var (player, errorMessage) = _quizService.JoinOrRejoin(pin, "KopanOyuncu", "new_conn_id");
+        var (player, errorMessage) = await _quizService.JoinOrRejoinAsync(pin, "KopanOyuncu", "new_conn_id");
 
         // Assert (Doğrulama)
         Assert.Null(errorMessage);
@@ -165,20 +165,20 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void SubmitAnswer_InvalidQuiz_ReturnsFalse()
+    public async Task SubmitAnswer_InvalidQuiz_ReturnsFalse()
     {
         // Arrange (Hazırlık)
         _mockQuizRepository.Setup(repo => repo.GetByPin(It.IsAny<string>())).Returns((Quiz?)null);
 
         // Act (Eylem)
-        bool result = _quizService.SubmitAnswer("invalid_pin", "Oyuncu1", Guid.NewGuid(), Guid.NewGuid());
+        var result = await _quizService.SubmitAnswerAsync("invalid_pin", "Oyuncu1", Guid.NewGuid(), Guid.NewGuid());
 
         // Assert (Doğrulama)
         Assert.False(result);
     }
 
     [Fact]
-    public void SubmitAnswer_DoubleAnswering_ReturnsFalse()
+    public async Task SubmitAnswer_DoubleAnswering_ReturnsFalse()
     {
         // Arrange (Hazırlık) - Uç Durum (Edge Case): Oyuncunun aynı soruya iki kez cevap vermeye çalışması
         string pin = "123456";
@@ -202,7 +202,7 @@ public class QuizServiceTests
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
 
         // Act (Eylem)
-        bool result = _quizService.SubmitAnswer(pin, "KurnazOyuncu", questionId, optionId);
+        var result = await _quizService.SubmitAnswerAsync(pin, "KurnazOyuncu", questionId, optionId);
 
         // Assert (Doğrulama)
         Assert.False(result); // Aynı soruyu tekrar cevaplaması engellenmeli
@@ -210,7 +210,7 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void StartGameFlow_ValidQuiz_StartsGameAndUpdatesDatabase()
+    public async Task StartGameFlow_ValidQuiz_StartsGameAndUpdatesDatabase()
     {
         // Arrange (Hazırlık)
         // Static sözlüklerde çakışma olmaması için benzersiz PIN kullanıyoruz.
@@ -223,7 +223,7 @@ public class QuizServiceTests
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
 
         // Act (Eylem)
-        _quizService.StartGameFlow(pin);
+        await _quizService.StartGameFlowAsync(pin);
 
         // Assert (Doğrulama)
         _mockQuizRepository.Verify(repo => repo.Update(quiz), Times.Once);
@@ -234,21 +234,21 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void StartGameFlow_InvalidQuiz_DoesNothing()
+    public async Task StartGameFlow_InvalidQuiz_DoesNothing()
     {
         // Arrange (Hazırlık)
         string pin = "START_INV";
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns((Quiz?)null);
 
         // Act (Eylem)
-        _quizService.StartGameFlow(pin);
+        await _quizService.StartGameFlowAsync(pin);
 
         // Assert (Doğrulama)
         _mockQuizRepository.Verify(repo => repo.Update(It.IsAny<Quiz>()), Times.Never);
     }
 
     [Fact]
-    public void UnregisterPlayer_ValidConnection_SetsConnectionIdToEmpty()
+    public async Task UnregisterPlayer_ValidConnection_SetsConnectionIdToEmpty()
     {
         // Arrange (Hazırlık)
         string pin = "UNREG_123";
@@ -257,10 +257,10 @@ public class QuizServiceTests
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
         
         // Haritayı doldurmak için oyuncuyu içeri alıyoruz
-        _quizService.JoinOrRejoin(pin, "TestPlayer", connId);
+        await _quizService.JoinOrRejoinAsync(pin, "TestPlayer", connId);
 
         // Act (Eylem)
-        var result = _quizService.UnregisterPlayer(connId);
+        var result = await _quizService.UnregisterPlayerAsync(connId);
 
         // Assert (Doğrulama)
         Assert.Equal(pin, result.Pin);
@@ -272,13 +272,13 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void UnregisterPlayer_InvalidConnection_ReturnsNulls()
+    public async Task UnregisterPlayer_InvalidConnection_ReturnsNulls()
     {
         // Arrange (Hazırlık)
         string connId = "unknown_conn";
 
         // Act (Eylem)
-        var result = _quizService.UnregisterPlayer(connId);
+        var result = await _quizService.UnregisterPlayerAsync(connId);
 
         // Assert (Doğrulama)
         Assert.Null(result.Pin);
@@ -286,7 +286,7 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void AbandonQuiz_ValidQuiz_DeactivatesAndUpdates()
+    public async Task AbandonQuiz_ValidQuiz_DeactivatesAndUpdates()
     {
         // Arrange (Hazırlık)
         string pin = "ABANDON_123";
@@ -294,7 +294,7 @@ public class QuizServiceTests
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
 
         // Act (Eylem)
-        _quizService.AbandonQuiz(pin);
+        await _quizService.AbandonQuizAsync(pin);
 
         // Assert (Doğrulama)
         Assert.False(quiz.IsActive);
@@ -317,16 +317,16 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void ProcessTicks_ActiveGame_ReducesTimeRemainingAndReturnsTimeUpdate()
+    public async Task ProcessTicks_ActiveGame_ReducesTimeRemainingAndReturnsTimeUpdate()
     {
         // Arrange (Hazırlık)
         string pin = "TICK_123";
         var quiz = new Quiz { Pin = pin, Questions = new List<Question> { new Question { TimeLimitInSeconds = 20 } } };
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
-        _quizService.StartGameFlow(pin);
+        await _quizService.StartGameFlowAsync(pin);
 
         // Act (Eylem)
-        var events = _quizService.ProcessTicks();
+        var events = await _quizService.ProcessTicksAsync();
 
         // Assert (Doğrulama)
         Assert.NotEmpty(events);
@@ -335,16 +335,16 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void ProcessTicks_TimeZero_TransitionsToWaitPhase()
+    public async Task ProcessTicks_TimeZero_TransitionsToWaitPhase()
     {
         // Arrange (Hazırlık) - Süreyi 1 saniye veriyoruz ki hemen bitsin
         string pin = "TICK_WAIT_123";
         var quiz = new Quiz { Pin = pin, Questions = new List<Question> { new Question { TimeLimitInSeconds = 1, Options = new List<Option>() } } };
         _mockQuizRepository.Setup(repo => repo.GetByPin(pin)).Returns(quiz);
-        _quizService.StartGameFlow(pin);
+        await _quizService.StartGameFlowAsync(pin);
 
         // Act (Eylem) - TimeRemaining 1'di. Ticks çalışınca 0'a düşer ve WaitPhase'e geçer
-        var events = _quizService.ProcessTicks();
+        var events = await _quizService.ProcessTicksAsync();
 
         // Assert (Doğrulama)
         Assert.NotEmpty(events);
@@ -353,7 +353,7 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void SubmitAnswer_CorrectAnswer_CalculatesScoreAndReturnsTrue()
+    public async Task SubmitAnswer_CorrectAnswer_CalculatesScoreAndReturnsTrue()
     {
         // Arrange (Hazırlık)
         string pin = "SCORE_123";
@@ -372,7 +372,7 @@ public class QuizServiceTests
         _mockQuizRepository.Setup(r => r.GetByPin(pin)).Returns(quiz);
 
         // Act (Eylem)
-        bool result = _quizService.SubmitAnswer(pin, "HizliOyuncu", qId, oId);
+        var result = await _quizService.SubmitAnswerAsync(pin, "HizliOyuncu", qId, oId);
 
         // Assert (Doğrulama)
         Assert.True(result); // Doğru cevap
@@ -381,7 +381,7 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void SubmitAnswer_IncorrectAnswer_ReturnsFalseAndZeroScore()
+    public async Task SubmitAnswer_IncorrectAnswer_ReturnsFalseAndZeroScore()
     {
         // Arrange (Hazırlık)
         string pin = "SCORE_456";
@@ -399,7 +399,7 @@ public class QuizServiceTests
         _mockQuizRepository.Setup(r => r.GetByPin(pin)).Returns(quiz);
 
         // Act (Eylem)
-        bool result = _quizService.SubmitAnswer(pin, "YanlisOyuncu", qId, oId);
+        var result = await _quizService.SubmitAnswerAsync(pin, "YanlisOyuncu", qId, oId);
 
         // Assert (Doğrulama)
         Assert.False(result); // Yanlış cevap
@@ -414,7 +414,7 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void SubmitAnswer_AllPlayersAnswered_ForcesTimeRemainingToZero()
+    public async Task SubmitAnswer_AllPlayersAnswered_ForcesTimeRemainingToZero()
     {
         // Arrange (Hazırlık)
         string pin = "ALL_ANS_123";
@@ -429,11 +429,11 @@ public class QuizServiceTests
             Questions = new List<Question> { new Question { Id = qId, TimeLimitInSeconds = 20, Options = new List<Option> { new Option { Id = oId, IsCorrect = true } } } } 
         };
         _mockQuizRepository.Setup(r => r.GetByPin(pin)).Returns(quiz);
-        _quizService.StartGameFlow(pin); // Oyunu başlat ve Question fazına al
+        await _quizService.StartGameFlowAsync(pin); // Oyunu başlat ve Question fazına al
 
         // Act (Eylem) - Oyuncu cevap verir ve herkes cevaplamış olur
-        _quizService.SubmitAnswer(pin, "TekOyuncu", qId, oId);
-        var events = _quizService.ProcessTicks(); // Süre sıfırlandığı için direkt WaitPhase'e geçmeli
+        await _quizService.SubmitAnswerAsync(pin, "TekOyuncu", qId, oId);
+        var events = await _quizService.ProcessTicksAsync(); // Süre sıfırlandığı için direkt WaitPhase'e geçmeli
 
         // Assert (Doğrulama)
         Assert.Contains(events, e => e.EventName == "WaitPhase");
@@ -441,20 +441,20 @@ public class QuizServiceTests
     }
 
     [Fact]
-    public void SubmitAnswer_PlayerNotInLobby_ReturnsFalse()
+    public async Task SubmitAnswer_PlayerNotInLobby_ReturnsFalse()
     {
         string pin = "TEST_PIN";
         var qId = Guid.NewGuid();
         var quiz = new Quiz { Pin = pin, IsActive = true, Questions = new List<Question> { new Question { Id = qId } }, Players = new List<Player>() };
         _mockQuizRepository.Setup(r => r.GetByPin(pin)).Returns(quiz);
 
-        var result = _quizService.SubmitAnswer(pin, "Unknown", qId, Guid.NewGuid());
+        var result = await _quizService.SubmitAnswerAsync(pin, "Unknown", qId, Guid.NewGuid());
 
         Assert.False(result.IsCorrect);
     }
 
     [Fact]
-    public void SubmitAnswer_GamePhaseNotQuestion_ReturnsFalse()
+    public async Task SubmitAnswer_GamePhaseNotQuestion_ReturnsFalse()
     {
         string pin = "TEST_PIN2";
         var qId = Guid.NewGuid();
@@ -462,55 +462,55 @@ public class QuizServiceTests
         var quiz = new Quiz { Pin = pin, IsActive = true, Questions = new List<Question> { new Question { Id = qId, TimeLimitInSeconds = 0 } }, Players = new List<Player> { player } };
         _mockQuizRepository.Setup(r => r.GetByPin(pin)).Returns(quiz);
 
-        _quizService.StartGameFlow(pin);
-        _quizService.ProcessTicks(); // Süre 0 olduğu için Transition (WaitPhase) aşamasına geçer.
+        await _quizService.StartGameFlowAsync(pin);
+        await _quizService.ProcessTicksAsync(); // Süre 0 olduğu için Transition (WaitPhase) aşamasına geçer.
 
-        var result = _quizService.SubmitAnswer(pin, "P1", qId, Guid.NewGuid());
+        var result = await _quizService.SubmitAnswerAsync(pin, "P1", qId, Guid.NewGuid());
 
         Assert.False(result.IsCorrect);
         _quizService.StopGameFlow(pin);
     }
 
     [Fact]
-    public void ProcessTicks_TransitionPhase_NextQuestion()
+    public async Task ProcessTicks_TransitionPhase_NextQuestion()
     {
         string pin = "TRANS_2";
         var quiz = new Quiz { Pin = pin, Questions = new List<Question> { new Question { TimeLimitInSeconds = 0 }, new Question { TimeLimitInSeconds = 20 } } };
         _mockQuizRepository.Setup(r => r.GetByPin(pin)).Returns(quiz);
         
-        _quizService.StartGameFlow(pin);
-        _quizService.ProcessTicks(); // WaitPhase'e girer, süreyi 7 yapar.
-        for(int i=0; i<7; i++) _quizService.ProcessTicks(); // 7 saniye bekler.
+        await _quizService.StartGameFlowAsync(pin);
+        await _quizService.ProcessTicksAsync(); // WaitPhase'e girer, süreyi 7 yapar.
+        for(int i=0; i<7; i++) await _quizService.ProcessTicksAsync(); // 7 saniye bekler.
         
-        var events = _quizService.ProcessTicks(); // Süre biter, yeni soruya geçer.
+        var events = await _quizService.ProcessTicksAsync(); // Süre biter, yeni soruya geçer.
         Assert.Contains(events, e => e.EventName == "ReceiveQuestion");
         _quizService.StopGameFlow(pin);
     }
 
     [Fact]
-    public void ProcessTicks_TransitionPhase_EndGame()
+    public async Task ProcessTicks_TransitionPhase_EndGame()
     {
         string pin = "TRANS_3";
         var quiz = new Quiz { Pin = pin, Questions = new List<Question> { new Question { TimeLimitInSeconds = 0 } } };
         _mockQuizRepository.Setup(r => r.GetByPin(pin)).Returns(quiz);
         
-        _quizService.StartGameFlow(pin);
-        _quizService.ProcessTicks(); // WaitPhase'e girer.
-        for(int i=0; i<7; i++) _quizService.ProcessTicks();
+        await _quizService.StartGameFlowAsync(pin);
+        await _quizService.ProcessTicksAsync(); // WaitPhase'e girer.
+        for(int i=0; i<7; i++) await _quizService.ProcessTicksAsync();
         
-        var events = _quizService.ProcessTicks(); // Başka soru kalmadığı için oyun biter.
+        var events = await _quizService.ProcessTicksAsync(); // Başka soru kalmadığı için oyun biter.
         Assert.Contains(events, e => e.EventName == "GameEnded");
         _quizService.StopGameFlow(pin);
     }
 
     [Fact]
-    public void GetFullGameState_ActiveGame_ReturnsState()
+    public async Task GetFullGameState_ActiveGame_ReturnsState()
     {
         string pin = "STATE_ACT";
         var quiz = new Quiz { Pin = pin, Questions = new List<Question> { new Question { Id = Guid.NewGuid(), TimeLimitInSeconds = 20, Options = new List<Option>() } }, Players = new List<Player> { new Player { ConnectionId = "c1", AnsweredQuestionIds = new List<Guid>() } } };
         _mockQuizRepository.Setup(r => r.GetByPin(pin)).Returns(quiz);
         
-        _quizService.StartGameFlow(pin);
+        await _quizService.StartGameFlowAsync(pin);
         var state = _quizService.GetFullGameState(pin);
         
         Assert.NotNull(state);

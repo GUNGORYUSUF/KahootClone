@@ -87,6 +87,7 @@
         let currentOptions = [];
         let pendingResult = { isCorrect: null, points: 0 };
         let hasJoinError = false;
+        let currentSessionToken = sessionStorage.getItem('kahootCloneSessionToken') || null;
 
         const connection = new signalR.HubConnectionBuilder().withUrl("/gamehub", {
             skipNegotiation: true,
@@ -102,7 +103,7 @@
 
         connection.onreconnected(async (connectionId) => {
             if (currentPin && currentNickname) {
-                await connection.invoke("JoinGame", currentPin, currentNickname);
+                await connection.invoke("JoinGame", currentPin, currentNickname, currentSessionToken);
             }
         });
         
@@ -119,6 +120,12 @@
             }
         }
         startConnection();
+
+        // Sunucudan gelen eşsiz oturum kimliğini kaydet
+        connection.on("SessionTokenReceived", (token) => {
+            currentSessionToken = token;
+            sessionStorage.setItem('kahootCloneSessionToken', token);
+        });
 
         connection.on("Error", (errorMessage) => {
             // Hata geldiğinde bayrağı kaldır ve uyarıyı göster.
@@ -138,10 +145,10 @@
             if (currentPin && currentNickname) {
                 // Her denemeden önce hata bayrağını sıfırla.
                 hasJoinError = false;
-                await connection.invoke("JoinGame", currentPin, currentNickname);
+            const isSuccess = await connection.invoke("JoinGame", currentPin, currentNickname, currentSessionToken);
 
                 // Sunucudan döndükten sonra hata bayrağını kontrol et.
-                if (hasJoinError) {
+                if (!isSuccess) {
                     // Hata oluştu, arayüzü giriş ekranında tut.
                     return;
                 }
@@ -302,7 +309,7 @@
             document.getElementById("waitingArea").querySelector('p').textContent = "Yönetici yeni oyunu başlattı, bekleniyor...";
 
             // Aynı takma ad ile yeni oyuna katıl
-            await connection.invoke("JoinGame", currentPin, currentNickname);
+            await connection.invoke("JoinGame", currentPin, currentNickname, currentSessionToken);
         });
 
         connection.on("LobbyReset", () => {
