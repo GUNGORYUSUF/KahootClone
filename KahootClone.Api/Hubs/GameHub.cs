@@ -142,7 +142,22 @@ public class GameHub : Hub<IGameClient>
         if (oldQuiz == null) return;
 
         // Önceki oyunun başlığıyla yeni bir quiz oluşturulur ve yeni bir PIN alınır.
-        var newPin = _quizService.CreateQuiz(new Quiz { Title = oldQuiz.Title });
+        var newPin = _quizService.CreateQuiz(new Quiz 
+        { 
+            Title = oldQuiz.Title,
+            Questions = oldQuiz.Questions.Select(q => new Question
+            {
+                Id = Guid.NewGuid(),
+                Text = q.Text,
+                TimeLimitInSeconds = q.TimeLimitInSeconds,
+                Options = q.Options.Select(o => new Option
+                {
+                    Id = Guid.NewGuid(),
+                    Text = o.Text,
+                    IsCorrect = o.IsCorrect
+                }).ToList()
+            }).ToList()
+        });
 
         // Yönlendirilecek oyuncuların takma ad listesi alınır.
         var playersToRedirect = oldQuiz.Players.Select(p => p.Nickname).ToList();
