@@ -470,4 +470,28 @@ public class QuizService : IQuizService
         }
         return state;
     }
+
+    public async Task<string?> KickPlayerAsync(string pin, string nickname)
+    {
+        await using (await _gameStateRepository.AcquireQuizLockAsync(pin))
+        {
+            var quiz = _quizRepository.GetByPin(pin);
+            if (quiz != null)
+            {
+                var player = quiz.Players.FirstOrDefault(p => p.Nickname == nickname);
+                if (player != null)
+                {
+                    var connId = player.ConnectionId;
+                    quiz.Players.Remove(player);
+                    _quizRepository.Update(quiz);
+                    if (!string.IsNullOrEmpty(connId))
+                    {
+                        _gameStateRepository.RemoveConnection(connId);
+                    }
+                    return connId;
+                }
+            }
+        }
+        return null;
+    }
 }

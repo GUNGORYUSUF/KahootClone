@@ -92,6 +92,19 @@ public class GameHub : Hub<IGameClient>
         }
     }
 
+    // YENİ: Yönetici lobideyken istenmeyen bir oyuncuyu atar.
+    [Authorize(Roles = "Host")]
+    public async Task KickPlayer(string pin, string nickname)
+    {
+        var connectionId = await _quizService.KickPlayerAsync(pin, nickname);
+        if (!string.IsNullOrEmpty(connectionId))
+        {
+            await Groups.RemoveFromGroupAsync(connectionId, pin);
+            await Clients.Client(connectionId).Kicked();
+            await Clients.Group(pin).PlayerLeft(nickname);
+        }
+    }
+
     // YENİ: AŞAMA 4 - Oyunu Backend tarafında başlatır. Artık frontend index sormaz.
     [Authorize(Roles = "Host")]
     public async Task StartGame(string pin)

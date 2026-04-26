@@ -1,0 +1,48 @@
+{
+  "hash": "822f3746",
+  "configHash": "138ecb86",
+  "lockfileHash": "aed68b2b",
+  "browserHash": "cc48d869",
+  "optimized": {
+    "@microsoft/signalr": {
+      "src": "../../node_modules/@microsoft/signalr/dist/esm/index.js",
+      "file": "@microsoft_signalr.js",
+      "fileHash": "5c674f7a",
+      "needsInterop": false
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "86cdcfb2",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "9f96df2a",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "878eaa30",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "06d96fa9",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-CegL5Rro": {
+      "file": "chunk-CegL5Rro.js",
+      "isDynamicEntry": false
+    },
+    "react-dom-BbFxlBoN": {
+      "file": "react-dom-BbFxlBoN.js",
+      "isDynamicEntry": false
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { HubConnection } from '@microsoft/signalr';
+import { Link } from 'react-router-dom';
 import type { QuestionPacket, WaitPhasePayload, Player, AnswerResult } from '../types/index';
 
 interface Props {
@@ -7,7 +8,9 @@ interface Props {
 }
 
 export default function PlayerView({ connection }: Props) {
-    const [pin, setPin] = useState('');
+    // YENİ: QR Kod ile gelindiğinde URL'deki "pin" parametresini otomatik al
+    const queryParams = new URLSearchParams(window.location.search);
+    const [pin, setPin] = useState(queryParams.get("pin") || '');
     const [nickname, setNickname] = useState('');
     const [isJoined, setIsJoined] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -23,6 +26,7 @@ export default function PlayerView({ connection }: Props) {
     const [isLastQuestion, setIsLastQuestion] = useState<boolean>(false);
     const [isGettingReady, setIsGettingReady] = useState<boolean>(false);
     const [readyCountdown, setReadyCountdown] = useState<number>(3);
+    const [answerStats, setAnswerStats] = useState({ answered: 0, total: 0 });
 
     useEffect(() => {
         if (!connection) return;
@@ -41,6 +45,13 @@ export default function PlayerView({ connection }: Props) {
         // YENİ: Cevap sonucunu dinle
         connection.on("AnswerResult", (result: AnswerResult) => {
             setAnswerResult(result);
+        });
+
+        // YENİ: Anlık cevap sayacı güncellemelerini dinle
+        connection.on("UpdateAnswerCount", (payload: any) => {
+            const answered = payload.answeredCount ?? payload.AnsweredCount ?? 0;
+            const total = payload.totalCount ?? payload.TotalCount ?? 0;
+            setAnswerStats({ answered, total });
         });
 
         // YENİ: Yönetici yeniden oyna dediğinde otomatik olarak yeni lobiye geç
@@ -87,6 +98,7 @@ export default function PlayerView({ connection }: Props) {
             setHasAnswered(false);
             setAnswerResult(null);
             setIsLastQuestion(question.currentIndex === question.totalQuestions);
+            setAnswerStats({ answered: 0, total: question.totalPlayers });
         });
 
         // YENİ: Soru sırasındaki saniye güncellemelerini dinle (Sayacın 0 kalmasını çözer)
@@ -127,18 +139,33 @@ export default function PlayerView({ connection }: Props) {
             setError("Yönetici oyunu iptal etti. Lobi kapatıldı.");
         });
 
+        // YENİ: Yönetici tarafından atıldığında
+        connection.on("Kicked", () => {
+            sessionStorage.removeItem("kahoot_player_pin");
+            setPin("");
+            setIsJoined(false);
+            setCurrentQuestion(null);
+            setWaitPhase(null);
+            setGameEndedLeaderboard(null);
+            setHasAnswered(false);
+            setAnswerResult(null);
+            setError("Yönetici tarafından lobiden atıldınız.");
+        });
+
         // Bileşen ekrandan kalktığında (Unmount) dinleyicileri temizle
         return () => {
             connection.off("SessionTokenReceived");
             connection.off("GetReady");
             connection.off("Error");
             connection.off("ReceiveQuestion");
+            connection.off("UpdateAnswerCount");
             connection.off("TimeUpdate");
             connection.off("WaitPhase");
             connection.off("WaitTimeUpdate");
             connection.off("GameEnded");
             connection.off("AnswerResult");
             connection.off("RedirectToNewGame");
+            connection.off("Kicked");
             connection.off("LobbyReset");
         };
     }, [connection]);
@@ -345,6 +372,9 @@ export default function PlayerView({ connection }: Props) {
                         <h1 className="display-1 fw-bold text-primary mb-4">⏳</h1>
                         <h2 className="display-4 fw-bold text-dark">Cevap Gönderildi!</h2>
                         <p className="lead mt-4 text-muted">Diğer oyuncuların cevaplaması veya sürenin bitmesi bekleniyor...</p>
+                        <div className="badge bg-primary fs-4 mt-3 shadow-sm px-4 py-2">
+                            📝 {answerStats.answered} / {answerStats.total} Kişi Cevapladı
+                        </div>
                         <div className="display-3 fw-bold mt-4 text-primary">{timeLeft}</div>
                         </div>
                     </div>
@@ -362,6 +392,9 @@ export default function PlayerView({ connection }: Props) {
                 </div>
                 <div className="mb-4">
                     <h2 className="display-6 fw-bold text-dark">{currentQuestion.text}</h2>
+                    <div className="text-muted fw-bold mt-2">
+                        📝 Cevaplayanlar: {answerStats.answered} / {answerStats.total}
+                    </div>
                 </div>
                 <div className="row g-3">
                     {currentQuestion.options.map((opt, i) => {
@@ -416,6 +449,11 @@ export default function PlayerView({ connection }: Props) {
         <div className="container mt-5">
             <div className="row justify-content-center">
                 <div className="col-md-6 col-lg-4">
+                    <div className="mb-3 text-start">
+                        <Link to="/" className="btn btn-sm btn-outline-secondary fw-bold shadow-sm">
+                            ⬅️ Ana Sayfa
+                        </Link>
+                    </div>
                     <div className="card shadow-sm border-0 bg-light">
                         <div className="card-body p-5 text-center">
                             <h2 className="fw-bold mb-4">🎮 Oyuna Katıl</h2>

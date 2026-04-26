@@ -43,4 +43,6 @@ public interface IQuizService
     Task<(string? Pin, string? Nickname)> UnregisterPlayerAsync(string connectionId);
     // Oyun lobideyken yönetici tarafından iptal edilir.
     Task AbandonQuizAsync(string pin);
+    // Yönetici tarafından oyuncu atılması
+    Task<string?> KickPlayerAsync(string pin, string nickname);
 }

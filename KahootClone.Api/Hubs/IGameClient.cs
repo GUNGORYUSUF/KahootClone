@@ -10,6 +10,7 @@ public interface IGameClient
     Task SessionTokenReceived(string token);
     Task PlayerJoined(string nickname);
     Task PlayerLeft(string nickname);
+    Task Kicked();
     Task GetReady();
     Task ReceiveQuestion(object question);
     Task GameEnded(object leaderboard);

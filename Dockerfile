@@ -16,8 +16,13 @@ WORKDIR "/src/KahootClone.Api"
 RUN dotnet publish "KahootClone.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # 2. Aşama: Runtime (Çalışma) ortamı
-# İçinde sadece .NET 10 Runtime olan daha hafif bir imaj kullanıyoruz
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+# İçinde sadece .NET 10 Runtime olan çok daha hafif (Alpine) bir imaj kullanıyoruz
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
+
+# Alpine üzerinde C# dil/tarih (Culture) ayarlarının çökmemesi için gerekli kütüphaneler
+RUN apk add --no-cache icu-libs tzdata
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
 WORKDIR /app
 EXPOSE 8080
 COPY --from=build /app/publish .
