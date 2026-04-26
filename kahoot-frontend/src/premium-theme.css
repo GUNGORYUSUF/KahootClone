@@ -1,0 +1,81 @@
+/* 1. KUSURSUZ GEÇİŞ (SMOOTH TRANSITION) */
+/* Işıkları açıp kapattığımızda renkler aniden patlamaz, 0.4 saniyede yumuşakça değişir */
+body, .card, .bg-light, .bg-white, .bg-dark, .text-dark, .text-muted, .btn, .list-group-item, .alert {
+    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+/* PREMIUM LIGHT MODE (Varsayılan Gündüz Modu) */
+body {
+    background-color: #f8fafc !important; /* Slate 50 - Göz yormayan kırık beyaz */
+    color: #0f172a !important; /* Slate 900 - Tam siyah yerine derin gece mavisi */
+}
+.card, .list-group-item, .bg-white, .bg-light {
+    border-color: #e2e8f0 !important;
+}
+.shadow, .shadow-sm, .shadow-lg {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01) !important;
+}
+
+/* 2. PREMIUM DARK MODE (SLATE / DEEP NAVY TONLARI) */
+/* Saf siyah yerine göz yormayan, derin bir gece mavisi/grisi kullanıyoruz */
+[data-bs-theme="dark"] body {
+    background-color: #0f172a !important; /* Slate 900 (Ana Arka Plan) */
+    color: #f8fafc !important; /* Slate 50 (Yazılar) */
+}
+
+/* Kartlar, Listeler ve Açık Renkli Alanlar (Özel renk atanmış olanlar hariç tutuldu) */
+[data-bs-theme="dark"] .card:not(.bg-primary):not(.bg-success):not(.bg-danger):not(.bg-warning):not(.bg-info):not(.bg-secondary), 
+[data-bs-theme="dark"] .list-group-item:not(.bg-primary):not(.bg-success):not(.bg-danger):not(.bg-warning):not(.bg-info):not(.bg-secondary),
+[data-bs-theme="dark"] .bg-white,
+[data-bs-theme="dark"] .bg-light {
+    background-color: #1e293b !important; /* Slate 800 (Kart Arka Planı) */
+    border-color: #334155 !important; /* Slate 700 (İnce Sınırlar) */
+    color: #e2e8f0 !important; /* Slate 200 */
+}
+
+/* Siyah kalmaya çalışan metinleri gece modunda parlak beyaz/gri yapıyoruz (Sarı butonlar hariç) */
+[data-bs-theme="dark"] .text-dark:not(.bg-warning) {
+    color: #f8fafc !important; 
+}
+
+[data-bs-theme="dark"] .text-muted {
+    color: #94a3b8 !important; /* Slate 400 */
+}
+
+/* Navbar ve Üst Kısım */
+[data-bs-theme="dark"] .bg-dark {
+    background-color: #020617 !important; /* Slate 950 */
+}
+
+/* Gölgeler: Gece modunda gölgeler daha derin ve geniş olmalıdır */
+[data-bs-theme="dark"] .shadow,
+[data-bs-theme="dark"] .shadow-sm,
+[data-bs-theme="dark"] .shadow-lg {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* 3. CEVAP BUTONLARI VE ETKİLEŞİM (OYUNLANABİLİRLİK) */
+/* Çirkin gölgeler kaldırıldı, yerine Flat (Düz) tasarım ve büyüme animasyonu eklendi */
+.option-btn, .option-card {
+    box-shadow: none !important;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), filter 0.15s ease !important;
+    border-radius: 16px !important;
+}
+
+/* Öğrenci tıkladığında veya üzerine geldiğinde basılma (Scale) efekti */
+.option-btn:hover {
+    transform: scale(1.03);
+    filter: brightness(1.1);
+}
+
+.option-btn:active {
+    transform: scale(0.95);
+    filter: brightness(0.9);
+}
+
+/* Yazı Okunaklılığı (Readability) */
+.option-text {
+    text-shadow: none !important; /* Yazı okunaklılığını bozan gölgeler temizlendi */
+    letter-spacing: 0.5px;
+    font-weight: 800 !important;
+}

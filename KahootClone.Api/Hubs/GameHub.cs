@@ -81,6 +81,17 @@ public class GameHub : Hub<IGameClient>
         await base.OnDisconnectedAsync(exception);
     }
 
+    // YENİ: Öğrenci kendi isteğiyle lobiden veya oyun bitişinden ayrıldığında tetiklenir.
+    public async Task LeaveGame()
+    {
+        var (pin, nickname) = await _quizService.UnregisterPlayerAsync(Context.ConnectionId);
+        if (pin != null && nickname != null)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, pin);
+            await Clients.Group(pin).PlayerLeft(nickname);
+        }
+    }
+
     // YENİ: AŞAMA 4 - Oyunu Backend tarafında başlatır. Artık frontend index sormaz.
     [Authorize(Roles = "Host")]
     public async Task StartGame(string pin)
@@ -89,6 +100,10 @@ public class GameHub : Hub<IGameClient>
         
         if (quiz != null && quiz.Questions.Count > 0)
         {
+            // YENİ: Soruları göndermeden önce herkese 3 saniyelik 3-2-1 sayacı başlatmasını söyle
+            await Clients.Group(pin).GetReady();
+            await Task.Delay(3000);
+
             var question = quiz.Questions[0];
             
             var secureQuestionPacket = new {
@@ -160,7 +175,9 @@ public class GameHub : Hub<IGameClient>
         });
 
         // Yönlendirilecek oyuncuların takma ad listesi alınır.
-        var playersToRedirect = oldQuiz.Players.Select(p => p.Nickname).ToList();
+        var playersToRedirect = oldQuiz.Players
+            .Where(p => !string.IsNullOrEmpty(p.ConnectionId))
+            .Select(p => p.Nickname).ToList();
 
         var payload = new {
             NewPin = newPin,
