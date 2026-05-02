@@ -29,6 +29,8 @@ BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard
 // Controller (API Uç Noktaları) yapısı sisteme dahil edilir.
 builder.Services.AddControllers();
 
+builder.Services.AddScoped<IUserRepository, KahootClone.Infrastructure.Repositories.UserRepository>();
+
 // YENİ: Frontend (tarayıcı) üzerinden API'ye ve SignalR Hub'ına engelsiz erişim için CORS politikası eklendi.
 builder.Services.AddCors(options =>
 {

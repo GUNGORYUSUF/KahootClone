@@ -144,7 +144,7 @@ Sisteme kendi sorularınızı eklemek oldukça basittir. Yönetici ekranında ye
 
 ### Oyun Nasıl Başlatılır? (Yönetici)
 1. **Yönetici Ekranını Açın:** Tarayıcıda `http://localhost:5173` adresine gidin ve **"👨‍🏫 Oyun Kur (Host)"** butonuna tıklayın.
-2. **Yeni Oyun Kur:** "Görsel Oluşturucu" veya "Markdown" kullanarak sorularınızı hazırlayın ve "Yeni Oyun Kur" butonuna basın.
+2. **Yeni Oyun Kur:** "Soru Oluşturucu" veya "Markdown" kullanarak sorularınızı hazırlayın ve "Yeni Oyun Kur" butonuna basın.
 3. **PIN veya QR Kod Paylaşın:** Ekranda büyük harflerle beliren 6 haneli **PIN kodunu** veya hemen yanındaki **QR Kodu** oyuncularla paylaşın.
 4. **Oyuncuları Bekle ve Başlat:** Tüm oyuncular katıldığında "Oyunu Başlat" butonuna tıklayarak yarışı başlatın. Oyun bundan sonra otomatik olarak işleyecektir.
 

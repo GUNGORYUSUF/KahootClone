@@ -22,4 +22,13 @@ public class Quiz
 
     // Hızlı cevap puanlaması için mevcut sorunun başlama zamanı tutulur.
     public DateTime CurrentQuestionStartTime { get; set; }
+
+    // YENİ: Oyunun Google girişi gerektirip gerektirmediğini tutan özellik
+    public bool RequireGoogleAuth { get; set; } = false;
+
+    // YENİ: Oyunu oluşturan kişinin (Yöneticinin) kalıcı ID'si
+    public string? CreatorId { get; set; }
+
+    // YENİ: Oyunun henüz canlıya alınmamış bir taslak olup olmadığını belirtir
+    public bool IsDraft { get; set; } = false;
 }

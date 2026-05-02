@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { HubConnection } from '@microsoft/signalr';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { QuestionPacket, WaitPhasePayload, Player, AnswerResult } from '../types/index';
+import { useGoogleLogin } from '@react-oauth/google';
+import { useAuth } from '../context/AuthContext';
 
 interface Props {
     connection: HubConnection | null;
 }
 
 export default function PlayerView({ connection }: Props) {
+    const { user, token } = useAuth();
     // YENİ: QR Kod ile gelindiğinde URL'deki "pin" parametresini otomatik al
-    const queryParams = new URLSearchParams(window.location.search);
-    const [pin, setPin] = useState(queryParams.get("pin") || '');
+    const [searchParams] = useSearchParams();
+    const [pin, setPin] = useState(searchParams.get("pin") || '');
     const [nickname, setNickname] = useState('');
     const [isJoined, setIsJoined] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -27,6 +30,55 @@ export default function PlayerView({ connection }: Props) {
     const [isGettingReady, setIsGettingReady] = useState<boolean>(false);
     const [readyCountdown, setReadyCountdown] = useState<number>(3);
     const [answerStats, setAnswerStats] = useState({ answered: 0, total: 0 });
+
+    // YENİ: Google Login Özellik Bayrağı (Feature Flag)
+    const enableGoogleLogin = import.meta.env.VITE_ENABLE_GOOGLE_LOGIN === 'true';
+
+    // YENİ: Global kullanıcı girişi yapılmışsa Nickname'i arka planda otomatik doldur
+    useEffect(() => {
+        if (user && !isJoined) {
+            setNickname(user.nickname);
+        }
+    }, [user, isJoined]);
+
+    // YENİ: Gerçek Google Login İşlemi
+    const loginWithGoogle = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                // 1. Google API'den kullanıcının adını/emailini al
+                const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                });
+                if (!res.ok) throw new Error("Google bilgileri alınamadı.");
+                
+                const userInfo = await res.json();
+                const googleName = userInfo.name || userInfo.given_name;
+                const avatarUrl = userInfo.picture || null; // YENİ: Avatar bilgisini yakala
+                
+                // 2. Backend'e bağlan (Google'dan alınan isim ve token ile)
+                const sessionToken = sessionStorage.getItem("kahoot_session_token");
+                const success = await connection?.invoke("JoinGame", pin, googleName, sessionToken || null, tokenResponse.access_token, avatarUrl || null);
+                
+                if (success) {
+                    sessionStorage.setItem("kahoot_nickname", googleName);
+                    sessionStorage.setItem("kahoot_player_pin", pin);
+                    sessionStorage.setItem("kahoot_avatar_url", avatarUrl || "");
+                    setNickname(googleName);
+                    setIsJoined(true);
+                } else {
+                    setError("Bu oyuna katılamazsınız veya lobi dolmuş olabilir.");
+                }
+            } catch (err) {
+                console.error("Google Login hatası:", err);
+                setError("Google ile giriş yapılamadı.");
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        onError: () => setError("Google girişi iptal edildi veya başarısız oldu.")
+    });
 
     useEffect(() => {
         if (!connection) return;
@@ -61,7 +113,8 @@ export default function PlayerView({ connection }: Props) {
                 const targetPlayers = payload.players || payload.Players || [];
                 const currentNick = sessionStorage.getItem("kahoot_nickname") || "";
                 
-                if (targetPlayers.includes(currentNick)) {
+                const isIncluded = targetPlayers.some((p: any) => (typeof p === 'string' ? p : p.nickname || p.Nickname) === currentNick);
+                if (isIncluded) {
                     setPin(targetPin);
                     setGameEndedLeaderboard(null);
                     setWaitPhase(null);
@@ -71,7 +124,11 @@ export default function PlayerView({ connection }: Props) {
                     
                     const sessionToken = sessionStorage.getItem("kahoot_session_token");
                     sessionStorage.setItem("kahoot_player_pin", targetPin);
-                    await connection.invoke("JoinGame", targetPin, currentNick, sessionToken || null);
+                    const globalToken = localStorage.getItem("kahoot_global_token");
+                    const globalUserStr = localStorage.getItem("kahoot_global_user");
+                    const globalUser = globalUserStr ? JSON.parse(globalUserStr) : null;
+                    const avatarUrl = globalUser?.avatarUrl || sessionStorage.getItem("kahoot_avatar_url");
+                    await connection.invoke("JoinGame", targetPin, currentNick, sessionToken || null, globalToken || null, avatarUrl || null);
                 }
             } catch (err) {
                 console.error("Yeni Lobiye Geçiş Hatası:", err);
@@ -187,14 +244,17 @@ export default function PlayerView({ connection }: Props) {
         try {
             // Varsa eski oturum token'ını al (Sayfa yenilense bile aynı kişi olduğunu kanıtlar)
             const sessionToken = sessionStorage.getItem("kahoot_session_token");
+            const avatarUrlToUse = user?.avatarUrl || null;
+            const authToPass = token || null; // Global token'ı yolla ki backend güvenlik kilidini aşsın
 
             // C# tarafındaki 'JoinGame' metodunu tetikle
-            const success = await connection.invoke("JoinGame", pin, cleanNickname, sessionToken || null);
+            const success = await connection.invoke("JoinGame", pin, cleanNickname, sessionToken || null, authToPass, avatarUrlToUse);
             
             if (success) {
                 // Sadece oyuna başarıyla katıldıktan sonra bilgileri hafızaya kaydet
                 sessionStorage.setItem("kahoot_nickname", cleanNickname);
                 sessionStorage.setItem("kahoot_player_pin", pin);
+                sessionStorage.setItem("kahoot_avatar_url", avatarUrlToUse || "");
                 setIsJoined(true);
             }
         } catch (err) {
@@ -240,9 +300,10 @@ export default function PlayerView({ connection }: Props) {
                                     const isMe = p.nickname === nickname.trim();
                                     return (
                                         <li key={p.id} className={`list-group-item d-flex justify-content-between align-items-center ${isMe ? 'bg-success text-white rounded' : ''}`}>
-                                            <span>
-                                                {index === 0 ? "👑 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `} 
-                                                {p.nickname} {isMe && "(Sen)"}
+                                            <span className="d-flex align-items-center gap-2">
+                                                <span>{index === 0 ? "👑 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `}</span>
+                                                {p.avatarUrl && <img src={p.avatarUrl} alt="avatar" className="rounded-circle shadow-sm" style={{ width: '32px', height: '32px', objectFit: 'cover' }} referrerPolicy="no-referrer" />}
+                                                <span>{p.nickname} {isMe && "(Sen)"}</span>
                                             </span>
                                             <span className={`badge ${isMe ? 'bg-light text-success' : 'bg-danger'} rounded-pill`}>{p.score} Puan</span>
                                         </li>
@@ -341,9 +402,10 @@ export default function PlayerView({ connection }: Props) {
                                         const isMe = p.nickname === nickname.trim();
                                         return (
                                             <li key={p.id} className={`list-group-item d-flex justify-content-between align-items-center ${isMe ? 'bg-success text-white rounded' : ''}`}>
-                                                <span>
-                                                    {index === 0 ? "🥇 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `} 
-                                                    {p.nickname} {isMe && "(Sen)"}
+                                                <span className="d-flex align-items-center gap-2">
+                                                    <span>{index === 0 ? "🥇 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `}</span>
+                                                    {p.avatarUrl && <img src={p.avatarUrl} alt="avatar" className="rounded-circle shadow-sm" style={{ width: '32px', height: '32px', objectFit: 'cover' }} referrerPolicy="no-referrer" />}
+                                                    <span>{p.nickname} {isMe && "(Sen)"}</span>
                                                 </span>
                                                 <span className={`badge ${isMe ? 'bg-light text-success' : 'bg-primary'} rounded-pill`}>{p.score} Puan</span>
                                             </li>
@@ -454,7 +516,7 @@ export default function PlayerView({ connection }: Props) {
                             ⬅️ Ana Sayfa
                         </Link>
                     </div>
-                    <div className="card shadow-sm border-0 bg-light">
+                    <div className="card shadow-sm border-0 bg-primary text-white">
                         <div className="card-body p-5 text-center">
                             <h2 className="fw-bold mb-4">🎮 Oyuna Katıl</h2>
                             
@@ -471,29 +533,68 @@ export default function PlayerView({ connection }: Props) {
                                         className="form-control form-control-lg text-center fw-bold fs-4" 
                                         placeholder="Oyun PIN" 
                                         value={pin}
-                                        onChange={(e) => setPin(e.target.value)}
+                                        onChange={(e) => {
+                                            const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                            setPin(numericValue);
+                                        }}
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         maxLength={6}
                                         required
                                     />
                                 </div>
                                 <div className="mb-4">
-                                    <input 
-                                        type="text" 
-                                        className="form-control form-control-lg text-center fw-bold fs-5" 
-                                        placeholder="Takma Ad (Nickname)" 
-                                        value={nickname}
-                                        onChange={(e) => setNickname(e.target.value)}
-                                        maxLength={15}
-                                        required
-                                    />
+                                    {user ? (
+                                        <div className="d-flex align-items-center justify-content-center gap-3 bg-white text-dark rounded-pill py-2 px-4 shadow-sm border border-2 border-primary">
+                                            {user.avatarUrl ? (
+                                                <img src={user.avatarUrl} alt="avatar" className="rounded-circle shadow-sm" style={{ width: '40px', height: '40px', objectFit: 'cover' }} referrerPolicy="no-referrer" />
+                                            ) : (
+                                                <div className="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center shadow-sm" style={{ width: '40px', height: '40px', fontSize: '1.2rem' }}>👤</div>
+                                            )}
+                                            <div className="text-start">
+                                                <div className="text-muted fw-bold mb-0" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>GİRİŞ YAPILDI</div>
+                                                <div className="fw-bold fs-5 lh-1 mt-1">{user.nickname}</div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <input 
+                                            type="text" 
+                                            className="form-control form-control-lg text-center fw-bold fs-5" 
+                                            placeholder="Takma Ad (Nickname)" 
+                                            value={nickname}
+                                            onChange={(e) => setNickname(e.target.value)}
+                                            maxLength={15}
+                                            minLength={3}
+                                            required
+                                        />
+                                    )}
                                 </div>
                                 <button 
                                     type="submit" 
-                                    className="btn btn-dark btn-lg w-100 py-3 fw-bold fs-5 shadow-sm"
-                                    disabled={isLoading || !connection}
+                                    className="btn btn-light text-primary btn-lg w-100 py-3 fw-bold fs-5 shadow-sm"
+                                    disabled={isLoading || !connection || pin.length < 6 || nickname.trim().length < 3}
                                 >
                                     {isLoading ? "Bağlanıyor..." : "Giriş Yap"}
                                 </button>
+
+                                {!user && enableGoogleLogin && (
+                                    <>
+                                        <div className="d-flex align-items-center my-3">
+                                            <hr className="flex-grow-1 bg-white opacity-50" />
+                                            <span className="mx-2 text-white fw-bold opacity-75 small">VEYA</span>
+                                            <hr className="flex-grow-1 bg-white opacity-50" />
+                                        </div>
+                                        <button 
+                                            type="button"
+                                    className="btn btn-light text-primary w-100 py-3 fw-bold fs-5 shadow-sm d-flex justify-content-center align-items-center gap-2"
+                                            onClick={() => loginWithGoogle()}
+                                            disabled={isLoading || !connection || pin.length < 6}
+                                        >
+                                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: '28px', height: '28px' }} />
+                                            Google ile Katıl
+                                        </button>
+                                    </>
+                                )}
 
                                 {sessionStorage.getItem("kahoot_player_pin") && sessionStorage.getItem("kahoot_nickname") && (
                                     <button 
@@ -506,7 +607,9 @@ export default function PlayerView({ connection }: Props) {
                                                 const sp = sessionStorage.getItem("kahoot_player_pin")!;
                                                 const sn = sessionStorage.getItem("kahoot_nickname")!;
                                                 const st = sessionStorage.getItem("kahoot_session_token");
-                                                const success = await connection?.invoke("JoinGame", sp, sn, st);
+                                                const sa = user?.avatarUrl || sessionStorage.getItem("kahoot_avatar_url");
+                                                const st_google = token || null;
+                                                const success = await connection?.invoke("JoinGame", sp, sn, st || null, st_google, sa || null);
                                                 if (success) {
                                                     setPin(sp);
                                                     setNickname(sn);

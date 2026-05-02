@@ -27,6 +27,8 @@ public interface IQuizService
     string CreateQuiz(Quiz quiz);
     // PIN koduna göre oyun bilgileri getirilir.
     Quiz? GetQuizByPin(string pin);
+    // Yöneticinin (Kullanıcının) kendi oluşturduğu oyunları getirir.
+    List<Quiz> GetQuizzesByCreatorId(string creatorId);
     // Oyuncunun verdiği cevap kontrol edilerek puanlaması yapılır. Artik cevap sayilarini ve kazanilan puani da doner.
     Task<(bool IsCorrect, int AnsweredCount, int TotalCount, int PointsEarned)> SubmitAnswerAsync(string pin, string nickname, Guid questionId, Guid optionId);
     // Oyun akışını otomatik yönetecek döngüye ekler.
@@ -36,7 +38,7 @@ public interface IQuizService
     // Her saniye çağrılır ve oyunların durumunu güncelleyip gerekli SignalR olaylarını döndürür.
     Task<List<GameTickEvent>> ProcessTicksAsync();
     // Oyuncunun oyuna ilk kez katılması veya kopup tekrar bağlanması durumunu yönetir.
-    Task<(Player? player, string? errorMessage, string? sessionToken)> JoinOrRejoinAsync(string pin, string nickname, string connectionId, string? sessionToken = null);
+    Task<(Player? player, string? errorMessage, string? sessionToken)> JoinOrRejoinAsync(string pin, string nickname, string connectionId, string? sessionToken = null, string? googleToken = null, string? avatarUrl = null);
     // Yöneticinin sayfayı yenilemesi durumunda oyunun tam durumunu getirir.
     object? GetFullGameState(string pin);
     // Bağlantısı kopan oyuncuyu kayıttan düşürür ve bilgi döndürür.
@@ -45,4 +47,6 @@ public interface IQuizService
     Task AbandonQuizAsync(string pin);
     // Yönetici tarafından oyuncu atılması
     Task<string?> KickPlayerAsync(string pin, string nickname);
+    // YENİ: Oyunu tamamen siler.
+    void DeleteQuiz(string pin);
 }

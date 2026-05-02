@@ -73,4 +73,24 @@ public class QuizRepository : IQuizRepository
             _redisDb.StringSet($"quiz_cache:{quiz.Pin}", JsonSerializer.Serialize(quiz), TimeSpan.FromHours(2));
         });
     }
+
+    // YENİ: Yöneticinin kendi oluşturduğu oyunları veritabanından getirir.
+    public List<Quiz> GetByCreatorId(string creatorId)
+    {
+        return _retryPolicy.Execute(() =>
+        {
+            // YENİ: Soru bankası sadece "Taslak (Draft)" olarak kaydedilen oyunları getirir.
+            return _context.Quizzes.Find(q => q.CreatorId == creatorId && q.IsDraft == true).ToList();
+        });
+    }
+
+    // YENİ: İstenmeyen oyunu MongoDB ve Redis'ten kalıcı olarak siler.
+    public void Delete(string pin)
+    {
+        _retryPolicy.Execute(() =>
+        {
+            _context.Quizzes.DeleteOne(q => q.Pin == pin);
+            _redisDb.KeyDelete($"quiz_cache:{pin}");
+        });
+    }
 }

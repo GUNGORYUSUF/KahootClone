@@ -8,7 +8,7 @@ public interface IGameClient
     Task Error(string message);
     Task RestoreGameState(object state);
     Task SessionTokenReceived(string token);
-    Task PlayerJoined(string nickname);
+    Task PlayerJoined(object player);
     Task PlayerLeft(string nickname);
     Task Kicked();
     Task GetReady();

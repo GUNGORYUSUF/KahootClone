@@ -6,6 +6,8 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using KahootClone.Application.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace KahootClone.Api.Controllers;
 
@@ -25,6 +27,13 @@ public class QuizController : ControllerBase
     [HttpPost("create")]
     public IActionResult CreateQuiz([FromBody] Quiz quiz)
     {
+        // YENİ: Yönetici sisteme giriş yapmışsa, ID'sini oyuna "Kurucu" olarak kaydet
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        if (!string.IsNullOrEmpty(userId))
+        {
+            quiz.CreatorId = userId;
+        }
+
         var pin = _quizService.CreateQuiz(quiz);
 
         // GÜVENLİ YÖNTEM: JWT Anahtarı kod içinden değil, yapılandırmadan okunur.
@@ -46,6 +55,37 @@ public class QuizController : ControllerBase
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return Ok(new { pin, token = tokenHandler.WriteToken(token) });
+    }
+
+    // YENİ: Giriş yapmış yöneticinin kendi kurduğu geçmiş oyunları getirir
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpGet("my-quizzes")]
+    public IActionResult GetMyQuizzes()
+    {
+        // JWT Token'dan kullanıcı ID'sini güvenli bir şekilde çekiyoruz
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+                     ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("Oturum süresi dolmuş veya geçersiz.");
+
+        var myQuizzes = _quizService.GetQuizzesByCreatorId(userId);
+        return Ok(myQuizzes);
+    }
+
+    // YENİ: Giriş yapmış yöneticinin kendi oyununu tamamen silmesi
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpDelete("{pin}")]
+    public IActionResult DeleteQuiz(string pin)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var quiz = _quizService.GetQuizByPin(pin);
+        
+        if (quiz == null) return NotFound("Oyun bulunamadı.");
+        if (quiz.CreatorId != userIdStr) return Forbid(); // Sadece oluşturan kişi silebilir
+        
+        _quizService.DeleteQuiz(pin);
+        return Ok(new { message = "Oyun başarıyla silindi." });
     }
 
     [HttpPost("parse-markdown")]

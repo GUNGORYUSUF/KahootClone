@@ -16,4 +16,7 @@ public class Player
 
     // Oyuncunun cevapladığı soruların kimlikleri tutulur (Çift cevap engelleme için).
     public List<Guid> AnsweredQuestionIds { get; set; } = new List<Guid>();
+
+    // Oyuncunun Google üzerinden gelen veya varsayılan profil resmi (Avatar) URL'si tutulur.
+    public string? AvatarUrl { get; set; }
 }

@@ -2,21 +2,27 @@ import { useState, useEffect } from 'react';
 import { HubConnection } from '@microsoft/signalr';
 import { Link } from 'react-router-dom';
 import type { QuestionPacket, WaitPhasePayload, Player } from '../types/index';
+import { useAuth } from '../context/AuthContext';
 
 interface Props {
     connection: HubConnection | null;
 }
 
 export default function HostView({ connection }: Props) {
-    const [markdown, setMarkdown] = useState('');
+    const { user, token } = useAuth(); // YENİ: Oturum açmış kullanıcının kimliğini ve bilgilerini al
+    const [quizTitle, setQuizTitle] = useState(() => localStorage.getItem("kahoot_draft_title") || '');
+    const [markdown, setMarkdown] = useState(() => localStorage.getItem("kahoot_draft_markdown") || '');
     const [pin, setPin] = useState<string | null>(null);
-    const [players, setPlayers] = useState<string[]>([]);
+    const [players, setPlayers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // YENİ: Görsel Soru Oluşturucu State'leri
     const [inputMode, setInputMode] = useState<'visual' | 'markdown'>('visual');
-    const [visualQuestions, setVisualQuestions] = useState<any[]>([]);
+    const [visualQuestions, setVisualQuestions] = useState<any[]>(() => {
+        const saved = localStorage.getItem("kahoot_draft_visual");
+        return saved ? JSON.parse(saved) : [];
+    });
     const [currentQText, setCurrentQText] = useState('');
     const [currentQTime, setCurrentQTime] = useState<number>(20);
     const [currentQOptions, setCurrentQOptions] = useState([
@@ -26,6 +32,12 @@ export default function HostView({ connection }: Props) {
         { text: '', isCorrect: false }
     ]);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [requireGoogleAuth, setRequireGoogleAuth] = useState(false); // YENİ: Google Login zorunluluğu
+
+    // YENİ: Değişiklik yapılıp yapılmadığını takip et
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(() => localStorage.getItem("kahoot_unsaved") === "true");
+    useEffect(() => { localStorage.setItem("kahoot_unsaved", hasUnsavedChanges ? "true" : "false"); }, [hasUnsavedChanges]);
+
 
     // YENİ: Soru ve süre state'leri
     const [currentQuestion, setCurrentQuestion] = useState<QuestionPacket | null>(null);
@@ -61,16 +73,18 @@ export default function HostView({ connection }: Props) {
         });
 
         // Lobideki oyuncu hareketlerini dinle
-        connection.on("PlayerJoined", (nickname: string) => {
-            console.log("🟢 Oyuncu katıldı:", nickname);
+        connection.on("PlayerJoined", (playerObj: any) => {
+            const nick = typeof playerObj === 'string' ? playerObj : (playerObj.nickname || playerObj.Nickname);
+            const avatar = typeof playerObj === 'string' ? undefined : (playerObj.avatarUrl || playerObj.AvatarUrl);
+            console.log("🟢 Oyuncu katıldı:", nick);
             setPlayers(prev => {
-                if (prev.includes(nickname)) return prev; // Aynı kişinin çift eklenmesini önle
-                return [...prev, nickname];
+                if (prev.some(p => p.nickname === nick)) return prev;
+                return [...prev, { nickname: nick, avatarUrl: avatar }];
             });
         });
 
         connection.on("PlayerLeft", (nickname: string) => {
-            setPlayers(prev => prev.filter(p => p !== nickname));
+            setPlayers(prev => prev.filter(p => p.nickname !== nickname));
         });
 
         // YENİ: 3-2-1 Geri Sayımını Başlat
@@ -146,7 +160,7 @@ export default function HostView({ connection }: Props) {
                 sessionStorage.setItem("kahoot_host_pin", restoredPin);
                 
                 const playersList = quiz.players || quiz.Players || [];
-                setPlayers(playersList.map((p: any) => p.nickname || p.Nickname));
+                setPlayers(playersList.map((p: any) => ({ nickname: p.nickname || p.Nickname, avatarUrl: p.avatarUrl || p.AvatarUrl })));
             }
 
             if (gameState) {
@@ -213,7 +227,7 @@ export default function HostView({ connection }: Props) {
         };
     }, [connection]);
 
-    // YENİ: Görsel oluşturucudan soru ekleme fonksiyonu
+    // YENİ: Soru oluşturucudan soru ekleme fonksiyonu
     const handleAddVisualQuestion = () => {
         if (!currentQText.trim()) {
             setError("Soru metni boş olamaz.");
@@ -238,6 +252,7 @@ export default function HostView({ connection }: Props) {
         } else {
             setVisualQuestions([...visualQuestions, newQuestion]);
         }
+        setHasUnsavedChanges(true); // Değişiklik yapıldı
         
         // Formu temizle
         setCurrentQText('');
@@ -273,7 +288,7 @@ export default function HostView({ connection }: Props) {
         URL.revokeObjectURL(url);
     };
 
-    // YENİ: Markdown sekmesindeki metni ayrıştırıp Görsel Oluşturucuya (Visual Builder) aktarır
+    // YENİ: Markdown sekmesindeki metni ayrıştırıp Soru Oluşturucuya (Visual Builder) aktarır
     const handleSyncMarkdownToVisual = async () => {
         if (!markdown.trim()) return;
         setIsLoading(true);
@@ -332,6 +347,7 @@ export default function HostView({ connection }: Props) {
 
             setVisualQuestions(mappedQuestions); // Görsel listeyi güncelle
             setInputMode('visual'); // Kullanıcıyı otomatik olarak Görsel sekmeye kaydır
+            setHasUnsavedChanges(true); // Değişiklik yapıldı
         } catch (err: any) {
             console.error("Markdown Aktarma Hatası:", err);
             setError(err.message);
@@ -344,6 +360,11 @@ export default function HostView({ connection }: Props) {
         setIsLoading(true);
         setError(null);
         try {
+            if (hasUnsavedChanges) {
+                alert("Lütfen oyunu başlatmadan önce sorularınızı '💾 Sisteme Kaydet' butonu ile kaydedin veya güncelleyin.");
+                return;
+            }
+
             // YENİ: Eğer yöneticinin hafızada unuttuğu/yarım bıraktığı bir oyun varsa, yeni oyuna geçmeden önce o lobiyi dağıt.
             const oldPin = sessionStorage.getItem("kahoot_host_pin");
             if (oldPin && connection) {
@@ -395,11 +416,27 @@ export default function HostView({ connection }: Props) {
                 questions = visualQuestions;
             }
 
+            // YENİ: Guid çakışmalarını önlemek için eski ID'leri temizle
+            const cleanQuestions = questions.map((q: any) => ({
+                text: q.text || q.Text,
+                timeLimitInSeconds: q.timeLimitInSeconds || q.TimeLimitInSeconds || 20,
+                options: (q.options || q.Options || []).map((o: any) => ({
+                    text: o.text || o.Text,
+                    isCorrect: o.isCorrect || o.IsCorrect || false
+                }))
+            }));
+
+            // YENİ: Sunucuya gönderilecek başlıkları ayarla, eğer kullanıcı giriş yapmışsa Token'ını da ekle
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
             // 1. Backend'e oyunu kurma isteği at
             const createRes = await fetch("http://localhost:5252/api/Quiz/create", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title: "React Kahoot Quiz", questions })
+                headers: headers,
+                body: JSON.stringify({ title: quizTitle.trim() || "Canlı Oyun", questions: cleanQuestions, requireGoogleAuth, isDraft: false })
             });
 
             if (!createRes.ok) throw new Error("Oyun kurulamadı");
@@ -427,8 +464,94 @@ export default function HostView({ connection }: Props) {
 
             // HER ŞEY BAŞARILI OLURSA EKRANI LOBİYE ÇEVİR
             setPin(generatedPin);
+            
+            // YENİ: Oyun başarıyla kurulup lobi açıldıktan sonra tarayıcıdaki taslağı temizle
+            localStorage.removeItem("kahoot_draft_visual");
+            localStorage.removeItem("kahoot_draft_markdown");
+            localStorage.removeItem("kahoot_draft_title");
+            localStorage.removeItem("kahoot_editing_pin");
         } catch (err: any) {
             console.error("Oyun Kurma Hatası:", err);
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // YENİ: Soruları doğrudan Backend Veritabanına (Kendi Profiline) kaydeder
+    const handleSaveToSystem = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            if (!quizTitle.trim()) {
+                setError("Soru Bankasına kaydetmek için lütfen bir 'Oyun Başlığı' girin.");
+                return;
+            }
+
+            let questions: any[] = [];
+            
+            if (inputMode === 'markdown') {
+                if (markdown.trim()) {
+                    const cleanLines = markdown.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                    if (cleanLines.length > 0 && !cleanLines[0].startsWith('#')) {
+                        throw new Error("Markdown formatı hatalı: Metin '#' işareti ile başlamalıdır.");
+                    }
+                    if (/^[ \t]*(?!Süre|Time|Timer|Duration|Zaman)([A-Za-zğüşıöçĞÜŞİÖÇ]+[ \t]*:|\d+[\.\)])/im.test(markdown)) {
+                        throw new Error("Bazı soruların başında '#' işareti eksik olabilir.");
+                    }
+                    const parseRes = await fetch("http://localhost:5252/api/Quiz/parse-markdown", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ markdownText: markdown })
+                    });
+                    if (!parseRes.ok) throw new Error("Markdown ayrıştırma hatası");
+                    questions = await parseRes.json();
+                    if (questions.length === 0) throw new Error("Geçerli bir soru bulunamadı.");
+                }
+            } else {
+                questions = visualQuestions;
+            }
+
+            if (questions.length === 0) {
+                throw new Error("Lütfen kaydedilecek sorular ekleyin.");
+            }
+
+            // YENİ: Guid çakışmalarını önlemek için eski ID'leri temizle
+            const cleanQuestions = questions.map((q: any) => ({
+                text: q.text || q.Text,
+                timeLimitInSeconds: q.timeLimitInSeconds || q.TimeLimitInSeconds || 20,
+                options: (q.options || q.Options || []).map((o: any) => ({
+                    text: o.text || o.Text,
+                    isCorrect: o.isCorrect || o.IsCorrect || false
+                }))
+            }));
+
+            // Eğer daha önceden yüklenmiş bir taslağı (veya oyunu) düzenliyorsak, eski kaydı silip yenisini atalım
+            const editingPin = localStorage.getItem("kahoot_editing_pin");
+            if (editingPin && token) {
+                try {
+                    await fetch(`http://localhost:5252/api/Quiz/${editingPin}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
+                } catch (e) { console.error("Eski taslak silinemedi:", e); }
+            }
+
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
+            const createRes = await fetch("http://localhost:5252/api/Quiz/create", {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify({ title: quizTitle.trim(), questions: cleanQuestions, requireGoogleAuth, isDraft: true })
+            });
+
+            if (!createRes.ok) throw new Error("Sisteme kaydedilemedi");
+
+            const data = await createRes.json();
+            localStorage.setItem("kahoot_editing_pin", data.pin || data.Pin); // Yeni pin ile eşleştir
+            setHasUnsavedChanges(false); // Değişiklikler kaydedildi
+
+            alert("Sorularınız Soru Bankasına başarıyla kaydedildi! Ana sayfadaki 'Kayıtlı Sorularım' menüsünden ulaşabilirsiniz.");
+        } catch (err: any) {
+            console.error("Kaydetme Hatası:", err);
             setError(err.message);
         } finally {
             setIsLoading(false);
@@ -447,9 +570,10 @@ export default function HostView({ connection }: Props) {
                             <ul className="list-group list-group-flush fs-4 fw-bold text-start">
                                 {gameEndedLeaderboard.map((p, index) => (
                                     <li key={p.id} className="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>
-                                            {index === 0 ? "👑 1. " : index === 1 ? "🥈 2. " : index === 2 ? "🥉 3. " : `${index + 1}. `} 
-                                            {p.nickname}
+                                        <span className="d-flex align-items-center gap-2">
+                                            <span>{index === 0 ? "👑 1. " : index === 1 ? "🥈 2. " : index === 2 ? "🥉 3. " : `${index + 1}. `}</span>
+                                            {p.avatarUrl && <img src={p.avatarUrl} alt="avatar" className="rounded-circle shadow-sm" style={{ width: '32px', height: '32px', objectFit: 'cover' }} referrerPolicy="no-referrer" />}
+                                            <span>{p.nickname}</span>
                                         </span>
                                         <span className="badge bg-danger rounded-pill">{p.score} Puan</span>
                                     </li>
@@ -512,9 +636,10 @@ export default function HostView({ connection }: Props) {
                                 <ul className="list-group list-group-flush fs-4 fw-bold text-start">
                                     {waitPhase.leaderboard.map((p, index) => (
                                         <li key={p.id} className="list-group-item d-flex justify-content-between align-items-center">
-                                            <span>
-                                                {index === 0 ? "🥇 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `} 
-                                                {p.nickname}
+                                            <span className="d-flex align-items-center gap-2">
+                                                <span>{index === 0 ? "🥇 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `}</span>
+                                                {p.avatarUrl && <img src={p.avatarUrl} alt="avatar" className="rounded-circle shadow-sm" style={{ width: '32px', height: '32px', objectFit: 'cover' }} referrerPolicy="no-referrer" />}
+                                                <span>{p.nickname}</span>
                                             </span>
                                             <span className="badge bg-primary rounded-pill">{p.score} Puan</span>
                                         </li>
@@ -602,7 +727,7 @@ export default function HostView({ connection }: Props) {
 
     // OYUN KURULDUYSA (LOBİ EKRANI)
     if (pin) {
-        const joinUrl = `${window.location.origin}/player?pin=${pin}`;
+        const joinUrl = `${window.location.origin}/#/player?pin=${pin}`;
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}`;
 
         return (
@@ -624,15 +749,16 @@ export default function HostView({ connection }: Props) {
                         <div className="d-flex flex-wrap justify-content-center gap-2 mt-4 mb-5">
                             {players.map((p, i) => (
                                 <span key={i} className="badge bg-primary text-white fs-5 py-2 px-3 shadow-sm d-flex align-items-center gap-2">
-                                    {p}
+                                    {p.avatarUrl && <img src={p.avatarUrl} alt="avatar" className="rounded-circle bg-white" style={{ width: '28px', height: '28px', objectFit: 'cover' }} referrerPolicy="no-referrer" />}
+                                    {p.nickname}
                                     <button 
                                         type="button" 
                                         className="btn-close btn-close-white ms-2" 
                                         style={{ fontSize: '0.65rem' }} 
                                         aria-label="Kick"
                                         onClick={() => {
-                                            if (window.confirm(`'${p}' adlı oyuncuyu atmak istediğinize emin misiniz?`)) {
-                                                connection?.invoke("KickPlayer", pin, p);
+                                            if (window.confirm(`'${p.nickname}' adlı oyuncuyu atmak istediğinize emin misiniz?`)) {
+                                                connection?.invoke("KickPlayer", pin, p.nickname);
                                             }
                                         }}
                                     ></button>
@@ -677,6 +803,18 @@ export default function HostView({ connection }: Props) {
                         <h2 className="fw-bold mb-0 text-dark">👨‍🏫 Yönetici Ekranı</h2>
                         <div style={{ width: '100px' }}></div> {/* Başlığı ortalamak için boşluk */}
                     </div>
+                
+                {/* YENİ EKLENEN: Oyun Başlığı Alanı */}
+                <div className="card shadow-sm border-0 mb-3 bg-white">
+                    <div className="card-body p-3">
+                        <label className="fw-bold text-dark mb-2">Oyun Başlığı (İsteğe Bağlı)</label>
+                        <input type="text" className="form-control form-control-lg fw-bold" placeholder="Örn: Vize Hazırlık Testi" value={quizTitle} onChange={(e) => {
+                            setQuizTitle(e.target.value);
+                            setHasUnsavedChanges(true);
+                            localStorage.setItem("kahoot_draft_title", e.target.value);
+                        }} />
+                    </div>
+                </div>
                     
                     {error && <div className="alert alert-danger fw-bold">{error}</div>}
                     
@@ -686,6 +824,23 @@ export default function HostView({ connection }: Props) {
                             <div className="text-md-start text-center">
                                 <h4 className="fw-bold mb-1">Yeni Bir Oyun Başlat</h4>
                                 <p className="mb-0 opacity-75 small">Sorularınızı hazırladıktan sonra oyunu kurun.</p>
+                            <div className="mt-3 text-start">
+                                <div className="d-inline-block bg-white text-dark py-2 px-3 rounded-pill shadow-sm border">
+                                    <div className="form-check form-switch mb-0">
+                                        <input 
+                                            className="form-check-input" 
+                                            type="checkbox" 
+                                            id="googleAuthSwitch" 
+                                            checked={requireGoogleAuth} 
+                                            onChange={(e) => setRequireGoogleAuth(e.target.checked)} 
+                                            style={{ cursor: 'pointer', transform: 'scale(1.2)', marginTop: '0.2rem' }}
+                                        />
+                                        <label className="form-check-label fw-bold ms-2" htmlFor="googleAuthSwitch" style={{ cursor: 'pointer', fontSize: '0.9rem' }}>
+                                            🔒 Sadece Google hesabı olanlar katılabilsin
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                             </div>
                             <div className="d-flex flex-wrap justify-content-center gap-2">
                                 {sessionStorage.getItem("kahoot_host_pin") && (
@@ -705,11 +860,11 @@ export default function HostView({ connection }: Props) {
                                     </button>
                                 )}
                                 <button 
-                                    className="btn btn-light text-primary fw-bold px-4 shadow-sm"
+                                    className="btn btn-warning text-dark fw-bold px-4 shadow-sm fs-5"
                                     onClick={handleCreateGame}
                                     disabled={isLoading || !connection}
                                 >
-                                    {isLoading ? "Oluşturuluyor..." : "✨ Yeni Oyun Kur"}
+                                    {isLoading ? "Başlatılıyor..." : "🚀 Oyunu Başlat"}
                                 </button>
                             </div>
                         </div>
@@ -721,7 +876,7 @@ export default function HostView({ connection }: Props) {
                             {/* SEKMELER (TABS) */}
                             <ul className="nav nav-tabs mb-4">
                                 <li className="nav-item">
-                                    <button className={`nav-link fw-bold ${inputMode === 'visual' ? 'active' : 'text-muted'}`} onClick={() => { setInputMode('visual'); setError(null); }}>🎨 Görsel Oluşturucu</button>
+                                    <button className={`nav-link fw-bold ${inputMode === 'visual' ? 'active' : 'text-muted'}`} onClick={() => { setInputMode('visual'); setError(null); }}>🎨 Soru Oluşturucu</button>
                                 </li>
                                 <li className="nav-item">
                                     <button className={`nav-link fw-bold ${inputMode === 'markdown' ? 'active' : 'text-muted'}`} onClick={() => { setInputMode('markdown'); setError(null); }}>📝 Markdown (İleri Düzey)</button>
@@ -863,6 +1018,24 @@ export default function HostView({ connection }: Props) {
                                         </div>
                                     </div>
                                     <textarea className="form-control mb-4 text-start font-monospace shadow-sm" rows={8} placeholder="# Soru: Türkiye'nin başkenti neresidir?&#10;Süre: 20&#10;- İstanbul&#10;- Ankara (*)&#10;- İzmir" value={markdown} onChange={(e) => setMarkdown(e.target.value)}></textarea>
+                                </div>
+                            )}
+
+                            {/* YENİ: Sadece giriş yapmış kullanıcılar soru bankasına kaydedebilir */}
+                            {user ? (
+                                <div className="mt-4 pt-4 border-top d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                                    <span className="text-muted small fw-bold">💡 Sorularınızı sisteme kaydederek Soru Bankası oluşturabilirsiniz.</span>
+                                    <button 
+                                        className="btn btn-outline-primary btn-lg fw-bold px-5 shadow-sm"
+                                        onClick={handleSaveToSystem}
+                                        disabled={isLoading}
+                                    >
+                                        💾 Sisteme Kaydet
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="mt-4 pt-4 border-top text-center">
+                                    <span className="text-muted small fw-bold">💡 Soru bankası oluşturmak ve sorularınızı sisteme kaydetmek için lütfen ana sayfadan giriş yapın.</span>
                                 </div>
                             )}
                         </div>

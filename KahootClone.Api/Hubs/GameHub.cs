@@ -48,10 +48,10 @@ public class GameHub : Hub<IGameClient>
         }
     }
 
-    public async Task<bool> JoinGame(string pin, string nickname, string? sessionToken = null)
+    public async Task<bool> JoinGame(string pin, string nickname, string? sessionToken = null, string? googleToken = null, string? avatarUrl = null)
     {
         // Oyuncuyu Backend'e kaydet veya var olan oyuncunun bağlantısını güncelle
-        var (player, errorMessage, newSessionToken) = await _quizService.JoinOrRejoinAsync(pin, nickname, Context.ConnectionId, sessionToken);
+        var (player, errorMessage, newSessionToken) = await _quizService.JoinOrRejoinAsync(pin, nickname, Context.ConnectionId, sessionToken, googleToken, avatarUrl);
         
         if (player == null)
         {
@@ -63,7 +63,7 @@ public class GameHub : Hub<IGameClient>
         await Clients.Caller.SessionTokenReceived(newSessionToken!);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, pin);
-        await Clients.Group(pin).PlayerJoined(nickname);
+        await Clients.Group(pin).PlayerJoined(new { Nickname = nickname, AvatarUrl = player.AvatarUrl });
         return true;
     }
 
@@ -190,7 +190,7 @@ public class GameHub : Hub<IGameClient>
         // Yönlendirilecek oyuncuların takma ad listesi alınır.
         var playersToRedirect = oldQuiz.Players
             .Where(p => !string.IsNullOrEmpty(p.ConnectionId))
-            .Select(p => p.Nickname).ToList();
+            .Select(p => new { Nickname = p.Nickname, AvatarUrl = p.AvatarUrl }).ToList();
 
         var payload = new {
             NewPin = newPin,

@@ -1,18 +1,24 @@
 import { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useSignalR } from './hooks/useSignalR';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import './App.css';
 import './premium-theme.css';
 
+import { AuthProvider } from './context/AuthContext.tsx';
+import Navbar from './components/Navbar.tsx';
 // Sayfalarımızı içe aktarıyoruz
 import Home from './pages/Home';
 import HostView from './pages/HostView';
 import PlayerView from './pages/PlayerView';
+import Profile from './pages/Profile';
 
 function App() {
-  const { isConnected, connection } = useSignalR();
+  const { connection } = useSignalR();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [isLive, setIsLive] = useState(false);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "GECICI_CLIENT_ID";
 
   // YENİ: Tema değişikliğini ve Modern Fontu (Poppins) uygula
   useEffect(() => {
@@ -25,31 +31,45 @@ function App() {
     document.body.style.fontFamily = "'Poppins', sans-serif";
   }, [theme]);
 
+  // YENİ: Bağlantı durumunu doğrudan SignalR'ın gerçek State nesnesi ile tam senkronize tut
+  useEffect(() => {
+    if (!connection) return;
+
+    const syncConnectionStatus = () => {
+      setIsLive(connection.state === "Connected");
+    };
+
+    // İlk açılışta ve durum değişimlerinde kontrol et
+    syncConnectionStatus();
+    connection.onclose(syncConnectionStatus);
+    connection.onreconnecting(syncConnectionStatus);
+    connection.onreconnected(syncConnectionStatus);
+
+    // Olası arayüz takılmalarına karşı (sessiz kopmalar) her 3 saniyede bir durumu doğrula
+    const interval = setInterval(syncConnectionStatus, 3000);
+
+    return () => clearInterval(interval);
+  }, [connection]);
+
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   return (
-    <BrowserRouter>
-      {/* Üst Kısım: Tüm sayfalarda her zaman görünecek olan bağlantı durumu (Navbar gibi) */}
-      <div className="bg-dark text-white py-2 shadow-sm d-flex justify-content-between align-items-center px-4">
-        <div>
-            {isConnected ? (
-            <span className="text-success fw-bold">🟢 Bağlantı Aktif</span>
-            ) : (
-            <span className="text-warning fw-bold">🔴 Bağlanılıyor...</span>
-            )}
-        </div>
-        <button className="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold" onClick={toggleTheme}>
-            {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
-        </button>
-      </div>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <AuthProvider>
+        <HashRouter>
+          {/* Üst Kısım: Tüm sayfalarda her zaman görünecek olan Navbar */}
+          <Navbar isLive={isLive} theme={theme} toggleTheme={toggleTheme} />
 
-      {/* Orta Kısım: Adrese (URL) göre değişen dinamik sayfalar */}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/host" element={<HostView connection={connection} />} />
-        <Route path="/player" element={<PlayerView connection={connection} />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Orta Kısım: Adrese (URL) göre değişen dinamik sayfalar */}
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/host" element={<HostView connection={connection} />} />
+            <Route path="/player" element={<PlayerView connection={connection} />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </HashRouter>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   )
 }
 

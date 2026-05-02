@@ -59,6 +59,12 @@ public class QuizService : IQuizService
         return _quizRepository.GetByPin(pin);
     }
 
+    // YENİ: Yöneticinin kendi oluşturduğu oyunları getirir
+    public List<Quiz> GetQuizzesByCreatorId(string creatorId)
+    {
+        return _quizRepository.GetByCreatorId(creatorId);
+    }
+
     // YENİ: AŞAMA 4 - Oyunun otomatik akışı (Zamanlayıcı) başlatılır.
     public async Task StartGameFlowAsync(string pin)
     {
@@ -216,19 +222,26 @@ public class QuizService : IQuizService
     }
 
     // YENİ: Oyuncu oyuna katıldığında veya tekrar bağlandığında çalışır.
-    public async Task<(Player? player, string? errorMessage, string? sessionToken)> JoinOrRejoinAsync(string pin, string nickname, string connectionId, string? sessionToken = null)
+    public async Task<(Player? player, string? errorMessage, string? sessionToken)> JoinOrRejoinAsync(string pin, string nickname, string connectionId, string? sessionToken = null, string? googleToken = null, string? avatarUrl = null)
     {
         await using (await _gameStateRepository.AcquireQuizLockAsync(pin))
         {
             var quiz = _quizRepository.GetByPin(pin);
             if (quiz == null || !quiz.IsActive) return (null, "Geçersiz PIN veya oyun aktif değil.", null);
 
+            // YENİ: Google Auth zorunluluğu kontrolü
+            if (quiz.RequireGoogleAuth && string.IsNullOrEmpty(googleToken))
+            {
+                // Eğer oyun Google istiyorsa ama token gelmemişse (veya doğrudan nick ile girmeye çalışıyorsa) reddet!
+                return (null, "Bu oyuna sadece Google ile giriş yapanlar katılabilir!", null);
+            }
+
             var player = quiz.Players.FirstOrDefault(p => p.Nickname == nickname);
             
             if (player == null)
             {
                 // Yeni oyuncu kaydı
-                player = new Player { Id = Guid.NewGuid(), Nickname = nickname, Score = 0, ConnectionId = connectionId };
+                player = new Player { Id = Guid.NewGuid(), Nickname = nickname, Score = 0, ConnectionId = connectionId, AvatarUrl = avatarUrl };
                 quiz.Players.Add(player);
             _gameStateRepository.AddConnection(connectionId, pin, nickname);
                 _quizRepository.Update(quiz);
@@ -245,6 +258,7 @@ public class QuizService : IQuizService
                 {
                     // Oyuncu daha önce bağlanmış ama kopmuş. Yeniden bağlanmasına izin ver.
                     player.ConnectionId = connectionId;
+                    if (!string.IsNullOrEmpty(avatarUrl)) player.AvatarUrl = avatarUrl;
                 _gameStateRepository.AddConnection(connectionId, pin, nickname);
                     _quizRepository.Update(quiz);
                 return (player, null, player.Id.ToString());
@@ -493,5 +507,10 @@ public class QuizService : IQuizService
             }
         }
         return null;
+    }
+
+    public void DeleteQuiz(string pin)
+    {
+        _quizRepository.Delete(pin);
     }
 }

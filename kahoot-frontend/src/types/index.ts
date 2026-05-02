@@ -2,6 +2,7 @@ export interface Player {
     id: string;
     nickname: string;
     score: number;
+    avatarUrl?: string;
 }
 
 export interface QuestionPacket {
@@ -24,4 +25,13 @@ export interface WaitPhasePayload {
     correctOptionId: string | null;
     leaderboard: Player[];
     allAnswered: boolean;
+}
+
+export interface User {
+    id: string;
+    googleId: string;
+    email: string;
+    nickname: string;
+    avatarUrl?: string;
+    role: string;
 }
