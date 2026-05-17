@@ -18,6 +18,7 @@
 
 > [!NOTE] 
 > **Felsefemiz: "Agentic Engineering"**
+>
 > Bu proje; Temiz Mimari (Clean Architecture), SOLID prensipleri ve Dağıtık Sistem (Distributed System) mühendisliğinin harmanlandığı, sıradan bir uygulamanın ötesinde **kurumsal (Enterprise)** standartlarda inşa edilmiş bir şaheserdir.
 
 ---
