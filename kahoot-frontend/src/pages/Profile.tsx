@@ -76,8 +76,9 @@ export default function Profile() {
 
                             <form onSubmit={handleSave}>
                                 <div className="mb-3">
-                                    <label className="form-label fw-bold text-dark">Takma Ad (Nickname)</label>
+                                    <label htmlFor="nicknameInput" className="form-label fw-bold text-dark">Takma Ad (Nickname)</label>
                                     <input 
+                                        id="nicknameInput"
                                         type="text" 
                                         className="form-control form-control-lg fw-bold" 
                                         value={nickname}
@@ -88,8 +89,9 @@ export default function Profile() {
                                     />
                                 </div>
                                 <div className="mb-4">
-                                    <label className="form-label fw-bold text-dark">Profil Resmi URL</label>
+                                    <label htmlFor="avatarUrlInput" className="form-label fw-bold text-dark">Profil Resmi URL</label>
                                     <input 
+                                        id="avatarUrlInput"
                                         type="url" 
                                         className="form-control form-control-lg" 
                                         value={avatarUrl}

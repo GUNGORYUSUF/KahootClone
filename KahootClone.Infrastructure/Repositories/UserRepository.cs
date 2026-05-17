@@ -11,19 +11,32 @@ public class UserRepository : IUserRepository
 {
     // Bağlantı havuzu (Connection Pool) performansını korumak için client static yapıldı
     private static MongoClient? _client;
+    private static readonly object _clientLock = new object();
     private readonly IMongoCollection<User> _usersCollection;
     private readonly IMongoDatabase _database;
+
+    private static MongoClient GetMongoClient(string connectionString)
+    {
+        if (_client == null)
+        {
+            lock (_clientLock)
+            {
+                if (_client == null)
+                {
+                    _client = new MongoClient(connectionString);
+                }
+            }
+        }
+        return _client;
+    }
 
     public UserRepository(IConfiguration configuration)
     {
         // Docker ortamında veya yerel ortamda bağlantı dizesini çekiyoruz
         var connectionString = configuration["MongoDbSettings:ConnectionString"] ?? "mongodb://localhost:27017";
         
-        if (_client == null)
-        {
-            _client = new MongoClient(connectionString);
-        }
-        _database = _client.GetDatabase("KahootDb");
+        var client = GetMongoClient(connectionString);
+        _database = client.GetDatabase("KahootDb");
         
         _usersCollection = _database.GetCollection<User>("Users");
     }

@@ -25,6 +25,7 @@ public class QuizController : ControllerBase
     }
 
     [HttpPost("create")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult CreateQuiz([FromBody] Quiz quiz)
     {
         // YENİ: Yönetici sisteme giriş yapmışsa, ID'sini oyuna "Kurucu" olarak kaydet
@@ -60,6 +61,7 @@ public class QuizController : ControllerBase
     // YENİ: Giriş yapmış yöneticinin kendi kurduğu geçmiş oyunları getirir
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("my-quizzes")]
+    [ProducesResponseType(typeof(IEnumerable<Quiz>), StatusCodes.Status200OK)]
     public IActionResult GetMyQuizzes()
     {
         // JWT Token'dan kullanıcı ID'sini güvenli bir şekilde çekiyoruz
@@ -76,6 +78,7 @@ public class QuizController : ControllerBase
     // YENİ: Giriş yapmış yöneticinin kendi oyununu tamamen silmesi
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpDelete("{pin}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult DeleteQuiz(string pin)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
@@ -89,6 +92,7 @@ public class QuizController : ControllerBase
     }
 
     [HttpPost("parse-markdown")]
+    [ProducesResponseType(typeof(IEnumerable<Question>), StatusCodes.Status200OK)]
     public IActionResult ParseMarkdown([FromBody] MarkdownRequestDto request)
     {
         if (string.IsNullOrWhiteSpace(request.MarkdownText))

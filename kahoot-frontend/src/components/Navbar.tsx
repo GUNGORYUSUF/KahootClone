@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 interface Props {
-    isLive: boolean;
-    theme: 'light' | 'dark';
-    toggleTheme: () => void;
+    readonly isLive: boolean;
+    readonly theme: 'light' | 'dark';
+    readonly toggleTheme: () => void;
 }
 
 export default function Navbar({ isLive, theme, toggleTheme }: Props) {
@@ -67,7 +67,7 @@ export default function Navbar({ isLive, theme, toggleTheme }: Props) {
                             {isLoading ? "Bekleniyor..." : (
                                 <>
                                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: '16px', height: '16px' }} />
-                                    Giriş Yap
+                                    {" "}Giriş Yap
                                 </>
                             )}
                         </button>

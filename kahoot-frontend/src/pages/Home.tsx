@@ -53,7 +53,7 @@ export default function Home() {
 
     // YENİ: İstenmeyen oyunu veritabanından tamamen sil
     const handleDeleteSavedGame = async (pin: string) => {
-        if (!window.confirm("Bu oyunu tamamen silmek istediğinize emin misiniz?")) return;
+        if (!globalThis.confirm("Bu oyunu tamamen silmek istediğinize emin misiniz?")) return;
         try {
             const res = await fetch(`http://localhost:5252/api/Quiz/${pin}`, {
                 method: "DELETE",
@@ -64,6 +64,49 @@ export default function Home() {
         } catch (err: any) {
             alert(err.message);
         }
+    };
+
+    const renderModalContent = () => {
+        if (isLoading) {
+            return (
+                <div className="text-center py-5">
+                    <output className="spinner-border text-primary"></output>
+                    <p className="mt-3 text-muted fw-bold">Oyunlarınız yükleniyor...</p>
+                </div>
+            );
+        }
+        if (error) {
+            return <div className="alert alert-danger fw-bold">{error}</div>;
+        }
+        if (myQuizzes.length === 0) {
+            return (
+                <div className="text-center py-5">
+                    <h1 className="display-1 text-muted opacity-50">📂</h1>
+                    <h4 className="text-muted fw-bold mt-3">Henüz kaydedilmiş bir oyununuz yok.</h4>
+                    <p className="text-muted">Host ekranından yeni bir oyun kurduğunuzda burada listelenecektir.</p>
+                </div>
+            );
+        }
+        return (
+            <ul className="list-group list-group-flush text-start">
+                {myQuizzes.map((quiz) => (
+                    <li key={quiz.id || quiz.pin} className="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-bottom">
+                        <div>
+                            <h5 className="fw-bold mb-1 text-dark">{quiz.title || "İsimsiz Oyun"}</h5>
+                            <small className="text-muted fw-bold"> Toplam {quiz.questions?.length || 0} Soru İçerir</small>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                            <button className="btn btn-sm btn-primary fw-bold px-4 py-2 shadow-sm" onClick={() => handleEditSavedGame(quiz)} disabled={isLoading}>
+                                ✏️ Yükle / Düzenle
+                            </button>
+                            <button className="btn btn-sm btn-outline-danger fw-bold px-3 py-2 shadow-sm" onClick={() => handleDeleteSavedGame(quiz.pin)} disabled={isLoading}>
+                                🗑️
+                            </button>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        );
     };
 
     return (
@@ -113,39 +156,7 @@ export default function Home() {
                                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
                             </div>
                             <div className="modal-body p-4">
-                                {isLoading ? (
-                                    <div className="text-center py-5">
-                                        <div className="spinner-border text-primary" role="status"></div>
-                                        <p className="mt-3 text-muted fw-bold">Oyunlarınız yükleniyor...</p>
-                                    </div>
-                                ) : error ? (
-                                    <div className="alert alert-danger fw-bold">{error}</div>
-                                ) : myQuizzes.length === 0 ? (
-                                    <div className="text-center py-5">
-                                        <h1 className="display-1 text-muted opacity-50">📂</h1>
-                                        <h4 className="text-muted fw-bold mt-3">Henüz kaydedilmiş bir oyununuz yok.</h4>
-                                        <p className="text-muted">Host ekranından yeni bir oyun kurduğunuzda burada listelenecektir.</p>
-                                    </div>
-                                ) : (
-                                    <ul className="list-group list-group-flush text-start">
-                                        {myQuizzes.map((quiz, i) => (
-                                            <li key={quiz.id || i} className="list-group-item d-flex justify-content-between align-items-center py-3 px-0 border-bottom">
-                                                <div>
-                                                    <h5 className="fw-bold mb-1 text-dark">{quiz.title || "İsimsiz Oyun"}</h5>
-                                                    <small className="text-muted fw-bold"> Toplam {quiz.questions?.length || 0} Soru İçerir</small>
-                                                </div>
-                                                <div className="d-flex align-items-center gap-2">
-                                                    <button className="btn btn-sm btn-primary fw-bold px-4 py-2 shadow-sm" onClick={() => handleEditSavedGame(quiz)} disabled={isLoading}>
-                                                        ✏️ Yükle / Düzenle
-                                                    </button>
-                                                    <button className="btn btn-sm btn-outline-danger fw-bold px-3 py-2 shadow-sm" onClick={() => handleDeleteSavedGame(quiz.pin)} disabled={isLoading}>
-                                                        🗑️
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                                {renderModalContent()}
                             </div>
                             <div className="modal-footer border-0 bg-light rounded-bottom-4">
                                 <button type="button" className="btn btn-secondary fw-bold px-4" onClick={() => setShowModal(false)}>Kapat</button>

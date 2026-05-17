@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useSignalR } from './hooks/useSignalR';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { HubConnectionState } from '@microsoft/signalr';
 import './App.css';
 import './premium-theme.css';
 
@@ -22,7 +23,7 @@ function App() {
 
   // YENİ: Tema değişikliğini ve Modern Fontu (Poppins) uygula
   useEffect(() => {
-    document.documentElement.setAttribute('data-bs-theme', theme);
+    document.documentElement.dataset.bsTheme = theme;
     
     const link = document.createElement('link');
     link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap';
@@ -36,7 +37,8 @@ function App() {
     if (!connection) return;
 
     const syncConnectionStatus = () => {
-      setIsLive(connection.state === "Connected");
+      // Güvenli Enum Kontrolü: SignalR sürümüne bakılmaksızın tam uyumlu çalışır
+      setIsLive(connection.state === HubConnectionState.Connected);
     };
 
     // İlk açılışta ve durum değişimlerinde kontrol et
@@ -45,8 +47,8 @@ function App() {
     connection.onreconnecting(syncConnectionStatus);
     connection.onreconnected(syncConnectionStatus);
 
-    // Olası arayüz takılmalarına karşı (sessiz kopmalar) her 3 saniyede bir durumu doğrula
-    const interval = setInterval(syncConnectionStatus, 3000);
+    // Olası arayüz takılmalarına karşı (sessiz kopmalar) her 1 saniyede bir durumu anında doğrula
+    const interval = setInterval(syncConnectionStatus, 1000);
 
     return () => clearInterval(interval);
   }, [connection]);

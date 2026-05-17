@@ -14,7 +14,7 @@ namespace KahootClone.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IUserRepository userRepository, IConfiguration configuration) : ControllerBase
+public class AuthController(IUserRepository userRepository, IConfiguration configuration, IHttpClientFactory httpClientFactory) : ControllerBase
 {
 
     // JSON Model Binding hatalarını (400) önlemek için 'record' yerine standart 'class' kullanıyoruz
@@ -47,8 +47,9 @@ public class AuthController(IUserRepository userRepository, IConfiguration confi
         try
         {
             // 1. Frontend'den gelen Access Token'ı Google UserInfo API'si ile doğrula
-            using var httpClient = new HttpClient();
-            var req = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v3/userinfo");
+            using var httpClient = httpClientFactory.CreateClient();
+            var googleApiUrl = configuration["GoogleApi:UserInfoUrl"] ?? "https://www.googleapis.com/oauth2/v3/userinfo";
+            var req = new HttpRequestMessage(HttpMethod.Get, googleApiUrl);
             req.Headers.Add("Authorization", $"Bearer {request.Credential}");
             var userInfoResponse = await httpClient.SendAsync(req);
             

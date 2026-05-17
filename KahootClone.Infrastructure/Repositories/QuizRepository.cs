@@ -80,7 +80,7 @@ public class QuizRepository : IQuizRepository
         return _retryPolicy.Execute(() =>
         {
             // YENİ: Soru bankası sadece "Taslak (Draft)" olarak kaydedilen oyunları getirir.
-            return _context.Quizzes.Find(q => q.CreatorId == creatorId && q.IsDraft == true).ToList();
+            return _context.Quizzes.Find(q => q.CreatorId == creatorId && q.IsDraft).ToList();
         });
     }
 

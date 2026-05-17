@@ -85,7 +85,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 150M
+          memory: 512M
 
     # API'nin çalışması için önce DB ve Redis'in hazır olmasını bekliyoruz.
     depends_on:

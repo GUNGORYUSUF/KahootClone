@@ -1,274 +1,33 @@
-import { useState, useEffect } from 'react';
 import { HubConnection } from '@microsoft/signalr';
-import { Link, useSearchParams } from 'react-router-dom';
-import type { QuestionPacket, WaitPhasePayload, Player, AnswerResult } from '../types/index';
-import { useGoogleLogin } from '@react-oauth/google';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
+import { useKahootPlayer } from '../hooks/useKahootPlayer';
 
 interface Props {
-    connection: HubConnection | null;
+    readonly connection: HubConnection | null;
 }
 
 export default function PlayerView({ connection }: Props) {
-    const { user, token } = useAuth();
-    // YENİ: QR Kod ile gelindiğinde URL'deki "pin" parametresini otomatik al
-    const [searchParams] = useSearchParams();
-    const [pin, setPin] = useState(searchParams.get("pin") || '');
-    const [nickname, setNickname] = useState('');
-    const [isJoined, setIsJoined] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const { pin, setPin, nickname, setNickname, isJoined, setIsJoined, error, setError, isLoading, setIsLoading, currentQuestion, setCurrentQuestion, waitPhase, setWaitPhase, gameEndedLeaderboard, setGameEndedLeaderboard, timeLeft, hasAnswered, setHasAnswered, answerResult, setAnswerResult, isLastQuestion, isGettingReady, readyCountdown, answerStats, enableGoogleLogin, loginWithGoogle, handleJoin, submitAnswer, user, token } = useKahootPlayer(connection);
 
-    // YENİ: Soru ve cevap state'leri
-    const [currentQuestion, setCurrentQuestion] = useState<QuestionPacket | null>(null);
-    const [waitPhase, setWaitPhase] = useState<WaitPhasePayload | null>(null);
-    const [gameEndedLeaderboard, setGameEndedLeaderboard] = useState<Player[] | null>(null);
-    const [timeLeft, setTimeLeft] = useState<number>(0);
-    const [hasAnswered, setHasAnswered] = useState(false);
-    const [answerResult, setAnswerResult] = useState<AnswerResult | null>(null);
-    const [isLastQuestion, setIsLastQuestion] = useState<boolean>(false);
-    const [isGettingReady, setIsGettingReady] = useState<boolean>(false);
-    const [readyCountdown, setReadyCountdown] = useState<number>(3);
-    const [answerStats, setAnswerStats] = useState({ answered: 0, total: 0 });
-
-    // YENİ: Google Login Özellik Bayrağı (Feature Flag)
-    const enableGoogleLogin = import.meta.env.VITE_ENABLE_GOOGLE_LOGIN === 'true';
-
-    // YENİ: Global kullanıcı girişi yapılmışsa Nickname'i arka planda otomatik doldur
-    useEffect(() => {
-        if (user && !isJoined) {
-            setNickname(user.nickname);
-        }
-    }, [user, isJoined]);
-
-    // YENİ: Gerçek Google Login İşlemi
-    const loginWithGoogle = useGoogleLogin({
-        onSuccess: async (tokenResponse) => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                // 1. Google API'den kullanıcının adını/emailini al
-                const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-                });
-                if (!res.ok) throw new Error("Google bilgileri alınamadı.");
-                
-                const userInfo = await res.json();
-                const googleName = userInfo.name || userInfo.given_name;
-                const avatarUrl = userInfo.picture || null; // YENİ: Avatar bilgisini yakala
-                
-                // 2. Backend'e bağlan (Google'dan alınan isim ve token ile)
-                const sessionToken = sessionStorage.getItem("kahoot_session_token");
-                const success = await connection?.invoke("JoinGame", pin, googleName, sessionToken || null, tokenResponse.access_token, avatarUrl || null);
-                
-                if (success) {
-                    sessionStorage.setItem("kahoot_nickname", googleName);
-                    sessionStorage.setItem("kahoot_player_pin", pin);
-                    sessionStorage.setItem("kahoot_avatar_url", avatarUrl || "");
-                    setNickname(googleName);
-                    setIsJoined(true);
-                } else {
-                    setError("Bu oyuna katılamazsınız veya lobi dolmuş olabilir.");
-                }
-            } catch (err) {
-                console.error("Google Login hatası:", err);
-                setError("Google ile giriş yapılamadı.");
-            } finally {
-                setIsLoading(false);
-            }
-        },
-        onError: () => setError("Google girişi iptal edildi veya başarısız oldu.")
-    });
-
-    useEffect(() => {
-        if (!connection) return;
-
-        // Sunucudan gelen güvenlik token'ını tarayıcı hafızasına kaydet (Session Hijacking Koruması)
-        connection.on("SessionTokenReceived", (token: string) => {
-            sessionStorage.setItem("kahoot_session_token", token);
-        });
-
-        // Sunucudan gelen hataları (Yanlış PIN vb.) ekrana yansıt
-        connection.on("Error", (message: string) => {
-            setError(message);
-            setIsLoading(false);
-        });
-
-        // YENİ: Cevap sonucunu dinle
-        connection.on("AnswerResult", (result: AnswerResult) => {
-            setAnswerResult(result);
-        });
-
-        // YENİ: Anlık cevap sayacı güncellemelerini dinle
-        connection.on("UpdateAnswerCount", (payload: any) => {
-            const answered = payload.answeredCount ?? payload.AnsweredCount ?? 0;
-            const total = payload.totalCount ?? payload.TotalCount ?? 0;
-            setAnswerStats({ answered, total });
-        });
-
-        // YENİ: Yönetici yeniden oyna dediğinde otomatik olarak yeni lobiye geç
-        connection.on("RedirectToNewGame", async (payload: any) => {
-            try {
-                const targetPin = payload.newPin || payload.NewPin;
-                const targetPlayers = payload.players || payload.Players || [];
-                const currentNick = sessionStorage.getItem("kahoot_nickname") || "";
-                
-                const isIncluded = targetPlayers.some((p: any) => (typeof p === 'string' ? p : p.nickname || p.Nickname) === currentNick);
-                if (isIncluded) {
-                    setPin(targetPin);
-                    setGameEndedLeaderboard(null);
-                    setWaitPhase(null);
-                    setCurrentQuestion(null);
-                    setHasAnswered(false);
-                    setAnswerResult(null);
-                    
-                    const sessionToken = sessionStorage.getItem("kahoot_session_token");
-                    sessionStorage.setItem("kahoot_player_pin", targetPin);
-                    const globalToken = localStorage.getItem("kahoot_global_token");
-                    const globalUserStr = localStorage.getItem("kahoot_global_user");
-                    const globalUser = globalUserStr ? JSON.parse(globalUserStr) : null;
-                    const avatarUrl = globalUser?.avatarUrl || sessionStorage.getItem("kahoot_avatar_url");
-                    await connection.invoke("JoinGame", targetPin, currentNick, sessionToken || null, globalToken || null, avatarUrl || null);
-                }
-            } catch (err) {
-                console.error("Yeni Lobiye Geçiş Hatası:", err);
-            }
-        });
-
-        // YENİ: 3-2-1 Geri Sayımını Başlat
-        connection.on("GetReady", () => {
-            setIsGettingReady(true);
-            setReadyCountdown(3);
-            let counter = 3;
-            const interval = setInterval(() => {
-                counter -= 1;
-                setReadyCountdown(counter);
-                if (counter <= 1) clearInterval(interval);
-            }, 1000);
-        });
-
-        // YENİ: Soru geldiğinde ekranı değiştir ve cevap hakkını aç
-        connection.on("ReceiveQuestion", (question: QuestionPacket) => {
-            setCurrentQuestion(question);
-            setWaitPhase(null); // Soru geldiğinde bekleme ekranını kapat
-            setIsGettingReady(false); // Hazırlık ekranını kapat
-            setHasAnswered(false);
-            setAnswerResult(null);
-            setIsLastQuestion(question.currentIndex === question.totalQuestions);
-            setAnswerStats({ answered: 0, total: question.totalPlayers });
-        });
-
-        // YENİ: Soru sırasındaki saniye güncellemelerini dinle (Sayacın 0 kalmasını çözer)
-        connection.on("TimeUpdate", (time: number) => {
-            setTimeLeft(time);
-        });
-
-        // YENİ: Soru bitip bekleme (Transition) aşamasına geçildiğinde
-        connection.on("WaitPhase", (payload: WaitPhasePayload) => {
-            setWaitPhase(payload);
-            setTimeLeft(payload.waitTime);
-        });
-
-        // YENİ: Bekleme aşamasındaki saniye güncellemeleri
-        connection.on("WaitTimeUpdate", (time: number) => {
-            setTimeLeft(time);
-        });
-
-        // YENİ: Oyun tamamen bittiğinde
-        connection.on("GameEnded", (leaderboard: Player[]) => {
-            setGameEndedLeaderboard(leaderboard);
-            setWaitPhase(null);
-            setCurrentQuestion(null);
-            // YENİ DÜZELTME: Oyun tamamen bittiğinde "Kaldığın Yerden Devam Et" butonunu gizler
-            sessionStorage.removeItem("kahoot_player_pin");
-        });
-
-        // YENİ: Yönetici lobiyi iptal ettiğinde öğrenciyi form ekranına geri fırlat
-        connection.on("LobbyReset", () => {
-            sessionStorage.removeItem("kahoot_player_pin");
-            setPin("");
-            setIsJoined(false);
-            setCurrentQuestion(null);
-            setWaitPhase(null);
-            setGameEndedLeaderboard(null);
-            setHasAnswered(false);
-            setAnswerResult(null);
-            setError("Yönetici oyunu iptal etti. Lobi kapatıldı.");
-        });
-
-        // YENİ: Yönetici tarafından atıldığında
-        connection.on("Kicked", () => {
-            sessionStorage.removeItem("kahoot_player_pin");
-            setPin("");
-            setIsJoined(false);
-            setCurrentQuestion(null);
-            setWaitPhase(null);
-            setGameEndedLeaderboard(null);
-            setHasAnswered(false);
-            setAnswerResult(null);
-            setError("Yönetici tarafından lobiden atıldınız.");
-        });
-
-        // Bileşen ekrandan kalktığında (Unmount) dinleyicileri temizle
-        return () => {
-            connection.off("SessionTokenReceived");
-            connection.off("GetReady");
-            connection.off("Error");
-            connection.off("ReceiveQuestion");
-            connection.off("UpdateAnswerCount");
-            connection.off("TimeUpdate");
-            connection.off("WaitPhase");
-            connection.off("WaitTimeUpdate");
-            connection.off("GameEnded");
-            connection.off("AnswerResult");
-            connection.off("RedirectToNewGame");
-            connection.off("Kicked");
-            connection.off("LobbyReset");
-        };
-    }, [connection]);
-
-    const handleJoin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!connection) {
-            setError("SignalR bağlantısı henüz kurulamadı.");
-            return;
-        }
-
-        // Aynı isimle girmeyi zorlaştırmak için boşlukları temizle
-        const cleanNickname = nickname.trim();
-        if (cleanNickname.length === 0) return;
-
-        setError(null);
-        setIsLoading(true);
-
-        try {
-            // Varsa eski oturum token'ını al (Sayfa yenilense bile aynı kişi olduğunu kanıtlar)
-            const sessionToken = sessionStorage.getItem("kahoot_session_token");
-            const avatarUrlToUse = user?.avatarUrl || null;
-            const authToPass = token || null; // Global token'ı yolla ki backend güvenlik kilidini aşsın
-
-            // C# tarafındaki 'JoinGame' metodunu tetikle
-            const success = await connection.invoke("JoinGame", pin, cleanNickname, sessionToken || null, authToPass, avatarUrlToUse);
-            
-            if (success) {
-                // Sadece oyuna başarıyla katıldıktan sonra bilgileri hafızaya kaydet
-                sessionStorage.setItem("kahoot_nickname", cleanNickname);
-                sessionStorage.setItem("kahoot_player_pin", pin);
-                sessionStorage.setItem("kahoot_avatar_url", avatarUrlToUse || "");
-                setIsJoined(true);
-            }
-        } catch (err) {
-            console.error("Katılma hatası:", err);
-            setError("Oyuna katılırken beklenmeyen bir hata oluştu.");
-        } finally {
-            setIsLoading(false);
-        }
+    // Bilişsel Karmaşıklığı (Cognitive Complexity) azaltmak için fonksiyonları JSX'ten dışarı alıyoruz
+    const handleReplay = () => {
+        setCurrentQuestion(null);
+        setWaitPhase(null);
+        setGameEndedLeaderboard(null);
+        setHasAnswered(false);
+        setAnswerResult(null);
     };
 
-    const submitAnswer = (optionId: string) => {
-        if (!connection || !currentQuestion || hasAnswered) return;
-        connection.invoke("SubmitAnswer", pin, nickname.trim(), currentQuestion.id, optionId);
-        setHasAnswered(true);
+    const handleLeaveGame = async () => {
+        await connection?.invoke("LeaveGame");
+        sessionStorage.removeItem("kahoot_player_pin");
+        setPin("");
+        setIsJoined(false);
+        setCurrentQuestion(null);
+        setWaitPhase(null);
+        setGameEndedLeaderboard(null);
+        setHasAnswered(false);
+        setAnswerResult(null);
     };
 
     // OYUN BİTTİ EKRANI (GAME ENDED)
@@ -301,7 +60,7 @@ export default function PlayerView({ connection }: Props) {
                                     return (
                                         <li key={p.id} className={`list-group-item d-flex justify-content-between align-items-center ${isMe ? 'bg-success text-white rounded' : ''}`}>
                                             <span className="d-flex align-items-center gap-2">
-                                                <span>{index === 0 ? "👑 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `}</span>
+                                                <span>{["👑 ", "🥈 ", "🥉 "][index] || `${index + 1}. `}</span>
                                                 {p.avatarUrl && <img src={p.avatarUrl} alt="avatar" className="rounded-circle shadow-sm" style={{ width: '32px', height: '32px', objectFit: 'cover' }} referrerPolicy="no-referrer" />}
                                                 <span>{p.nickname} {isMe && "(Sen)"}</span>
                                             </span>
@@ -316,30 +75,14 @@ export default function PlayerView({ connection }: Props) {
                             <button 
                                 className="btn btn-primary btn-lg w-100 py-3 fs-5 shadow fw-bold" 
                                 style={{ maxWidth: '400px' }}
-                                onClick={() => {
-                                    setCurrentQuestion(null);
-                                    setWaitPhase(null);
-                                    setGameEndedLeaderboard(null);
-                                    setHasAnswered(false);
-                                    setAnswerResult(null);
-                                }}
+                                onClick={handleReplay}
                             >
                                 🔄 Yeniden Oyna (Aynı Lobi)
                             </button>
                             <button 
                                 className="btn btn-danger btn-lg w-100 py-3 fs-5 shadow fw-bold" 
                                 style={{ maxWidth: '400px' }}
-                                onClick={async () => {
-                                    await connection?.invoke("LeaveGame");
-                                    sessionStorage.removeItem("kahoot_player_pin");
-                                    setPin("");
-                                    setIsJoined(false);
-                                    setCurrentQuestion(null);
-                                    setWaitPhase(null);
-                                    setGameEndedLeaderboard(null);
-                                    setHasAnswered(false);
-                                    setAnswerResult(null);
-                                }}
+                                onClick={handleLeaveGame}
                             >
                                  🚪 Ana Ekrana Dön
                             </button>
@@ -403,7 +146,7 @@ export default function PlayerView({ connection }: Props) {
                                         return (
                                             <li key={p.id} className={`list-group-item d-flex justify-content-between align-items-center ${isMe ? 'bg-success text-white rounded' : ''}`}>
                                                 <span className="d-flex align-items-center gap-2">
-                                                    <span>{index === 0 ? "🥇 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `}</span>
+                                                    <span>{["🥇 ", "🥈 ", "🥉 "][index] || `${index + 1}. `}</span>
                                                     {p.avatarUrl && <img src={p.avatarUrl} alt="avatar" className="rounded-circle shadow-sm" style={{ width: '32px', height: '32px', objectFit: 'cover' }} referrerPolicy="no-referrer" />}
                                                     <span>{p.nickname} {isMe && "(Sen)"}</span>
                                                 </span>
@@ -485,19 +228,14 @@ export default function PlayerView({ connection }: Props) {
                     <div className="card-body py-5">
                         <h1 className="display-1 fw-bold text-success mb-4">Sen İçeridesin!</h1>
                         <h3 className="mb-4 text-dark">Ekranda adını görüyor musun?</h3>
-                        <div className="spinner-border text-success mt-3" role="status">
+                        <output className="spinner-border text-success mt-3">
                             <span className="visually-hidden">Bekleniyor...</span>
-                        </div>
+                        </output>
                         <p className="mt-3 lead fw-bold text-muted">Oyunun başlaması bekleniyor...</p>
                         
                         <button 
                             className="btn btn-outline-danger mt-4 fw-bold px-4"
-                            onClick={async () => {
-                                await connection?.invoke("LeaveGame");
-                                sessionStorage.removeItem("kahoot_player_pin");
-                                setPin("");
-                                setIsJoined(false);
-                            }}
+                            onClick={handleLeaveGame}
                         >
                             🚪 Lobiden Ayrıl
                         </button>
@@ -528,13 +266,16 @@ export default function PlayerView({ connection }: Props) {
 
                             <form onSubmit={handleJoin}>
                                 <div className="mb-3">
+                                    <label htmlFor="pinInput" className="visually-hidden">Oyun PIN</label>
                                     <input 
+                                        id="pinInput"
                                         type="text" 
                                         className="form-control form-control-lg text-center fw-bold fs-4" 
                                         placeholder="Oyun PIN" 
                                         value={pin}
                                         onChange={(e) => {
-                                            const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                            // SonarQube S6353: Daha temiz Regex Sınıfı (\D) kullanıldı
+                                            const numericValue = e.target.value.replace(/\D/g, '');
                                             setPin(numericValue);
                                         }}
                                         inputMode="numeric"
@@ -557,16 +298,20 @@ export default function PlayerView({ connection }: Props) {
                                             </div>
                                         </div>
                                     ) : (
-                                        <input 
-                                            type="text" 
-                                            className="form-control form-control-lg text-center fw-bold fs-5" 
-                                            placeholder="Takma Ad (Nickname)" 
-                                            value={nickname}
-                                            onChange={(e) => setNickname(e.target.value)}
-                                            maxLength={15}
-                                            minLength={3}
-                                            required
-                                        />
+                                        <>
+                                            <label htmlFor="nicknameInput" className="visually-hidden">Takma Ad (Nickname)</label>
+                                            <input 
+                                                id="nicknameInput"
+                                                type="text" 
+                                                className="form-control form-control-lg text-center fw-bold fs-5" 
+                                                placeholder="Takma Ad (Nickname)" 
+                                                value={nickname}
+                                                onChange={(e) => setNickname(e.target.value)}
+                                                maxLength={15}
+                                                minLength={3}
+                                                required
+                                            />
+                                        </>
                                     )}
                                 </div>
                                 <button 
