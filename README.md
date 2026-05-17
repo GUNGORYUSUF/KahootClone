@@ -16,7 +16,8 @@
 
 ---
 
-> 💡 **Felsefemiz: "Agentic Engineering"**
+> [!NOTE] 
+> **Felsefemiz: "Agentic Engineering"**
 > Bu proje; Temiz Mimari (Clean Architecture), SOLID prensipleri ve Dağıtık Sistem (Distributed System) mühendisliğinin harmanlandığı, sıradan bir uygulamanın ötesinde **kurumsal (Enterprise)** standartlarda inşa edilmiş bir şaheserdir.
 
 ---
@@ -137,7 +138,8 @@ KahootProjesi/
 
 Bu devasa sistemi bilgisayarınızda çalıştırmak için veritabanı uzmanı veya sistem yöneticisi olmanıza gerek yok. Sadece **Docker Desktop**'a ihtiyacınız var.
 
-> 📌 **Ön Gereksinimler:** Docker Desktop ve Git kurulu olmalıdır.
+> [!TIP]
+> **Ön Gereksinimler:** Docker Desktop ve Git kurulu olmalıdır.
 
 ### 1. Tek Tuşla Başlatma
 Terminalinizi açın ve sadece şu komutu yazın:
@@ -189,7 +191,8 @@ Süre: 20
 - API
 ```
 
-> ⚠️ **Dikkat Edilmesi Gerekenler:**
+> [!WARNING] 
+> **Dikkat Edilmesi Gerekenler:**
 > 1. Doğru cevabın sonuna muhakkak boşluk bırakıp `(*)` eklemelisiniz.
 > 2. Süre belirtilmezse sistem varsayılan olarak soruyu **20 Saniye** kabul eder.
 
