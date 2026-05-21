@@ -206,27 +206,86 @@ Süre: 20
 
 ## 🏆 Altın Standart: SonarQube Kod Analizi ve Testler
 
-Kaliteden asla ödün verilmez. Sistemde statik kod analizi (Code Smells, Bugs, Vulnerabilities) ve Unit Test kapsamını (Coverage) ölçmek için **SonarQube** entegrasyonu mevcuttur.
+Kaliteden asla ödün verilmez. Sistemde statik kod analizi (Code Smells, Bugs, Vulnerabilities) ve Unit Test kapsam ölçümü (Coverage) için **SonarQube** entegrasyonu mevcuttur. Tüm altyapı Docker üzerinde çalışır — **bilgisayarınıza hiçbir global araç kurmanıza gerek yoktur.**
 
-**1. Gerekli Aracı Yükleme (İlk Seferlik)**
-```bash
-dotnet tool install --global dotnet-sonarscanner
+> [!NOTE]
+> **İki Ayrı Proje:** Backend (`kahoot-backend`) ve Frontend (`kahoot-frontend`) için bağımsız SonarQube projeleri mevcuttur. Her biri kendi kalite kapılarını ve geçmişini ayrı tutar.
+
+---
+
+**Adım 1 — SonarQube Sunucusunu Başlatma**
+Docker engine'i başlatın;
+
+```powershell
+docker compose -f docker-compose.sonar.yml up -d
 ```
 
-**2. Kalite Kapısından Geçiş (Analizi Başlatma)**
-Sırasıyla aşağıdaki komutlarla kodunuzu inceleyip SonarQube'a gönderebilirsiniz:
+Tarayıcınızda **`http://localhost:9000`** adresine gidin. İlk başlatmada ~60–120 saniye beklemeniz gerekebilir.
 
-```bash
-# 1. Dinlemeye başla ve kapsam ayarlarını yap
-dotnet sonarscanner begin /k:"KahootProjesi" /d:sonar.host.url="http://localhost:9000" /d:sonar.login="sqp_***" /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml"
+---
 
-# 2. Derle ve testleri koş (Arka planda analiz yapılır)
-dotnet build
-dotnet test --collect:"XPlat Code Coverage;Format=opencover"
+**Adım 2 — İlk Kurulum (Yalnızca İlk Seferinde)**
 
-# 3. Sonuçları paketle ve SonarQube Dashboard'una fırlat
-dotnet sonarscanner end /d:sonar.login="sqp_***"
+> [!TIP]
+> Bu adım SonarQube volume'ları henüz yokken, sunucuya ilk kez eriştiğinizde yapılır.
+
+1. `http://localhost:9000` adresine gidin.
+2. **admin / admin** ile giriş yapın, sistem yeni bir şifre ister — belirleyin.
+3. Sağ üst köşeden **My Account → Security → Generate Tokens** bölümüne gidin.
+4. Token adı olarak `kahoot-analiz` yazın, type olarak global analysis token seçin ve **Generate** butonuna basın.
+5. Oluşan token'ı kopyalayın (`sqa_...` ile başlar). **Bir daha gösterilmez.**
+6. kahoot-backend ve kahoot-frontend keyiyle iki proje oluşturun. Projelerin simlerini istediğiniz gibi verebilirsiniz.
+
+---
+
+**Adım 3 — Token'ı Ortam Değişkenine Kaydetme**
+
+```powershell
+$env:SONAR_TOKEN = "sqa_buraya_token_yapistirin"
 ```
+
+> [!WARNING]
+> Bu değişken yalnızca **mevcut PowerShell oturumu** için geçerlidir. Kalıcı yapmak için:
+> ```powershell
+> [System.Environment]::SetEnvironmentVariable("SONAR_TOKEN", "sqp_...", "User")
+> ```
+
+---
+
+**Adım 4 — Analizi Çalıştırma**
+
+```powershell
+.\sonar-docker-analiz.ps1
+```
+
+Script otomatik olarak şunları yapar:
+
+| Adım | İşlem |
+| :--- | :--- |
+| ① | SonarQube'un `UP` durumuna geçmesini bekler |
+| ② | `.NET SDK` konteyneri içinde `dotnet-sonarscanner` kurar; C# kodu derler, testleri + coverage'ı çalıştırır ve backend analizini gönderir |
+| ③ | `sonar-scanner-cli` konteyneri ile React/TypeScript frontend analizini gönderir |
+| ④ | Her iki projenin sonuç bağlantısını ekrana yazdırır |
+
+> [!TIP]
+> İlk çalıştırmada Docker imajları indirildiği ve NuGet restore yapıldığı için 5–10 dakika sürebilir. Sonraki çalıştırmalar çok daha hızlıdır.
+
+---
+
+**Adım 5 — Sonuçları Görüntüleme**
+
+| Proje | Dashboard Adresi |
+| :--- | :--- |
+| 🖥️ **Backend (C#/.NET)** | `http://localhost:9000/dashboard?id=kahoot-backend` |
+| ⚛️ **Frontend (React/TS)** | `http://localhost:9000/dashboard?id=kahoot-frontend` |
+
+Analiz tamamlandıktan sonra sunucuyu durdurmak için:
+
+```powershell
+docker compose -f docker-compose.sonar.yml down
+```
+
+> Volume'lar korunur. Bir sonraki `up` komutunda tüm proje geçmişi ve ayarlar geri gelir.
 
 ---
 

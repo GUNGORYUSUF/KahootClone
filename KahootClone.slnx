@@ -3,4 +3,5 @@
   <Project Path="KahootClone.Application/KahootClone.Application.csproj" />
   <Project Path="KahootClone.Domain/KahootClone.Domain.csproj" />
   <Project Path="KahootClone.Infrastructure/KahootClone.Infrastructure.csproj" />
+  <Project Path="KahootClone.Tests/KahootClone.Tests.csproj" />
 </Solution>

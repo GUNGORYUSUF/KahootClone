@@ -1,11 +1,12 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using KahootClone.Api.Controllers;
 using KahootClone.Application.Interfaces;
 using KahootClone.Domain.Entities;
-using KahootClone.Application.DTOs;
 using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
 
 namespace KahootClone.Tests.Api.Controllers;
 
@@ -19,27 +20,34 @@ public class QuizControllerTests
     {
         _mockQuizService = new Mock<IQuizService>();
         _mockConfiguration = new Mock<IConfiguration>();
-        
-        _mockConfiguration.Setup(c => c["Jwt:Key"]).Returns("TestSecretKey_1234567890123456");
-        
+
+        _mockConfiguration.Setup(c => c["Jwt:Key"]).Returns("TestSecretKey_KahootClone_Unit_Test_2024!");
+
         _controller = new QuizController(_mockQuizService.Object, _mockConfiguration.Object);
+
+        // Controller.User null olmaması için anonim bir HttpContext atanır
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity())
+            }
+        };
     }
 
     [Fact]
     public void CreateQuiz_ValidRequest_ReturnsOkWithPin()
     {
-        // Arrange (Hazırlık)
-        var requestDto = new CreateQuizRequestDto { Title = "Matematik Testi" }; // AŞAMA 3: Quiz yerine DTO kullanıldı
+        // Arrange
+        var quiz = new Quiz { Title = "Matematik Testi", Questions = new List<Question>() };
         string expectedPin = "123456";
         _mockQuizService.Setup(s => s.CreateQuiz(It.IsAny<Quiz>())).Returns(expectedPin);
 
-        // Act (Eylem)
-        var result = _controller.CreateQuiz(requestDto); // AŞAMA 3: Controller'a DTO gönderildi
+        // Act
+        var result = _controller.CreateQuiz(quiz);
 
-        // Assert (Doğrulama)
-        var okResult = Assert.IsType<OkObjectResult>(result); // 200 OK dönmeli
-        
-        // Dönüş objesinin içindeki özellikleri reflection veya dynamic ile kontrol edebiliriz
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
     }
 }

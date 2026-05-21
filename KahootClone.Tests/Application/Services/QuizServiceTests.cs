@@ -67,7 +67,7 @@ public class QuizServiceTests
         {
             Pin = pin,
             IsActive = true,
-            Players = new List<Player> { new Player { Nickname = nickname, Score = 0 } },
+            Players = new List<Player> { new Player { Nickname = nickname, Score = 0, ConnectionId = "test_conn" } },
             Questions = new List<Question>
             {
                 new Question
