@@ -106,8 +106,8 @@ export default function HostView({ connection }: Props) {
         return (
             <div className="container mt-5 text-center d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
                 <h1 className="display-1 fw-bold text-primary mb-4" style={{ fontSize: '5rem' }}>Hazır Ol!</h1>
-                <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-lg" style={{ width: '200px', height: '200px', fontSize: '6rem', fontWeight: '800' }}>
-                    {readyCountdown}
+                <div key={readyCountdown} className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-lg pop-animation" style={{ width: '200px', height: '200px', fontSize: readyCountdown > 0 ? '6rem' : '3.5rem', fontWeight: '800' }}>
+                    {readyCountdown > 0 ? readyCountdown : "BAŞLA!"}
                 </div>
             </div>
         );
@@ -286,7 +286,7 @@ export default function HostView({ connection }: Props) {
                         <input id="quizTitleInput" type="text" className="form-control form-control-lg fw-bold" placeholder="Örn: Vize Hazırlık Testi" value={quizTitle} onChange={(e) => {
                             setQuizTitle(e.target.value);
                             setHasUnsavedChanges(true);
-                            localStorage.setItem("kahoot_draft_title", e.target.value);
+                            localStorage.setItem("quiz_draft_title", e.target.value);
                         }} />
                     </div>
                 </div>
@@ -318,15 +318,15 @@ export default function HostView({ connection }: Props) {
                             </div>
                             </div>
                             <div className="d-flex flex-wrap justify-content-center gap-2">
-                                {sessionStorage.getItem("kahoot_host_pin") && (
+                                {sessionStorage.getItem("quiz_host_pin") && (
                                     <button 
                                         className="btn btn-success fw-bold shadow-sm"
                                         onClick={() => {
                                             setError(null);
-                                            connection?.invoke("RejoinAsManager", sessionStorage.getItem("kahoot_host_pin")).catch(err => {
+                                            connection?.invoke("RejoinAsManager", sessionStorage.getItem("quiz_host_pin")).catch(err => {
                                                 console.error(err);
                                                 setError("Oyuna dönülemedi. Oyun bitmiş veya iptal edilmiş olabilir.");
-                                                sessionStorage.removeItem("kahoot_host_pin");
+                                                sessionStorage.removeItem("quiz_host_pin");
                                             });
                                         }}
                                         disabled={isLoading || !connection}

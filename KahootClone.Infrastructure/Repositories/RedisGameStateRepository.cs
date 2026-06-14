@@ -105,7 +105,8 @@ public class RedisGameStateRepository : IGameStateRepository
     public void AddConnection(string connectionId, string pin, string nickname)
     {
         var data = JsonSerializer.Serialize(new { Pin = pin, Nickname = nickname });
-        _db.StringSet($"connection:{connectionId}", data);
+        // DAĞITIK SİSTEM KORUMASI: Sunucu çökerse Redis'te sonsuza kadar kalmasını (Memory Leak) önlemek için 4 saatlik TTL (yaşam süresi) eklendi.
+        _db.StringSet($"connection:{connectionId}", data, TimeSpan.FromHours(4));
     }
 
     public (string Pin, string Nickname)? GetConnection(string connectionId)

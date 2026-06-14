@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
-    const { user, token } = useAuth();
+    const { user, token, logout } = useAuth();
     const navigate = useNavigate();
     const [myQuizzes, setMyQuizzes] = useState<any[]>([]);
     const [showModal, setShowModal] = useState(false);
@@ -20,6 +20,13 @@ export default function Home() {
                     "Authorization": `Bearer ${token}`
                 }
             });
+            
+            // YENİ: Token süresi dolduysa (401), kullanıcıyı otomatik olarak sistemden çıkar ve uyar.
+            if (res.status === 401) {
+                logout();
+                throw new Error("Oturum süreniz doldu. Lütfen güvenliğiniz için tekrar giriş yapın.");
+            }
+            
             if (!res.ok) throw new Error("Oyunlar yüklenirken bir hata oluştu.");
             
             const data = await res.json();

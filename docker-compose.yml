@@ -79,7 +79,9 @@ services:
       - Redis__ConnectionString=redis:6379
       - RabbitMq__HostName=rabbitmq
       - ASPNETCORE_ENVIRONMENT=Development
-      - Jwt__Key=${JWT_SECRET_KEY:-KahootCloneDefaultKey_For_Dev_12345!}
+      - Jwt__Key=SuperGizliVeUretimIcinGuvenliAnahtar_12345!
+      - Jwt__Issuer=KahootApi
+      - Jwt__Audience=KahootClients
     restart: always
 
     deploy:

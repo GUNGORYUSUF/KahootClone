@@ -5,8 +5,8 @@ import type { QuestionPacket, WaitPhasePayload, Player } from '../types/index';
 
 export function useKahootHost(connection: HubConnection | null) {
     const { user, token } = useAuth();
-    const [quizTitle, setQuizTitle] = useState(() => localStorage.getItem("kahoot_draft_title") || '');
-    const [markdown, setMarkdown] = useState(() => localStorage.getItem("kahoot_draft_markdown") || '');
+    const [quizTitle, setQuizTitle] = useState(() => localStorage.getItem("quiz_draft_title") || '');
+    const [markdown, setMarkdown] = useState(() => localStorage.getItem("quiz_draft_markdown") || '');
     const [pin, setPin] = useState<string | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +14,7 @@ export function useKahootHost(connection: HubConnection | null) {
 
     const [inputMode, setInputMode] = useState<'visual' | 'markdown'>('visual');
     const [visualQuestions, setVisualQuestions] = useState<any[]>(() => {
-        const saved = localStorage.getItem("kahoot_draft_visual");
+        const saved = localStorage.getItem("quiz_draft_visual");
         return saved ? JSON.parse(saved) : [];
     });
     const [currentQText, setCurrentQText] = useState('');
@@ -26,8 +26,8 @@ export function useKahootHost(connection: HubConnection | null) {
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [requireGoogleAuth, setRequireGoogleAuth] = useState(false);
 
-    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(() => localStorage.getItem("kahoot_unsaved") === "true");
-    useEffect(() => { localStorage.setItem("kahoot_unsaved", hasUnsavedChanges ? "true" : "false"); }, [hasUnsavedChanges]);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(() => localStorage.getItem("quiz_unsaved") === "true");
+    useEffect(() => { localStorage.setItem("quiz_unsaved", hasUnsavedChanges ? "true" : "false"); }, [hasUnsavedChanges]);
 
     const [currentQuestion, setCurrentQuestion] = useState<QuestionPacket | null>(null);
     const [waitPhase, setWaitPhase] = useState<WaitPhasePayload | null>(null);
@@ -43,7 +43,7 @@ export function useKahootHost(connection: HubConnection | null) {
 
         connection.on("RedirectToNewGame", async (payload: any) => {
             const targetPin = payload.newPin || payload.NewPin;
-            setPin(targetPin); sessionStorage.setItem("kahoot_host_pin", targetPin);
+            setPin(targetPin); sessionStorage.setItem("quiz_host_pin", targetPin);
             setPlayers(payload.players || payload.Players || []);
             setGameEndedLeaderboard(null); setWaitPhase(null); setCurrentQuestion(null);
             try { await connection.invoke("JoinAsManager", targetPin); } catch (err) {}
@@ -62,7 +62,7 @@ export function useKahootHost(connection: HubConnection | null) {
             let counter = 3;
             const interval = setInterval(() => {
                 counter -= 1; setReadyCountdown(counter);
-                if (counter <= 1) clearInterval(interval);
+                if (counter <= 0) clearInterval(interval); // 0 olduğunda 'Başla!' göstereceğiz
             }, 1000);
         });
 
@@ -89,7 +89,7 @@ export function useKahootHost(connection: HubConnection | null) {
             
             if (quiz) {
                 const restoredPin = quiz.pin || quiz.Pin;
-                setPin(restoredPin); sessionStorage.setItem("kahoot_host_pin", restoredPin);
+                setPin(restoredPin); sessionStorage.setItem("quiz_host_pin", restoredPin);
                 setPlayers((quiz.players || quiz.Players || []).map((p: any) => ({ nickname: p.nickname || p.Nickname, avatarUrl: p.avatarUrl || p.AvatarUrl })));
             }
 
@@ -107,8 +107,8 @@ export function useKahootHost(connection: HubConnection | null) {
             } else { setCurrentQuestion(null); setWaitPhase(null); setGameEndedLeaderboard(null); }
         });
 
-        connection.on("UpdateLeaderboard", (leaderboard: Player[]) => { setGameEndedLeaderboard(leaderboard); setWaitPhase(null); setCurrentQuestion(null); sessionStorage.removeItem("kahoot_host_pin"); });
-        connection.on("LobbyReset", () => { setPin(null); setPlayers([]); setCurrentQuestion(null); setWaitPhase(null); setGameEndedLeaderboard(null); sessionStorage.removeItem("kahoot_host_pin"); setError("Lobi başarıyla iptal edildi."); });
+        connection.on("UpdateLeaderboard", (leaderboard: Player[]) => { setGameEndedLeaderboard(leaderboard); setWaitPhase(null); setCurrentQuestion(null); sessionStorage.removeItem("quiz_host_pin"); });
+        connection.on("LobbyReset", () => { setPin(null); setPlayers([]); setCurrentQuestion(null); setWaitPhase(null); setGameEndedLeaderboard(null); sessionStorage.removeItem("quiz_host_pin"); setError("Lobi başarıyla iptal edildi."); });
 
         return () => {
             connection.off("PlayerJoined"); connection.off("PlayerLeft"); connection.off("GetReady"); connection.off("ReceiveQuestion"); connection.off("TimeUpdate"); connection.off("WaitPhase"); connection.off("WaitTimeUpdate"); connection.off("UpdateAnswerCount"); connection.off("GameEnded"); connection.off("RedirectToNewGame"); connection.off("RestoreGameState"); connection.off("UpdateLeaderboard"); connection.off("LobbyReset");
@@ -167,7 +167,7 @@ export function useKahootHost(connection: HubConnection | null) {
         setIsLoading(true); setError(null);
         try {
             if (hasUnsavedChanges) { alert("Lütfen oyunu başlatmadan önce sorularınızı kaydedin."); return; }
-            const oldPin = sessionStorage.getItem("kahoot_host_pin");
+            const oldPin = sessionStorage.getItem("quiz_host_pin");
             if (oldPin && connection) connection.invoke("ResetLobby", oldPin).catch(() => {});
             let questions = inputMode === 'markdown' && markdown.trim() ? (await (await fetch("http://localhost:5252/api/Quiz/parse-markdown", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ markdownText: markdown }) })).json()) : visualQuestions;
             
@@ -178,9 +178,9 @@ export function useKahootHost(connection: HubConnection | null) {
             if (!createRes.ok) throw new Error("Oyun kurulamadı");
             const data = await createRes.json();
             const generatedPin = data.pin || data.Pin; const generatedToken = data.token || data.Token;
-            sessionStorage.setItem("kahoot_host_token", generatedToken); sessionStorage.setItem("kahoot_host_pin", generatedPin);
+            sessionStorage.setItem("quiz_host_token", generatedToken); sessionStorage.setItem("quiz_host_pin", generatedPin);
             if (connection) { await connection.stop(); await connection.start(); await connection.invoke("JoinAsManager", generatedPin); }
-            setPin(generatedPin); localStorage.removeItem("kahoot_draft_visual"); localStorage.removeItem("kahoot_draft_markdown"); localStorage.removeItem("kahoot_draft_title"); localStorage.removeItem("kahoot_editing_pin");
+            setPin(generatedPin); localStorage.removeItem("quiz_draft_visual"); localStorage.removeItem("quiz_draft_markdown"); localStorage.removeItem("quiz_draft_title"); localStorage.removeItem("quiz_editing_pin");
         } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
     };
 
@@ -191,13 +191,13 @@ export function useKahootHost(connection: HubConnection | null) {
             let questions = inputMode === 'markdown' && markdown.trim() ? (await (await fetch("http://localhost:5252/api/Quiz/parse-markdown", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ markdownText: markdown }) })).json()) : visualQuestions;
             if (questions.length === 0) throw new Error("Soru ekleyin.");
             const cleanQuestions = questions.map((q: any) => ({ text: q.text || q.Text, timeLimitInSeconds: q.timeLimitInSeconds || q.TimeLimitInSeconds || 20, options: (q.options || q.Options || []).map((o: any) => ({ text: o.text || o.Text, isCorrect: o.isCorrect || o.IsCorrect || false })) }));
-            const editingPin = localStorage.getItem("kahoot_editing_pin");
+            const editingPin = localStorage.getItem("quiz_editing_pin");
             if (editingPin && token) try { await fetch(`http://localhost:5252/api/Quiz/${editingPin}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); } catch (e) {}
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (token) headers["Authorization"] = `Bearer ${token}`;
             const createRes = await fetch("http://localhost:5252/api/Quiz/create", { method: "POST", headers, body: JSON.stringify({ title: quizTitle.trim(), questions: cleanQuestions, requireGoogleAuth, isDraft: true }) });
             if (!createRes.ok) throw new Error("Kaydedilemedi");
-            localStorage.setItem("kahoot_editing_pin", (await createRes.json()).pin || (await createRes.json()).Pin);
+            localStorage.setItem("quiz_editing_pin", (await createRes.json()).pin || (await createRes.json()).Pin);
             setHasUnsavedChanges(false); alert("Başarıyla kaydedildi!");
         } catch (err: any) { setError(err.message); } finally { setIsLoading(false); }
     };

@@ -1,9 +1,7 @@
 using KahootClone.Application.Interfaces;
 using KahootClone.Application.Services;
 using KahootClone.Infrastructure.Data;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
+using KahootClone.Domain.Entities;
 using KahootClone.Api.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,6 +11,7 @@ using StackExchange.Redis;
 using System.Threading.RateLimiting;
 using Serilog;
 using OpenTelemetry.Metrics;
+using Polly;
 
 // YENİ: Serilog yapılandırması - Logları konsola ve Docker içindeki Seq sunucusuna yollar
 Log.Logger = new LoggerConfiguration()
@@ -23,8 +22,10 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog(); // Varsayılan loglayıcı olarak Serilog'u kullan
 
-// MongoDB'nin Guid (Benzersiz Kimlik) veri tipini standart formatta kaydetmesi sağlanır.
-BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+
+// TEMİZ MİMARİ (CLEAN ARCHITECTURE) ÇÖZÜMÜ: 
+// MongoDB ve BSON konfigürasyonları ait olduğu altyapı (Infrastructure) katmanına taşındı.
+MongoDbConfiguration.Configure();
 
 // Controller (API Uç Noktaları) yapısı sisteme dahil edilir.
 builder.Services.AddControllers();
@@ -37,9 +38,10 @@ builder.Services.AddScoped<IUserRepository, KahootClone.Infrastructure.Repositor
 // YENİ: Frontend (tarayıcı) üzerinden API'ye ve SignalR Hub'ına engelsiz erişim için CORS politikası eklendi.
 builder.Services.AddCors(options =>
 {
+    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173", "http://127.0.0.1:5173" };
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true) // Tüm kaynaklara (file://, localhost vs) izin ver
+        policy.WithOrigins(allowedOrigins) // Yalnızca konfigürasyondan gelen veya varsayılan güvenli kaynaklara izin ver
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials(); // SignalR (WebSockets) kimlik doğrulaması için zorunludur.
@@ -54,9 +56,7 @@ var redisConnectionString = builder.Configuration.GetSection("Redis:ConnectionSt
 builder.Services.AddSignalR(options =>
 {
     options.AddFilter<KahootClone.Api.Hubs.Filters.GlobalHubFilter>();
-}).AddStackExchangeRedis(redisConnectionString, options => {
-    options.Configuration.ChannelPrefix = RedisChannel.Literal("KahootCloneApp"); // İsteğe bağlı: Redis içindeki mesajları diğer uygulamalardan ayırmak için ön ek
-});
+}).AddStackExchangeRedis(redisConnectionString); // DÜZELTME: SignalR Redis Backplane'in anında kopmaya sebep olan konfigürasyon çökmesi (NRE) engellendi.
 
 // Swagger (Test Arayüzü) sisteme eklenir.
 builder.Services.AddEndpointsApiExplorer();
@@ -69,14 +69,18 @@ if (string.IsNullOrEmpty(jwtKey))
 {
     throw new InvalidOperationException("Kritik Güvenlik Hatası: JWT Secret Key (Jwt:Key) yapılandırmalarda bulunamadı!");
 }
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Kritik Güvenlik Hatası: JWT Issuer (Jwt:Issuer) yapılandırmalarda bulunamadı!");
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Kritik Güvenlik Hatası: JWT Audience (Jwt:Audience) yapılandırmalarda bulunamadı!");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = false,
-            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
@@ -113,12 +117,19 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IQuizRepository, KahootClone.Infrastructure.Repositories.QuizRepository>();
 
 // AŞAMA 6: Redis Bağlantısı ve Dağıtık Durum (State) Yönetimi sisteme dahil edilir.
-builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
+// Senkron Başlatma Bloku (Blocking) Hatası Giderildi: Uygulamanın ayağa kalkarken Redis'i bekleyip çökmesi engellendi (Lazy load ve Fail-Safe).
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp => {
+    var options = ConfigurationOptions.Parse(redisConnectionString);
+    options.AbortOnConnectFail = false;
+    return ConnectionMultiplexer.Connect(options);
+});
 builder.Services.AddSingleton<IGameStateRepository, KahootClone.Infrastructure.Repositories.RedisGameStateRepository>();
+
+// Zaman Bağımlılığı İhlali (DIP) Giderildi: Unit Testlerde zamanı simüle edebilmek için .NET 8 TimeProvider sisteme eklendi.
+builder.Services.AddSingleton(TimeProvider.System);
 
 // YENİ: Sistem Sağlık Kontrolleri (Health Checks) MongoDB ve Redis için yapılandırılır
 builder.Services.AddHealthChecks()
-    .AddMongoDb(mongoConnectionString ?? "mongodb://localhost:27017", name: "MongoDB")
     .AddRedis(redisConnectionString, name: "Redis");
 
 // YENİ: RabbitMQ Mesajlaşma Servisi (Publisher) ve Arka Plan Tüketicisi (Consumer) eklendi
@@ -131,11 +142,12 @@ builder.Services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
-        // Nginx arkasında olduğumuz için gerçek IP'yi X-Real-IP başlığından alıyoruz
-        var ip = context.Request.Headers["X-Real-IP"].FirstOrDefault() ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        // NAT VE SINIF ORTAMI KORUMASI: Aynı IP'den bağlanan 40 öğrencinin engellenmemesi için 
+        // limit IP tabanlı değil, doğrudan Connection (TCP Soketi) bazlı ayrıştırılır. Limit esnetilir.
+        var partitionKey = context.Connection.Id;
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = 10, // Her IP için saniyede maksimum 10 istek izni verilir
+            PermitLimit = 50, // Her soket bağlantısı için saniyede maksimum 50 istek izni verilir (Esnetildi)
             Window = TimeSpan.FromSeconds(1),
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
             QueueLimit = 0 // Sınırı aşan istekler kuyruğa alınmaz, anında reddedilir

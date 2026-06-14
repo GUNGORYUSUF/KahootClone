@@ -48,13 +48,13 @@ export function useKahootPlayer(connection: HubConnection | null) {
                 const googleName = userInfo.name || userInfo.given_name;
                 const avatarUrl = userInfo.picture || null;
                 
-                const sessionToken = sessionStorage.getItem("kahoot_session_token");
+                const sessionToken = sessionStorage.getItem("quiz_session_token");
                 const success = await connection?.invoke("JoinGame", pin, googleName, sessionToken || null, tokenResponse.access_token, avatarUrl || null);
                 
                 if (success) {
-                    sessionStorage.setItem("kahoot_nickname", googleName);
-                    sessionStorage.setItem("kahoot_player_pin", pin);
-                    sessionStorage.setItem("kahoot_avatar_url", avatarUrl || "");
+                    sessionStorage.setItem("quiz_nickname", googleName);
+                    sessionStorage.setItem("quiz_player_pin", pin);
+                    sessionStorage.setItem("quiz_avatar_url", avatarUrl || "");
                     setNickname(googleName);
                     setIsJoined(true);
                 } else {
@@ -73,7 +73,7 @@ export function useKahootPlayer(connection: HubConnection | null) {
     useEffect(() => {
         if (!connection) return;
 
-        connection.on("SessionTokenReceived", (token: string) => sessionStorage.setItem("kahoot_session_token", token));
+        connection.on("SessionTokenReceived", (token: string) => sessionStorage.setItem("quiz_session_token", token));
         connection.on("Error", (message: string) => { setError(message); setIsLoading(false); });
         connection.on("AnswerResult", (result: AnswerResult) => setAnswerResult(result));
         connection.on("UpdateAnswerCount", (payload: any) => setAnswerStats({ answered: payload.answeredCount ?? payload.AnsweredCount ?? 0, total: payload.totalCount ?? payload.TotalCount ?? 0 }));
@@ -82,15 +82,15 @@ export function useKahootPlayer(connection: HubConnection | null) {
             try {
                 const targetPin = payload.newPin || payload.NewPin;
                 const targetPlayers = payload.players || payload.Players || [];
-                const currentNick = sessionStorage.getItem("kahoot_nickname") || "";
+                const currentNick = sessionStorage.getItem("quiz_nickname") || "";
                 
                 if (targetPlayers.some((p: any) => (typeof p === 'string' ? p : p.nickname || p.Nickname) === currentNick)) {
                     setPin(targetPin); setGameEndedLeaderboard(null); setWaitPhase(null); setCurrentQuestion(null); setHasAnswered(false); setAnswerResult(null);
-                    const sessionToken = sessionStorage.getItem("kahoot_session_token");
-                    sessionStorage.setItem("kahoot_player_pin", targetPin);
-                    const globalToken = localStorage.getItem("kahoot_global_token");
-                    const globalUserStr = localStorage.getItem("kahoot_global_user");
-                    const avatarUrl = (globalUserStr ? JSON.parse(globalUserStr) : null)?.avatarUrl || sessionStorage.getItem("kahoot_avatar_url");
+                    const sessionToken = sessionStorage.getItem("quiz_session_token");
+                    sessionStorage.setItem("quiz_player_pin", targetPin);
+                    const globalToken = localStorage.getItem("quiz_global_token");
+                    const globalUserStr = localStorage.getItem("quiz_global_user");
+                    const avatarUrl = (globalUserStr ? JSON.parse(globalUserStr) : null)?.avatarUrl || sessionStorage.getItem("quiz_avatar_url");
                     await connection.invoke("JoinGame", targetPin, currentNick, sessionToken || null, globalToken || null, avatarUrl || null);
                 }
             } catch (err) { console.error("Yeni Lobiye Geçiş Hatası:", err); }
@@ -101,7 +101,7 @@ export function useKahootPlayer(connection: HubConnection | null) {
             let counter = 3;
             const interval = setInterval(() => {
                 counter -= 1; setReadyCountdown(counter);
-                if (counter <= 1) clearInterval(interval);
+                if (counter <= 0) clearInterval(interval); // 0 olduğunda 'Başla!' göstereceğiz
             }, 1000);
         });
 
@@ -114,14 +114,14 @@ export function useKahootPlayer(connection: HubConnection | null) {
         connection.on("TimeUpdate", (time: number) => setTimeLeft(time));
         connection.on("WaitPhase", (payload: WaitPhasePayload) => { setWaitPhase(payload); setTimeLeft(payload.waitTime); });
         connection.on("WaitTimeUpdate", (time: number) => setTimeLeft(time));
-        connection.on("GameEnded", (leaderboard: Player[]) => { setGameEndedLeaderboard(leaderboard); setWaitPhase(null); setCurrentQuestion(null); sessionStorage.removeItem("kahoot_player_pin"); });
+        connection.on("GameEnded", (leaderboard: Player[]) => { setGameEndedLeaderboard(leaderboard); setWaitPhase(null); setCurrentQuestion(null); sessionStorage.removeItem("quiz_player_pin"); });
         
         connection.on("LobbyReset", () => {
-            sessionStorage.removeItem("kahoot_player_pin"); setPin(""); setIsJoined(false); setCurrentQuestion(null); setWaitPhase(null); setGameEndedLeaderboard(null); setHasAnswered(false); setAnswerResult(null); setError("Yönetici oyunu iptal etti. Lobi kapatıldı.");
+            sessionStorage.removeItem("quiz_player_pin"); setPin(""); setIsJoined(false); setCurrentQuestion(null); setWaitPhase(null); setGameEndedLeaderboard(null); setHasAnswered(false); setAnswerResult(null); setError("Yönetici oyunu iptal etti. Lobi kapatıldı.");
         });
 
         connection.on("Kicked", () => {
-            sessionStorage.removeItem("kahoot_player_pin"); setPin(""); setIsJoined(false); setCurrentQuestion(null); setWaitPhase(null); setGameEndedLeaderboard(null); setHasAnswered(false); setAnswerResult(null); setError("Yönetici tarafından lobiden atıldınız.");
+            sessionStorage.removeItem("quiz_player_pin"); setPin(""); setIsJoined(false); setCurrentQuestion(null); setWaitPhase(null); setGameEndedLeaderboard(null); setHasAnswered(false); setAnswerResult(null); setError("Yönetici tarafından lobiden atıldınız.");
         });
 
         return () => {
@@ -137,15 +137,15 @@ export function useKahootPlayer(connection: HubConnection | null) {
 
         setError(null); setIsLoading(true);
         try {
-            const sessionToken = sessionStorage.getItem("kahoot_session_token");
+            const sessionToken = sessionStorage.getItem("quiz_session_token");
             const avatarUrlToUse = user?.avatarUrl || null;
             const authToPass = token || null; 
             const success = await connection.invoke("JoinGame", pin, cleanNickname, sessionToken || null, authToPass, avatarUrlToUse);
             
             if (success) {
-                sessionStorage.setItem("kahoot_nickname", cleanNickname);
-                sessionStorage.setItem("kahoot_player_pin", pin);
-                sessionStorage.setItem("kahoot_avatar_url", avatarUrlToUse || "");
+                sessionStorage.setItem("quiz_nickname", cleanNickname);
+                sessionStorage.setItem("quiz_player_pin", pin);
+                sessionStorage.setItem("quiz_avatar_url", avatarUrlToUse || "");
                 setIsJoined(true);
             }
         } catch (err) { setError("Oyuna katılırken beklenmeyen bir hata oluştu."); } 

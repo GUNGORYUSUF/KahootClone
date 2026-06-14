@@ -12,7 +12,12 @@ export const useSignalR = () => {
         // SignalR bağlantısını inşa et
         const newConnection = new HubConnectionBuilder()
             .withUrl(HUB_URL, {
-                accessTokenFactory: () => sessionStorage.getItem("kahoot_host_token") || ""
+                accessTokenFactory: () => {
+                    // Anlık kurulan oyunun host token'ı veya sisteme giriş yapmış yetkili kişinin global token'ı
+                    const hostToken = sessionStorage.getItem("quiz_host_token");
+                    const globalToken = localStorage.getItem("quiz_global_token");
+                    return hostToken || globalToken || "";
+                }
             })
             .configureLogging(LogLevel.Information)
             .withAutomaticReconnect() // Kopsa bile otomatik tekrar bağlanmayı dener

@@ -1,0 +1,15 @@
+﻿/src/KahootClone.Tests/Api/Controllers/QuizControllerTests.cs
+/src/KahootClone.Tests/Api/Hubs/GameHubTests.cs
+/src/KahootClone.Tests/Application/Services/MarkdownQuestionParserTests.cs
+/src/KahootClone.Tests/Application/Services/QuizServiceTests.cs
+/root/.nuget/packages/microsoft.net.test.sdk/17.11.1/build/netcoreapp3.1/Microsoft.NET.Test.Sdk.Program.cs
+/root/.nuget/packages/xunit.runner.visualstudio/2.8.2/build/net6.0/xunit.runner.visualstudio.testadapter.dll
+/root/.nuget/packages/xunit.runner.visualstudio/2.8.2/build/net6.0/xunit.runner.reporters.netcoreapp10.dll
+/root/.nuget/packages/xunit.runner.visualstudio/2.8.2/build/net6.0/xunit.runner.utility.netcoreapp10.dll
+/src/KahootClone.Tests/coverage.opencover.xml
+/src/KahootClone.Tests/TestResults/036103a2-bc7e-4688-bec4-94b6f67cb6eb/coverage.opencover.xml
+/src/KahootClone.Tests/TestResults/2510bd8d-8eaa-41f4-a137-350546aa144b/coverage.opencover.xml
+/src/KahootClone.Tests/TestResults/640de138-1fc3-4068-a1cd-335e4fdc62a8/coverage.opencover.xml
+/src/KahootClone.Tests/TestResults/71492053-d3d0-4982-a21a-de1ba11d1667/coverage.opencover.xml
+/src/KahootClone.Tests/TestResults/9cda0177-65cf-4c91-94c0-026ba88cbb95/coverage.opencover.xml
+/src/KahootClone.Tests/TestResults/de9650d0-1f70-4491-b6cb-18824bafd182/coverage.opencover.xml

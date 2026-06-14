@@ -1,0 +1,814 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CoverageSession>
+  <Summary numSequencePoints="281" visitedSequencePoints="106" numBranchPoints="74" visitedBranchPoints="16" sequenceCoverage="37.72" branchCoverage="21.62" maxCyclomaticComplexity="86" minCyclomaticComplexity="19" visitedClasses="5" numClasses="7" visitedMethods="24" numMethods="38" />
+  <Modules>
+    <Module hash="2F78C9F6-2729-41AD-8C8E-4FC1FB18FE64">
+      <ModulePath>KahootClone.Application.dll</ModulePath>
+      <ModuleTime>2026-04-17T08:20:03</ModuleTime>
+      <ModuleName>KahootClone.Application</ModuleName>
+      <Files>
+        <File uid="1" fullPath="D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Application\Services\QuizService.cs" />
+        <File uid="2" fullPath="D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Application\Interfaces\IQuizService.cs" />
+      </Files>
+      <Classes>
+        <Class>
+          <Summary numSequencePoints="256" visitedSequencePoints="89" numBranchPoints="74" visitedBranchPoints="16" sequenceCoverage="34.76" branchCoverage="21.62" maxCyclomaticComplexity="22" minCyclomaticComplexity="1" visitedClasses="1" numClasses="1" visitedMethods="7" numMethods="13" />
+          <FullName>KahootClone.Application.Services.QuizService</FullName>
+          <Methods>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="8" visitedSequencePoints="8" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Application.Services.QuizService::CreateQuiz(KahootClone.Domain.Entities.Quiz)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="1" uspid="38" ordinal="0" sl="38" sc="1" el="38" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="40" ordinal="1" sl="40" sc="1" el="40" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="42" ordinal="2" sl="42" sc="1" el="42" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="43" ordinal="3" sl="43" sc="1" el="43" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="46" ordinal="4" sl="46" sc="1" el="46" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="49" ordinal="5" sl="49" sc="1" el="49" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="51" ordinal="6" sl="51" sc="1" el="51" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="52" ordinal="7" sl="52" sc="1" el="52" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="8" uspid="0" p8:type="SequencePoint" ordinal="0" offset="0" sc="0" sl="38" ec="1" el="52" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="3" visitedSequencePoints="3" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>KahootClone.Domain.Entities.Quiz KahootClone.Application.Services.QuizService::GetQuizByPin(System.String)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="2" uspid="55" ordinal="0" sl="55" sc="1" el="55" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="56" ordinal="1" sl="56" sc="1" el="56" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="57" ordinal="2" sl="57" sc="1" el="57" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="3" uspid="0" p8:type="SequencePoint" ordinal="1" offset="1" sc="0" sl="55" ec="1" el="57" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="4" nPathComplexity="4" sequenceCoverage="0" branchCoverage="0" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="18" visitedSequencePoints="0" numBranchPoints="4" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="0" maxCyclomaticComplexity="4" minCyclomaticComplexity="4" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Void KahootClone.Application.Services.QuizService::StartGameFlow(System.String)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="61" ordinal="0" sl="61" sc="1" el="61" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="62" ordinal="1" sl="62" sc="1" el="62" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="63" ordinal="2" sl="63" sc="1" el="63" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="64" ordinal="3" sl="64" sc="1" el="64" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="65" ordinal="4" sl="65" sc="1" el="65" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="66" ordinal="5" sl="66" sc="1" el="66" ec="2" bec="4" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="67" ordinal="6" sl="67" sc="1" el="67" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="68" ordinal="7" sl="68" sc="1" el="68" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="69" ordinal="8" sl="69" sc="1" el="69" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="70" ordinal="9" sl="70" sc="1" el="70" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="71" ordinal="10" sl="71" sc="1" el="71" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="72" ordinal="11" sl="72" sc="1" el="72" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="73" ordinal="12" sl="73" sc="1" el="73" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="74" ordinal="13" sl="74" sc="1" el="74" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="75" ordinal="14" sl="75" sc="1" el="75" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="76" ordinal="15" sl="76" sc="1" el="76" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="77" ordinal="16" sl="77" sc="1" el="77" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="78" ordinal="17" sl="78" sc="1" el="78" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints>
+                <BranchPoint vc="0" uspid="66" ordinal="0" path="0" offset="72" offsetend="74" sl="66" fileid="1" />
+                <BranchPoint vc="0" uspid="66" ordinal="1" path="1" offset="72" offsetend="90" sl="66" fileid="1" />
+                <BranchPoint vc="0" uspid="66" ordinal="2" path="0" offset="95" offsetend="97" sl="66" fileid="1" />
+                <BranchPoint vc="0" uspid="66" ordinal="3" path="1" offset="95" offsetend="185" sl="66" fileid="1" />
+              </BranchPoints>
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="2" offset="2" sc="0" sl="61" ec="1" el="78" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="3" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Void KahootClone.Application.Services.QuizService::StopGameFlow(System.String)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="81" ordinal="0" sl="81" sc="1" el="81" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="82" ordinal="1" sl="82" sc="1" el="82" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="83" ordinal="2" sl="83" sc="1" el="83" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="3" offset="3" sc="0" sl="81" ec="1" el="83" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="22" nPathComplexity="22" sequenceCoverage="0" branchCoverage="0" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="63" visitedSequencePoints="0" numBranchPoints="22" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="0" maxCyclomaticComplexity="22" minCyclomaticComplexity="22" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Collections.Generic.List`1&lt;KahootClone.Application.Interfaces.GameTickEvent&gt; KahootClone.Application.Services.QuizService::ProcessTicks()</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="86" ordinal="0" sl="86" sc="1" el="86" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="87" ordinal="1" sl="87" sc="1" el="87" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="88" ordinal="2" sl="88" sc="1" el="88" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="89" ordinal="3" sl="89" sc="1" el="89" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="90" ordinal="4" sl="90" sc="1" el="90" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="91" ordinal="5" sl="91" sc="1" el="91" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="92" ordinal="6" sl="92" sc="1" el="92" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="94" ordinal="7" sl="94" sc="1" el="94" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="95" ordinal="8" sl="95" sc="1" el="95" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="96" ordinal="9" sl="96" sc="1" el="96" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="98" ordinal="10" sl="98" sc="1" el="98" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="99" ordinal="11" sl="99" sc="1" el="99" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="100" ordinal="12" sl="100" sc="1" el="100" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="101" ordinal="13" sl="101" sc="1" el="101" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="102" ordinal="14" sl="102" sc="1" el="102" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="103" ordinal="15" sl="103" sc="1" el="103" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="106" ordinal="16" sl="106" sc="1" el="106" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="107" ordinal="17" sl="107" sc="1" el="107" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="108" ordinal="18" sl="108" sc="1" el="108" ec="2" bec="4" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="109" ordinal="19" sl="109" sc="1" el="109" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="110" ordinal="20" sl="110" sc="1" el="110" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="111" ordinal="21" sl="111" sc="1" el="111" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="112" ordinal="22" sl="112" sc="1" el="112" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="113" ordinal="23" sl="113" sc="1" el="113" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="114" ordinal="24" sl="114" sc="1" el="114" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="116" ordinal="25" sl="116" sc="1" el="116" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="117" ordinal="26" sl="117" sc="1" el="117" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="118" ordinal="27" sl="118" sc="1" el="118" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="119" ordinal="28" sl="119" sc="1" el="119" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="120" ordinal="29" sl="120" sc="1" el="120" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="121" ordinal="30" sl="121" sc="1" el="121" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="122" ordinal="31" sl="122" sc="1" el="122" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="123" ordinal="32" sl="123" sc="1" el="123" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="124" ordinal="33" sl="124" sc="1" el="124" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="125" ordinal="34" sl="125" sc="1" el="125" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="126" ordinal="35" sl="126" sc="1" el="126" ec="2" bec="4" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="127" ordinal="36" sl="127" sc="1" el="127" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="128" ordinal="37" sl="128" sc="1" el="128" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="129" ordinal="38" sl="129" sc="1" el="129" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="130" ordinal="39" sl="130" sc="1" el="130" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="131" ordinal="40" sl="131" sc="1" el="131" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="132" ordinal="41" sl="132" sc="1" el="132" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="134" ordinal="42" sl="134" sc="1" el="134" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="135" ordinal="43" sl="135" sc="1" el="135" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="136" ordinal="44" sl="136" sc="1" el="136" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="137" ordinal="45" sl="137" sc="1" el="137" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="138" ordinal="46" sl="138" sc="1" el="138" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="139" ordinal="47" sl="139" sc="1" el="139" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="140" ordinal="48" sl="140" sc="1" el="140" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="142" ordinal="49" sl="142" sc="1" el="142" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="143" ordinal="50" sl="143" sc="1" el="143" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="144" ordinal="51" sl="144" sc="1" el="144" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="145" ordinal="52" sl="145" sc="1" el="145" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="146" ordinal="53" sl="146" sc="1" el="146" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="147" ordinal="54" sl="147" sc="1" el="147" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="149" ordinal="55" sl="149" sc="1" el="149" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="150" ordinal="56" sl="150" sc="1" el="150" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="151" ordinal="57" sl="151" sc="1" el="151" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="152" ordinal="58" sl="152" sc="1" el="152" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="153" ordinal="59" sl="153" sc="1" el="153" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="154" ordinal="60" sl="154" sc="1" el="154" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="155" ordinal="61" sl="155" sc="1" el="155" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="156" ordinal="62" sl="156" sc="1" el="156" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints>
+                <BranchPoint vc="0" uspid="88" ordinal="21" path="1" offset="987" offsetend="24" sl="88" fileid="1" />
+                <BranchPoint vc="0" uspid="98" ordinal="0" path="0" offset="152" offsetend="157" sl="98" fileid="1" />
+                <BranchPoint vc="0" uspid="100" ordinal="2" path="0" offset="175" offsetend="180" sl="100" fileid="1" />
+                <BranchPoint vc="0" uspid="107" ordinal="4" path="0" offset="219" offsetend="221" sl="107" fileid="1" />
+                <BranchPoint vc="0" uspid="107" ordinal="5" path="1" offset="219" offsetend="224" sl="107" fileid="1" />
+                <BranchPoint vc="0" uspid="108" ordinal="6" path="0" offset="247" offsetend="249" sl="108" fileid="1" />
+                <BranchPoint vc="0" uspid="108" ordinal="7" path="1" offset="247" offsetend="261" sl="108" fileid="1" />
+                <BranchPoint vc="0" uspid="108" ordinal="8" path="0" offset="305" offsetend="307" sl="108" fileid="1" />
+                <BranchPoint vc="0" uspid="108" ordinal="9" path="1" offset="305" offsetend="320" sl="108" fileid="1" />
+                <BranchPoint vc="0" uspid="100" ordinal="3" path="1" offset="175" offsetend="386" sl="100" fileid="1" />
+                <BranchPoint vc="0" uspid="98" ordinal="1" path="1" offset="152" offsetend="445" sl="98" fileid="1" />
+                <BranchPoint vc="0" uspid="120" ordinal="10" path="0" offset="466" offsetend="471" sl="120" fileid="1" />
+                <BranchPoint vc="0" uspid="122" ordinal="12" path="0" offset="489" offsetend="494" sl="122" fileid="1" />
+                <BranchPoint vc="0" uspid="126" ordinal="14" path="0" offset="531" offsetend="533" sl="126" fileid="1" />
+                <BranchPoint vc="0" uspid="126" ordinal="15" path="1" offset="531" offsetend="556" sl="126" fileid="1" />
+                <BranchPoint vc="0" uspid="126" ordinal="16" path="0" offset="561" offsetend="566" sl="126" fileid="1" />
+                <BranchPoint vc="0" uspid="126" ordinal="17" path="1" offset="561" offsetend="784" sl="126" fileid="1" />
+                <BranchPoint vc="0" uspid="145" ordinal="18" path="0" offset="841" offsetend="843" sl="145" fileid="1" />
+                <BranchPoint vc="0" uspid="145" ordinal="19" path="1" offset="841" offsetend="846" sl="145" fileid="1" />
+                <BranchPoint vc="0" uspid="122" ordinal="13" path="1" offset="489" offsetend="910" sl="122" fileid="1" />
+                <BranchPoint vc="0" uspid="120" ordinal="11" path="1" offset="466" offsetend="964" sl="120" fileid="1" />
+                <BranchPoint vc="0" uspid="88" ordinal="20" path="0" offset="987" offsetend="992" sl="88" fileid="1" />
+              </BranchPoints>
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="4" offset="4" sc="0" sl="86" ec="1" el="156" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="8" nPathComplexity="8" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="24" visitedSequencePoints="24" numBranchPoints="8" visitedBranchPoints="8" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="8" minCyclomaticComplexity="8" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.ValueTuple`2&lt;KahootClone.Domain.Entities.Player,System.String&gt; KahootClone.Application.Services.QuizService::JoinOrRejoin(System.String,System.String,System.String)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="4" uspid="160" ordinal="0" sl="160" sc="1" el="160" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="5" uspid="161" ordinal="1" sl="161" sc="1" el="161" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="4" uspid="162" ordinal="2" sl="162" sc="1" el="162" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="4" uspid="163" ordinal="3" sl="163" sc="1" el="163" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="4" uspid="164" ordinal="4" sl="164" sc="1" el="164" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="5" uspid="165" ordinal="5" sl="165" sc="1" el="165" ec="2" bec="4" bev="4" fileid="1" />
+                <SequencePoint vc="5" uspid="167" ordinal="6" sl="167" sc="1" el="167" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="3" uspid="169" ordinal="7" sl="169" sc="1" el="169" ec="2" bec="2" bev="2" fileid="1" />
+                <SequencePoint vc="1" uspid="170" ordinal="8" sl="170" sc="1" el="170" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="172" ordinal="9" sl="172" sc="1" el="172" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="173" ordinal="10" sl="173" sc="1" el="173" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="174" ordinal="11" sl="174" sc="1" el="174" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="175" ordinal="12" sl="175" sc="1" el="175" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="176" ordinal="13" sl="176" sc="1" el="176" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="179" ordinal="14" sl="179" sc="1" el="179" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="181" ordinal="15" sl="181" sc="1" el="181" ec="2" bec="2" bev="2" fileid="1" />
+                <SequencePoint vc="1" uspid="182" ordinal="16" sl="182" sc="1" el="182" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="184" ordinal="17" sl="184" sc="1" el="184" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="187" ordinal="18" sl="187" sc="1" el="187" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="189" ordinal="19" sl="189" sc="1" el="189" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="190" ordinal="20" sl="190" sc="1" el="190" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="191" ordinal="21" sl="191" sc="1" el="191" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="192" ordinal="22" sl="192" sc="1" el="192" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="4" uspid="196" ordinal="23" sl="196" sc="1" el="196" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints>
+                <BranchPoint vc="3" uspid="165" ordinal="0" path="0" offset="87" offsetend="89" sl="165" fileid="1" />
+                <BranchPoint vc="1" uspid="165" ordinal="1" path="1" offset="87" offsetend="101" sl="165" fileid="1" />
+                <BranchPoint vc="1" uspid="165" ordinal="2" path="0" offset="106" offsetend="108" sl="165" fileid="1" />
+                <BranchPoint vc="3" uspid="165" ordinal="3" path="1" offset="106" offsetend="126" sl="165" fileid="1" />
+                <BranchPoint vc="1" uspid="169" ordinal="4" path="0" offset="161" offsetend="163" sl="169" fileid="1" />
+                <BranchPoint vc="2" uspid="169" ordinal="5" path="1" offset="161" offsetend="277" sl="169" fileid="1" />
+                <BranchPoint vc="1" uspid="181" ordinal="6" path="0" offset="297" offsetend="299" sl="181" fileid="1" />
+                <BranchPoint vc="1" uspid="181" ordinal="7" path="1" offset="297" offsetend="315" sl="181" fileid="1" />
+              </BranchPoints>
+              <MethodPoint vc="24" uspid="0" p8:type="SequencePoint" ordinal="5" offset="5" sc="0" sl="160" ec="1" el="196" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="6" nPathComplexity="6" sequenceCoverage="0" branchCoverage="0" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="18" visitedSequencePoints="0" numBranchPoints="6" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="0" maxCyclomaticComplexity="6" minCyclomaticComplexity="6" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.ValueTuple`2&lt;System.String,System.String&gt; KahootClone.Application.Services.QuizService::UnregisterPlayer(System.String)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="199" ordinal="0" sl="199" sc="1" el="199" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="200" ordinal="1" sl="200" sc="1" el="200" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="201" ordinal="2" sl="201" sc="1" el="201" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="202" ordinal="3" sl="202" sc="1" el="202" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="203" ordinal="4" sl="203" sc="1" el="203" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="204" ordinal="5" sl="204" sc="1" el="204" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="205" ordinal="6" sl="205" sc="1" el="205" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="206" ordinal="7" sl="206" sc="1" el="206" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="207" ordinal="8" sl="207" sc="1" el="207" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="208" ordinal="9" sl="208" sc="1" el="208" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="209" ordinal="10" sl="209" sc="1" el="209" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="210" ordinal="11" sl="210" sc="1" el="210" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="211" ordinal="12" sl="211" sc="1" el="211" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="212" ordinal="13" sl="212" sc="1" el="212" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="214" ordinal="14" sl="214" sc="1" el="214" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="215" ordinal="15" sl="215" sc="1" el="215" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="216" ordinal="16" sl="216" sc="1" el="216" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="217" ordinal="17" sl="217" sc="1" el="217" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints>
+                <BranchPoint vc="0" uspid="200" ordinal="0" path="0" offset="16" offsetend="21" sl="200" fileid="1" />
+                <BranchPoint vc="0" uspid="207" ordinal="2" path="0" offset="130" offsetend="132" sl="207" fileid="1" />
+                <BranchPoint vc="0" uspid="207" ordinal="3" path="1" offset="130" offsetend="135" sl="207" fileid="1" />
+                <BranchPoint vc="0" uspid="208" ordinal="4" path="0" offset="170" offsetend="172" sl="208" fileid="1" />
+                <BranchPoint vc="0" uspid="208" ordinal="5" path="1" offset="170" offsetend="216" sl="208" fileid="1" />
+                <BranchPoint vc="0" uspid="200" ordinal="1" path="1" offset="16" offsetend="233" sl="200" fileid="1" />
+              </BranchPoints>
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="6" offset="6" sc="0" sl="199" ec="1" el="217" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="6" nPathComplexity="6" sequenceCoverage="0" branchCoverage="0" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="20" visitedSequencePoints="0" numBranchPoints="6" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="0" maxCyclomaticComplexity="6" minCyclomaticComplexity="6" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Void KahootClone.Application.Services.QuizService::AbandonQuiz(System.String)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="220" ordinal="0" sl="220" sc="1" el="220" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="221" ordinal="1" sl="221" sc="1" el="221" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="222" ordinal="2" sl="222" sc="1" el="222" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="223" ordinal="3" sl="223" sc="1" el="223" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="224" ordinal="4" sl="224" sc="1" el="224" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="225" ordinal="5" sl="225" sc="1" el="225" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="226" ordinal="6" sl="226" sc="1" el="226" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="228" ordinal="7" sl="228" sc="1" el="228" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="229" ordinal="8" sl="229" sc="1" el="229" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="232" ordinal="9" sl="232" sc="1" el="232" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="233" ordinal="10" sl="233" sc="1" el="233" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="234" ordinal="11" sl="234" sc="1" el="234" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="235" ordinal="12" sl="235" sc="1" el="235" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="236" ordinal="13" sl="236" sc="1" el="236" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="237" ordinal="14" sl="237" sc="1" el="237" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="238" ordinal="15" sl="238" sc="1" el="238" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="239" ordinal="16" sl="239" sc="1" el="239" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="240" ordinal="17" sl="240" sc="1" el="240" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="242" ordinal="18" sl="242" sc="1" el="242" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="243" ordinal="19" sl="243" sc="1" el="243" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints>
+                <BranchPoint vc="0" uspid="225" ordinal="0" path="0" offset="79" offsetend="81" sl="225" fileid="1" />
+                <BranchPoint vc="0" uspid="232" ordinal="5" path="1" offset="180" offsetend="119" sl="232" fileid="1" />
+                <BranchPoint vc="0" uspid="234" ordinal="2" path="0" offset="148" offsetend="150" sl="234" fileid="1" />
+                <BranchPoint vc="0" uspid="234" ordinal="3" path="1" offset="148" offsetend="172" sl="234" fileid="1" />
+                <BranchPoint vc="0" uspid="232" ordinal="4" path="0" offset="180" offsetend="182" sl="232" fileid="1" />
+                <BranchPoint vc="0" uspid="225" ordinal="1" path="1" offset="79" offsetend="200" sl="225" fileid="1" />
+              </BranchPoints>
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="7" offset="7" sc="0" sl="220" ec="1" el="243" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="8" nPathComplexity="8" sequenceCoverage="0" branchCoverage="0" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="30" visitedSequencePoints="0" numBranchPoints="8" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="0" maxCyclomaticComplexity="8" minCyclomaticComplexity="8" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Object KahootClone.Application.Services.QuizService::GetFullGameState(System.String)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="246" ordinal="0" sl="246" sc="1" el="246" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="247" ordinal="1" sl="247" sc="1" el="247" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="248" ordinal="2" sl="248" sc="1" el="248" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="250" ordinal="3" sl="250" sc="1" el="250" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="252" ordinal="4" sl="252" sc="1" el="252" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="253" ordinal="5" sl="253" sc="1" el="253" ec="2" bec="4" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="254" ordinal="6" sl="254" sc="1" el="254" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="255" ordinal="7" sl="255" sc="1" el="255" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="256" ordinal="8" sl="256" sc="1" el="256" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="259" ordinal="9" sl="259" sc="1" el="259" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="260" ordinal="10" sl="260" sc="1" el="260" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="261" ordinal="11" sl="261" sc="1" el="261" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="262" ordinal="12" sl="262" sc="1" el="262" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="263" ordinal="13" sl="263" sc="1" el="263" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="264" ordinal="14" sl="264" sc="1" el="264" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="265" ordinal="15" sl="265" sc="1" el="265" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="266" ordinal="16" sl="266" sc="1" el="266" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="267" ordinal="17" sl="267" sc="1" el="267" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="268" ordinal="18" sl="268" sc="1" el="268" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="270" ordinal="19" sl="270" sc="1" el="270" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="271" ordinal="20" sl="271" sc="1" el="271" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="272" ordinal="21" sl="272" sc="1" el="272" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="273" ordinal="22" sl="273" sc="1" el="273" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="274" ordinal="23" sl="274" sc="1" el="274" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="275" ordinal="24" sl="275" sc="1" el="275" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="276" ordinal="25" sl="276" sc="1" el="276" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="277" ordinal="26" sl="277" sc="1" el="277" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="278" ordinal="27" sl="278" sc="1" el="278" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="279" ordinal="28" sl="279" sc="1" el="279" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="280" ordinal="29" sl="280" sc="1" el="280" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints>
+                <BranchPoint vc="0" uspid="248" ordinal="0" path="0" offset="22" offsetend="24" sl="248" fileid="1" />
+                <BranchPoint vc="0" uspid="248" ordinal="1" path="1" offset="22" offsetend="32" sl="248" fileid="1" />
+                <BranchPoint vc="0" uspid="253" ordinal="2" path="0" offset="49" offsetend="51" sl="253" fileid="1" />
+                <BranchPoint vc="0" uspid="253" ordinal="3" path="1" offset="49" offsetend="72" sl="253" fileid="1" />
+                <BranchPoint vc="0" uspid="253" ordinal="4" path="0" offset="77" offsetend="79" sl="253" fileid="1" />
+                <BranchPoint vc="0" uspid="253" ordinal="5" path="1" offset="77" offsetend="99" sl="253" fileid="1" />
+                <BranchPoint vc="0" uspid="260" ordinal="6" path="0" offset="109" offsetend="111" sl="260" fileid="1" />
+                <BranchPoint vc="0" uspid="260" ordinal="7" path="1" offset="109" offsetend="184" sl="260" fileid="1" />
+              </BranchPoints>
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="8" offset="8" sc="0" sl="246" ec="1" el="280" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="31" visitedSequencePoints="31" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Collections.Generic.List`1&lt;KahootClone.Domain.Entities.Question&gt; KahootClone.Application.Services.QuizService::GenerateSampleQuestions()</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="1" uspid="284" ordinal="0" sl="284" sc="1" el="284" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="285" ordinal="1" sl="285" sc="1" el="285" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="286" ordinal="2" sl="286" sc="1" el="286" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="287" ordinal="3" sl="287" sc="1" el="287" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="288" ordinal="4" sl="288" sc="1" el="288" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="289" ordinal="5" sl="289" sc="1" el="289" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="290" ordinal="6" sl="290" sc="1" el="290" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="291" ordinal="7" sl="291" sc="1" el="291" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="292" ordinal="8" sl="292" sc="1" el="292" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="293" ordinal="9" sl="293" sc="1" el="293" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="294" ordinal="10" sl="294" sc="1" el="294" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="295" ordinal="11" sl="295" sc="1" el="295" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="296" ordinal="12" sl="296" sc="1" el="296" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="297" ordinal="13" sl="297" sc="1" el="297" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="298" ordinal="14" sl="298" sc="1" el="298" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="299" ordinal="15" sl="299" sc="1" el="299" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="300" ordinal="16" sl="300" sc="1" el="300" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="301" ordinal="17" sl="301" sc="1" el="301" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="302" ordinal="18" sl="302" sc="1" el="302" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="303" ordinal="19" sl="303" sc="1" el="303" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="304" ordinal="20" sl="304" sc="1" el="304" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="305" ordinal="21" sl="305" sc="1" el="305" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="306" ordinal="22" sl="306" sc="1" el="306" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="307" ordinal="23" sl="307" sc="1" el="307" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="308" ordinal="24" sl="308" sc="1" el="308" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="309" ordinal="25" sl="309" sc="1" el="309" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="310" ordinal="26" sl="310" sc="1" el="310" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="311" ordinal="27" sl="311" sc="1" el="311" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="312" ordinal="28" sl="312" sc="1" el="312" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="313" ordinal="29" sl="313" sc="1" el="313" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="314" ordinal="30" sl="314" sc="1" el="314" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="31" uspid="0" p8:type="SequencePoint" ordinal="9" offset="9" sc="0" sl="284" ec="1" el="314" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="20" nPathComplexity="20" sequenceCoverage="51.61" branchCoverage="40" isConstructor="False" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="31" visitedSequencePoints="16" numBranchPoints="20" visitedBranchPoints="8" sequenceCoverage="51.61" branchCoverage="40" maxCyclomaticComplexity="20" minCyclomaticComplexity="20" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Boolean KahootClone.Application.Services.QuizService::SubmitAnswer(System.String,System.String,System.Guid,System.Guid)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="2" uspid="317" ordinal="0" sl="317" sc="1" el="317" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="3" uspid="318" ordinal="1" sl="318" sc="1" el="318" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="319" ordinal="2" sl="319" sc="1" el="319" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="320" ordinal="3" sl="320" sc="1" el="320" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="321" ordinal="4" sl="321" sc="1" el="321" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="3" uspid="322" ordinal="5" sl="322" sc="1" el="322" ec="2" bec="2" bev="2" fileid="1" />
+                <SequencePoint vc="2" uspid="324" ordinal="6" sl="324" sc="1" el="324" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="325" ordinal="7" sl="325" sc="1" el="325" ec="2" bec="2" bev="1" fileid="1" />
+                <SequencePoint vc="1" uspid="327" ordinal="8" sl="327" sc="1" el="327" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="329" ordinal="9" sl="329" sc="1" el="329" ec="2" bec="2" bev="1" fileid="1" />
+                <SequencePoint vc="1" uspid="332" ordinal="10" sl="332" sc="1" el="332" ec="2" bec="4" bev="2" fileid="1" />
+                <SequencePoint vc="0" uspid="333" ordinal="11" sl="333" sc="1" el="333" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="336" ordinal="12" sl="336" sc="1" el="336" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="337" ordinal="13" sl="337" sc="1" el="337" ec="2" bec="2" bev="1" fileid="1" />
+                <SequencePoint vc="0" uspid="338" ordinal="14" sl="338" sc="1" el="338" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="340" ordinal="15" sl="340" sc="1" el="340" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="344" ordinal="16" sl="344" sc="1" el="344" ec="2" bec="2" bev="1" fileid="1" />
+                <SequencePoint vc="1" uspid="345" ordinal="17" sl="345" sc="1" el="345" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="348" ordinal="18" sl="348" sc="1" el="348" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="351" ordinal="19" sl="351" sc="1" el="351" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="352" ordinal="20" sl="352" sc="1" el="352" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="353" ordinal="21" sl="353" sc="1" el="353" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="355" ordinal="22" sl="355" sc="1" el="355" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="356" ordinal="23" sl="356" sc="1" el="356" ec="2" bec="2" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="359" ordinal="24" sl="359" sc="1" el="359" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="360" ordinal="25" sl="360" sc="1" el="360" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="362" ordinal="26" sl="362" sc="1" el="362" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="363" ordinal="27" sl="363" sc="1" el="363" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="366" ordinal="28" sl="366" sc="1" el="366" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="0" uspid="368" ordinal="29" sl="368" sc="1" el="368" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="2" uspid="370" ordinal="30" sl="370" sc="1" el="370" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints>
+                <BranchPoint vc="1" uspid="322" ordinal="0" path="0" offset="109" offsetend="111" sl="322" fileid="1" />
+                <BranchPoint vc="1" uspid="322" ordinal="1" path="1" offset="109" offsetend="119" sl="322" fileid="1" />
+                <BranchPoint vc="0" uspid="325" ordinal="2" path="0" offset="154" offsetend="156" sl="325" fileid="1" />
+                <BranchPoint vc="1" uspid="325" ordinal="3" path="1" offset="154" offsetend="164" sl="325" fileid="1" />
+                <BranchPoint vc="0" uspid="329" ordinal="4" path="0" offset="192" offsetend="194" sl="329" fileid="1" />
+                <BranchPoint vc="1" uspid="329" ordinal="5" path="1" offset="192" offsetend="203" sl="329" fileid="1" />
+                <BranchPoint vc="0" uspid="332" ordinal="6" path="0" offset="219" offsetend="221" sl="332" fileid="1" />
+                <BranchPoint vc="1" uspid="332" ordinal="7" path="1" offset="219" offsetend="240" sl="332" fileid="1" />
+                <BranchPoint vc="0" uspid="332" ordinal="8" path="0" offset="245" offsetend="247" sl="332" fileid="1" />
+                <BranchPoint vc="1" uspid="332" ordinal="9" path="1" offset="245" offsetend="255" sl="332" fileid="1" />
+                <BranchPoint vc="0" uspid="337" ordinal="10" path="0" offset="290" offsetend="292" sl="337" fileid="1" />
+                <BranchPoint vc="1" uspid="337" ordinal="11" path="1" offset="290" offsetend="301" sl="337" fileid="1" />
+                <BranchPoint vc="1" uspid="344" ordinal="12" path="0" offset="323" offsetend="325" sl="344" fileid="1" />
+                <BranchPoint vc="0" uspid="344" ordinal="13" path="1" offset="323" offsetend="333" sl="344" fileid="1" />
+                <BranchPoint vc="0" uspid="351" ordinal="14" path="0" offset="358" offsetend="363" sl="351" fileid="1" />
+                <BranchPoint vc="0" uspid="355" ordinal="16" path="0" offset="409" offsetend="411" sl="355" fileid="1" />
+                <BranchPoint vc="0" uspid="355" ordinal="17" path="1" offset="409" offsetend="422" sl="355" fileid="1" />
+                <BranchPoint vc="0" uspid="356" ordinal="18" path="0" offset="438" offsetend="440" sl="356" fileid="1" />
+                <BranchPoint vc="0" uspid="356" ordinal="19" path="1" offset="438" offsetend="450" sl="356" fileid="1" />
+                <BranchPoint vc="0" uspid="351" ordinal="15" path="1" offset="358" offsetend="521" sl="351" fileid="1" />
+              </BranchPoints>
+              <MethodPoint vc="16" uspid="0" p8:type="SequencePoint" ordinal="10" offset="10" sc="0" sl="317" ec="1" el="370" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="True" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="4" visitedSequencePoints="4" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Void KahootClone.Application.Services.QuizService::.ctor(KahootClone.Application.Interfaces.IQuizRepository)</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="9" uspid="33" ordinal="0" sl="33" sc="1" el="33" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="9" uspid="34" ordinal="1" sl="34" sc="1" el="34" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="9" uspid="35" ordinal="2" sl="35" sc="1" el="35" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="9" uspid="36" ordinal="3" sl="36" sc="1" el="36" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="4" uspid="0" p8:type="SequencePoint" ordinal="11" offset="11" sc="0" sl="33" ec="1" el="36" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="True" isGetter="False" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="3" visitedSequencePoints="3" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Void KahootClone.Application.Services.QuizService::.cctor()</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="1" uspid="12" ordinal="0" sl="12" sc="1" el="12" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="21" ordinal="1" sl="21" sc="1" el="21" ec="2" bec="0" bev="0" fileid="1" />
+                <SequencePoint vc="1" uspid="30" ordinal="2" sl="30" sc="1" el="30" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="3" uspid="0" p8:type="SequencePoint" ordinal="12" offset="12" sc="0" sl="12" ec="1" el="30" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+          </Methods>
+        </Class>
+        <Class>
+          <Summary numSequencePoints="3" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="1" visitedMethods="0" numMethods="3" />
+          <FullName>KahootClone.Application.Services.QuizService/GameStateTracker</FullName>
+          <Methods>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Application.Services.QuizService/GameStateTracker::get_Phase()</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="17" ordinal="0" sl="17" sc="1" el="17" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="0" offset="0" sc="0" sl="17" ec="1" el="17" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Int32 KahootClone.Application.Services.QuizService/GameStateTracker::get_CurrentQuestionIndex()</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="18" ordinal="0" sl="18" sc="1" el="18" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="1" offset="1" sc="0" sl="18" ec="1" el="18" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Int32 KahootClone.Application.Services.QuizService/GameStateTracker::get_TimeRemaining()</Name>
+              <FileRef uid="1" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="19" ordinal="0" sl="19" sc="1" el="19" ec="2" bec="0" bev="0" fileid="1" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="2" offset="2" sc="0" sl="19" ec="1" el="19" bec="0" bev="0" fileid="1" xmlns:p8="xsi" />
+            </Method>
+          </Methods>
+        </Class>
+        <Class>
+          <Summary numSequencePoints="3" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="1" visitedMethods="0" numMethods="3" />
+          <FullName>KahootClone.Application.Interfaces.GameTickEvent</FullName>
+          <Methods>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Application.Interfaces.GameTickEvent::get_Pin()</Name>
+              <FileRef uid="2" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="8" ordinal="0" sl="8" sc="1" el="8" ec="2" bec="0" bev="0" fileid="2" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="0" offset="0" sc="0" sl="8" ec="1" el="8" bec="0" bev="0" fileid="2" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Application.Interfaces.GameTickEvent::get_EventName()</Name>
+              <FileRef uid="2" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="9" ordinal="0" sl="9" sc="1" el="9" ec="2" bec="0" bev="0" fileid="2" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="1" offset="1" sc="0" sl="9" ec="1" el="9" bec="0" bev="0" fileid="2" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Object KahootClone.Application.Interfaces.GameTickEvent::get_Payload()</Name>
+              <FileRef uid="2" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="10" ordinal="0" sl="10" sc="1" el="10" ec="2" bec="0" bev="0" fileid="2" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="2" offset="2" sc="0" sl="10" ec="1" el="10" bec="0" bev="0" fileid="2" xmlns:p8="xsi" />
+            </Method>
+          </Methods>
+        </Class>
+      </Classes>
+    </Module>
+    <Module hash="D71AB9E4-1901-475A-87C1-32177C4964B5">
+      <ModulePath>KahootClone.Domain.dll</ModulePath>
+      <ModuleTime>2026-04-17T08:20:03</ModuleTime>
+      <ModuleName>KahootClone.Domain</ModuleName>
+      <Files>
+        <File uid="3" fullPath="D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Option.cs" />
+        <File uid="4" fullPath="D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Player.cs" />
+        <File uid="5" fullPath="D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Question.cs" />
+        <File uid="6" fullPath="D:\yusuf\Desktop\Student\YapayZekaDYG\KahootProjesi\KahootClone.Domain\Entities\Quiz.cs" />
+      </Files>
+      <Classes>
+        <Class>
+          <Summary numSequencePoints="3" visitedSequencePoints="3" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="1" numClasses="1" visitedMethods="3" numMethods="3" />
+          <FullName>KahootClone.Domain.Entities.Option</FullName>
+          <Methods>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Guid KahootClone.Domain.Entities.Option::get_Id()</Name>
+              <FileRef uid="3" />
+              <SequencePoints>
+                <SequencePoint vc="8" uspid="6" ordinal="0" sl="6" sc="1" el="6" ec="2" bec="0" bev="0" fileid="3" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="0" offset="0" sc="0" sl="6" ec="1" el="6" bec="0" bev="0" fileid="3" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Domain.Entities.Option::get_Text()</Name>
+              <FileRef uid="3" />
+              <SequencePoints>
+                <SequencePoint vc="16" uspid="9" ordinal="0" sl="9" sc="1" el="9" ec="2" bec="0" bev="0" fileid="3" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="1" offset="1" sc="0" sl="9" ec="1" el="9" bec="0" bev="0" fileid="3" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Boolean KahootClone.Domain.Entities.Option::get_IsCorrect()</Name>
+              <FileRef uid="3" />
+              <SequencePoints>
+                <SequencePoint vc="8" uspid="12" ordinal="0" sl="12" sc="1" el="12" ec="2" bec="0" bev="0" fileid="3" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="2" offset="2" sc="0" sl="12" ec="1" el="12" bec="0" bev="0" fileid="3" xmlns:p8="xsi" />
+            </Method>
+          </Methods>
+        </Class>
+        <Class>
+          <Summary numSequencePoints="5" visitedSequencePoints="5" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="1" numClasses="1" visitedMethods="5" numMethods="5" />
+          <FullName>KahootClone.Domain.Entities.Player</FullName>
+          <Methods>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Guid KahootClone.Domain.Entities.Player::get_Id()</Name>
+              <FileRef uid="4" />
+              <SequencePoints>
+                <SequencePoint vc="1" uspid="6" ordinal="0" sl="6" sc="1" el="6" ec="2" bec="0" bev="0" fileid="4" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="0" offset="0" sc="0" sl="6" ec="1" el="6" bec="0" bev="0" fileid="4" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Domain.Entities.Player::get_Nickname()</Name>
+              <FileRef uid="4" />
+              <SequencePoints>
+                <SequencePoint vc="12" uspid="9" ordinal="0" sl="9" sc="1" el="9" ec="2" bec="0" bev="0" fileid="4" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="1" offset="1" sc="0" sl="9" ec="1" el="9" bec="0" bev="0" fileid="4" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Int32 KahootClone.Domain.Entities.Player::get_Score()</Name>
+              <FileRef uid="4" />
+              <SequencePoints>
+                <SequencePoint vc="1" uspid="12" ordinal="0" sl="12" sc="1" el="12" ec="2" bec="0" bev="0" fileid="4" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="2" offset="2" sc="0" sl="12" ec="1" el="12" bec="0" bev="0" fileid="4" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Domain.Entities.Player::get_ConnectionId()</Name>
+              <FileRef uid="4" />
+              <SequencePoints>
+                <SequencePoint vc="12" uspid="15" ordinal="0" sl="15" sc="1" el="15" ec="2" bec="0" bev="0" fileid="4" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="3" offset="3" sc="0" sl="15" ec="1" el="15" bec="0" bev="0" fileid="4" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Collections.Generic.List`1&lt;System.Guid&gt; KahootClone.Domain.Entities.Player::get_AnsweredQuestionIds()</Name>
+              <FileRef uid="4" />
+              <SequencePoints>
+                <SequencePoint vc="6" uspid="18" ordinal="0" sl="18" sc="1" el="18" ec="2" bec="0" bev="0" fileid="4" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="4" offset="4" sc="0" sl="18" ec="1" el="18" bec="0" bev="0" fileid="4" xmlns:p8="xsi" />
+            </Method>
+          </Methods>
+        </Class>
+        <Class>
+          <Summary numSequencePoints="4" visitedSequencePoints="4" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="1" numClasses="1" visitedMethods="4" numMethods="4" />
+          <FullName>KahootClone.Domain.Entities.Question</FullName>
+          <Methods>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Guid KahootClone.Domain.Entities.Question::get_Id()</Name>
+              <FileRef uid="5" />
+              <SequencePoints>
+                <SequencePoint vc="4" uspid="6" ordinal="0" sl="6" sc="1" el="6" ec="2" bec="0" bev="0" fileid="5" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="0" offset="0" sc="0" sl="6" ec="1" el="6" bec="0" bev="0" fileid="5" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Domain.Entities.Question::get_Text()</Name>
+              <FileRef uid="5" />
+              <SequencePoints>
+                <SequencePoint vc="5" uspid="9" ordinal="0" sl="9" sc="1" el="9" ec="2" bec="0" bev="0" fileid="5" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="1" offset="1" sc="0" sl="9" ec="1" el="9" bec="0" bev="0" fileid="5" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Int32 KahootClone.Domain.Entities.Question::get_TimeLimitInSeconds()</Name>
+              <FileRef uid="5" />
+              <SequencePoints>
+                <SequencePoint vc="2" uspid="12" ordinal="0" sl="12" sc="1" el="12" ec="2" bec="0" bev="0" fileid="5" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="2" offset="2" sc="0" sl="12" ec="1" el="12" bec="0" bev="0" fileid="5" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Collections.Generic.List`1&lt;KahootClone.Domain.Entities.Option&gt; KahootClone.Domain.Entities.Question::get_Options()</Name>
+              <FileRef uid="5" />
+              <SequencePoints>
+                <SequencePoint vc="6" uspid="15" ordinal="0" sl="15" sc="1" el="15" ec="2" bec="0" bev="0" fileid="5" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="3" offset="3" sc="0" sl="15" ec="1" el="15" bec="0" bev="0" fileid="5" xmlns:p8="xsi" />
+            </Method>
+          </Methods>
+        </Class>
+        <Class>
+          <Summary numSequencePoints="7" visitedSequencePoints="5" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="71.42" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="1" numClasses="1" visitedMethods="5" numMethods="7" />
+          <FullName>KahootClone.Domain.Entities.Quiz</FullName>
+          <Methods>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Guid KahootClone.Domain.Entities.Quiz::get_Id()</Name>
+              <FileRef uid="6" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="6" ordinal="0" sl="6" sc="1" el="6" ec="2" bec="0" bev="0" fileid="6" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="0" offset="0" sc="0" sl="6" ec="1" el="6" bec="0" bev="0" fileid="6" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Domain.Entities.Quiz::get_Title()</Name>
+              <FileRef uid="6" />
+              <SequencePoints>
+                <SequencePoint vc="9" uspid="9" ordinal="0" sl="9" sc="1" el="9" ec="2" bec="0" bev="0" fileid="6" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="1" offset="1" sc="0" sl="9" ec="1" el="9" bec="0" bev="0" fileid="6" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.String KahootClone.Domain.Entities.Quiz::get_Pin()</Name>
+              <FileRef uid="6" />
+              <SequencePoints>
+                <SequencePoint vc="13" uspid="12" ordinal="0" sl="12" sc="1" el="12" ec="2" bec="0" bev="0" fileid="6" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="2" offset="2" sc="0" sl="12" ec="1" el="12" bec="0" bev="0" fileid="6" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Boolean KahootClone.Domain.Entities.Quiz::get_IsActive()</Name>
+              <FileRef uid="6" />
+              <SequencePoints>
+                <SequencePoint vc="9" uspid="15" ordinal="0" sl="15" sc="1" el="15" ec="2" bec="0" bev="0" fileid="6" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="3" offset="3" sc="0" sl="15" ec="1" el="15" bec="0" bev="0" fileid="6" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Collections.Generic.List`1&lt;KahootClone.Domain.Entities.Question&gt; KahootClone.Domain.Entities.Quiz::get_Questions()</Name>
+              <FileRef uid="6" />
+              <SequencePoints>
+                <SequencePoint vc="10" uspid="18" ordinal="0" sl="18" sc="1" el="18" ec="2" bec="0" bev="0" fileid="6" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="4" offset="4" sc="0" sl="18" ec="1" el="18" bec="0" bev="0" fileid="6" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="100" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="1" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="100" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="1" numMethods="1" />
+              <MetadataToken />
+              <Name>System.Collections.Generic.List`1&lt;KahootClone.Domain.Entities.Player&gt; KahootClone.Domain.Entities.Quiz::get_Players()</Name>
+              <FileRef uid="6" />
+              <SequencePoints>
+                <SequencePoint vc="15" uspid="21" ordinal="0" sl="21" sc="1" el="21" ec="2" bec="0" bev="0" fileid="6" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="1" uspid="0" p8:type="SequencePoint" ordinal="5" offset="5" sc="0" sl="21" ec="1" el="21" bec="0" bev="0" fileid="6" xmlns:p8="xsi" />
+            </Method>
+            <Method cyclomaticComplexity="1" nPathComplexity="1" sequenceCoverage="0" branchCoverage="100" isConstructor="False" isGetter="True" isSetter="False" isStatic="True">
+              <Summary numSequencePoints="1" visitedSequencePoints="0" numBranchPoints="0" visitedBranchPoints="0" sequenceCoverage="0" branchCoverage="100" maxCyclomaticComplexity="1" minCyclomaticComplexity="1" visitedClasses="0" numClasses="0" visitedMethods="0" numMethods="1" />
+              <MetadataToken />
+              <Name>System.DateTime KahootClone.Domain.Entities.Quiz::get_CurrentQuestionStartTime()</Name>
+              <FileRef uid="6" />
+              <SequencePoints>
+                <SequencePoint vc="0" uspid="24" ordinal="0" sl="24" sc="1" el="24" ec="2" bec="0" bev="0" fileid="6" />
+              </SequencePoints>
+              <BranchPoints />
+              <MethodPoint vc="0" uspid="0" p8:type="SequencePoint" ordinal="6" offset="6" sc="0" sl="24" ec="1" el="24" bec="0" bev="0" fileid="6" xmlns:p8="xsi" />
+            </Method>
+          </Methods>
+        </Class>
+      </Classes>
+    </Module>
+  </Modules>
+</CoverageSession>

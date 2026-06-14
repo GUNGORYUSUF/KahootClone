@@ -98,8 +98,8 @@ export default function PlayerView({ connection }: Props) {
         return (
             <div className="container mt-5 text-center d-flex flex-column align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
                 <h1 className="display-1 fw-bold text-success mb-4" style={{ fontSize: '4rem' }}>Oyun Başlıyor!</h1>
-                <div className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-lg" style={{ width: '150px', height: '150px', fontSize: '5rem', fontWeight: '800' }}>
-                    {readyCountdown}
+                <div key={readyCountdown} className="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-lg pop-animation" style={{ width: '150px', height: '150px', fontSize: readyCountdown > 0 ? '5rem' : '2.5rem', fontWeight: '800' }}>
+                    {readyCountdown > 0 ? readyCountdown : "BAŞLA!"}
                 </div>
             </div>
         );
@@ -160,7 +160,7 @@ export default function PlayerView({ connection }: Props) {
                             </ul>
                         </div>
 
-                        <div className="display-3 fw-bold mt-2 text-dark">⏳ {timeLeft}</div>
+                        <div className="display-3 fw-bold mt-2 text-dark d-inline-block">⏳ {timeLeft}</div>
                     </div>
                 </div>
             </div>
@@ -180,7 +180,7 @@ export default function PlayerView({ connection }: Props) {
                         <div className="badge bg-primary fs-4 mt-3 shadow-sm px-4 py-2">
                             📝 {answerStats.answered} / {answerStats.total} Kişi Cevapladı
                         </div>
-                        <div className="display-3 fw-bold mt-4 text-primary">{timeLeft}</div>
+                        <div className="display-3 fw-bold mt-4 text-primary d-inline-block">{timeLeft}</div>
                         </div>
                     </div>
                 </div>

@@ -45,7 +45,7 @@ public class GameEndedConsumerService : BackgroundService
                         using var scope = _serviceProvider.CreateScope();
                         var quizRepository = scope.ServiceProvider.GetRequiredService<IQuizRepository>();
                         
-                        quiz.IsActive = false; // Oyunu arşivle
+                        quiz.Deactivate(); // Oyunu arşivle
                         quizRepository.Update(quiz); // Yük burada arka planda eritiliyor!
                     }
                     // İşlem başarıyla bittiğinde kuyruktan silinmesi onaylanır.

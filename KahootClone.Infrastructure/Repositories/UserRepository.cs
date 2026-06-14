@@ -52,7 +52,7 @@ public class UserRepository : IUserRepository
         {
             return await _usersCollection.Find(x => x.GoogleId == googleId).FirstOrDefaultAsync();
         }
-        catch (FormatException)
+            catch (Exception ex) when (ex is FormatException || ex is BsonException)
         {
             // YENİ: Self-Healing (Kendi Kendini Onaran) Veritabanı Mantığı
             // Veritabanında eski Guid (Binary) formatından kalma bozuk veri varsa onu BsonDocument seviyesinde sil.

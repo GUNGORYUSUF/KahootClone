@@ -19,6 +19,9 @@ public class GameHub : Hub<IGameClient>
     [Authorize(Roles = "Host")]
     public async Task JoinAsManager(string pin)
     {
+        // Girdi Doğrulaması (Validation)
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return;
+
         var quiz = _quizService.GetQuizByPin(pin);
         if (quiz == null || !quiz.IsActive)
         {
@@ -32,6 +35,9 @@ public class GameHub : Hub<IGameClient>
     [Authorize(Roles = "Host")]
     public async Task RejoinAsManager(string pin)
     {
+        // Girdi Doğrulaması
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return;
+
         // Önce gruba dahil et ki yayınları alabilsin.
         await Groups.AddToGroupAsync(Context.ConnectionId, pin);
 
@@ -50,6 +56,11 @@ public class GameHub : Hub<IGameClient>
 
     public async Task<bool> JoinGame(string pin, string nickname, string? sessionToken = null, string? googleToken = null, string? avatarUrl = null)
     {
+        // Girdi Doğrulaması (DoS ve Buffer Overflow koruması)
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return false;
+        if (string.IsNullOrEmpty(nickname) || nickname.Length > 30) return false;
+        if (avatarUrl != null && avatarUrl.Length > 2000) return false;
+
         // Oyuncuyu Backend'e kaydet veya var olan oyuncunun bağlantısını güncelle
         var (player, errorMessage, newSessionToken) = await _quizService.JoinOrRejoinAsync(pin, nickname, Context.ConnectionId, sessionToken, googleToken, avatarUrl);
         
@@ -70,12 +81,19 @@ public class GameHub : Hub<IGameClient>
     // YENİ: Oyuncu veya yöneticinin bağlantısı koptuğunda tetiklenir.
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var (pin, nickname) = await _quizService.UnregisterPlayerAsync(Context.ConnectionId);
-
-        if (pin != null && nickname != null)
+        try
         {
-            // Diğer oyunculara ve yöneticiye oyuncunun ayrıldığı bilgisini gönder.
-            await Clients.Group(pin).PlayerLeft(nickname);
+            var (pin, nickname) = await _quizService.UnregisterPlayerAsync(Context.ConnectionId);
+
+            if (pin != null && nickname != null)
+            {
+                // Diğer oyunculara ve yöneticiye oyuncunun ayrıldığı bilgisini gönder.
+                await Clients.Group(pin).PlayerLeft(nickname);
+            }
+        }
+        catch
+        {
+            // Sessizce yut ki SignalR bağlantı kapama (Close) mesajında sunucu hatası fırlatmasın.
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -96,6 +114,10 @@ public class GameHub : Hub<IGameClient>
     [Authorize(Roles = "Host")]
     public async Task KickPlayer(string pin, string nickname)
     {
+        // Girdi Doğrulaması
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return;
+        if (string.IsNullOrEmpty(nickname) || nickname.Length > 30) return;
+
         var connectionId = await _quizService.KickPlayerAsync(pin, nickname);
         if (!string.IsNullOrEmpty(connectionId))
         {
@@ -109,29 +131,23 @@ public class GameHub : Hub<IGameClient>
     [Authorize(Roles = "Host")]
     public async Task StartGame(string pin)
     {
+        // Girdi Doğrulaması
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return;
+
         var quiz = _quizService.GetQuizByPin(pin);
         
         if (quiz != null && quiz.Questions.Count > 0)
         {
-            // YENİ: Soruları göndermeden önce herkese 3 saniyelik 3-2-1 sayacı başlatmasını söyle
+            // Idempotency (Etkisizlik) Koruması: Yönetici ağ gecikmesi nedeniyle "Başlat" tuşuna çift tıklarsa
+            // aynı oyunun iki kez başlatılması (Race Condition) engellenir.
+            if (quiz.CurrentQuestionStartTime != default) return;
+
+            // Hub Bloklama İhlali (Task.Delay) Giderildi: Sunucu thread'ini kilitlemek yerine işlem serbest bırakıldı.
             await Clients.Group(pin).GetReady();
-            await Task.Delay(3000);
 
-            var question = quiz.Questions[0];
-            
-            var secureQuestionPacket = new {
-                Id = question.Id,
-                Text = question.Text,
-                TimeLimit = question.TimeLimitInSeconds,
-                Options = question.Options.Select(o => new { o.Id, o.Text }).ToList(),
-                CurrentIndex = 1,
-                TotalQuestions = quiz.Questions.Count,
-                TotalPlayers = quiz.Players.Count(p => !string.IsNullOrEmpty(p.ConnectionId))
-            };
-
-            // AŞAMA 4: Oyun sunucu döngüsüne eklenir
+            // MİMARİ DÜZELTME: İlk soruyu anında fırlatmak yerine sadece döngüyü başlatıyoruz.
+            // Arka plandaki State Machine 3-2-1 sayımını yapıp ilk soruyu kendisi fırlatacak!
             await _quizService.StartGameFlowAsync(pin);
-            await Clients.Group(pin).ReceiveQuestion(secureQuestionPacket);
         }
     }
 
@@ -139,6 +155,9 @@ public class GameHub : Hub<IGameClient>
     [Authorize(Roles = "Host")]
     public async Task EndGame(string pin)
     {
+        // Girdi Doğrulaması
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return;
+
         _quizService.StopGameFlow(pin); // Döngüden çıkar.
         var quiz = _quizService.GetQuizByPin(pin);
         await Clients.Group(pin).GameEnded(quiz?.Players.OrderByDescending(p => p.Score).ToList()!);
@@ -148,6 +167,9 @@ public class GameHub : Hub<IGameClient>
     [Authorize(Roles = "Host")]
     public async Task ShowLeaderboard(string pin)
     {
+        // Girdi Doğrulaması
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return;
+
         var quiz = _quizService.GetQuizByPin(pin);
         await Clients.Group(pin).UpdateLeaderboard(quiz?.Players.OrderByDescending(p => p.Score).ToList()!);
     }
@@ -156,6 +178,9 @@ public class GameHub : Hub<IGameClient>
     [Authorize(Roles = "Host")]
     public async Task ResetLobby(string pin)
     {
+        // Girdi Doğrulaması
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return;
+
         // Herkese lobinin kapandığını bildir.
         await Clients.Group(pin).LobbyReset();
         // Sunucu tarafındaki oyunu ve durumu temizle.
@@ -166,6 +191,9 @@ public class GameHub : Hub<IGameClient>
     [Authorize(Roles = "Host")]
     public async Task PlayAgain(string oldPin)
     {
+        // Girdi Doğrulaması
+        if (string.IsNullOrEmpty(oldPin) || oldPin.Length > 10) return;
+
         var oldQuiz = _quizService.GetQuizByPin(oldPin);
         if (oldQuiz == null) return;
 
@@ -203,8 +231,21 @@ public class GameHub : Hub<IGameClient>
 
     public async Task SubmitAnswer(string pin, string nickname, string questionId, string optionId)
     {
+        // Girdi Doğrulaması (Validation): Sınırsız girdi engeli
+        if (string.IsNullOrEmpty(pin) || pin.Length > 10) return;
+        if (string.IsNullOrEmpty(nickname) || nickname.Length > 30) return;
+
         // Girdi Doğrulaması (Validation): Geçersiz bir ID gelirse sunucunun çökmesi engellenir.
         if (!Guid.TryParse(questionId, out Guid qId) || !Guid.TryParse(optionId, out Guid oId))
+        {
+            await Clients.Caller.AnswerResult(false);
+            return;
+        }
+
+        // Kimlik Sahtekarlığı (Identity Spoofing) Koruması: Context.ConnectionId eşleşmesi zorunludur.
+        var quiz = _quizService.GetQuizByPin(pin);
+        var player = quiz?.Players.FirstOrDefault(p => p.Nickname == nickname);
+        if (player == null || player.ConnectionId != Context.ConnectionId)
         {
             await Clients.Caller.AnswerResult(false);
             return;

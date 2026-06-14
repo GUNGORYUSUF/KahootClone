@@ -1,0 +1,6 @@
+﻿/src/KahootClone.Domain/Class1.cs
+/src/KahootClone.Domain/Entities/Option.cs
+/src/KahootClone.Domain/Entities/Player.cs
+/src/KahootClone.Domain/Entities/Question.cs
+/src/KahootClone.Domain/Entities/Quiz.cs
+/src/KahootClone.Domain/Entities/User.cs

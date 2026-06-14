@@ -1,0 +1,9 @@
+﻿/src/KahootClone.Infrastructure/Class1.cs
+/src/KahootClone.Infrastructure/Data/MongoDbContext.cs
+/src/KahootClone.Infrastructure/Messaging/RabbitMqPublisher.cs
+/src/KahootClone.Infrastructure/Repositories/InMemoryGameStateRepository.cs
+/src/KahootClone.Infrastructure/Repositories/QuizRepository.cs
+/src/KahootClone.Infrastructure/Repositories/RedisGameStateRepository.cs
+/src/KahootClone.Infrastructure/Repositories/UserRepository.cs
+/src/KahootClone.Infrastructure/Settings/MongoDbSettings.cs
+/src/KahootClone.Infrastructure/Repositories/ci.yml

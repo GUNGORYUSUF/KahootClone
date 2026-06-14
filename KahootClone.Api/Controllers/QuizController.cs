@@ -37,25 +37,9 @@ public class QuizController : ControllerBase
 
         var pin = _quizService.CreateQuiz(quiz);
 
-        // GÜVENLİ YÖNTEM: JWT Anahtarı kod içinden değil, yapılandırmadan okunur.
-        var jwtKey = _configuration["Jwt:Key"];
-        if (string.IsNullOrEmpty(jwtKey))
-        {
-            // Program.cs'deki gibi, anahtar yoksa sistem hata verir (Fail-Fast).
-            throw new InvalidOperationException("Kritik Güvenlik Hatası: JWT Secret Key (Jwt:Key) yapılandırmalarda bulunamadı!");
-        }
-        var key = Encoding.UTF8.GetBytes(jwtKey);
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, pin), new Claim(ClaimTypes.Role, "Host") }),
-            Expires = DateTime.UtcNow.AddHours(8),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return Ok(new { pin, token = tokenHandler.WriteToken(token) });
+        // SRP ve Güvenlik Çözümü: Token üretme işlemi (Issuer ve Audience kalkanlarıyla birlikte) özel metoda taşındı.
+        var token = GenerateHostToken(pin);
+        return Ok(new { pin, token });
     }
 
     // YENİ: Giriş yapmış yöneticinin kendi kurduğu geçmiş oyunları getirir
@@ -100,10 +84,23 @@ public class QuizController : ControllerBase
             return BadRequest("Markdown metni boş olamaz.");
         }
 
+        // SRP Çözümü: Markdown ayrıştırma mantığı izole edildi. Controller sadece HTTP yanıtlarından sorumlu hale getirildi.
+        var (questions, errorMessage) = ParseMarkdownToQuestions(request.MarkdownText);
+        if (errorMessage != null)
+        {
+            return BadRequest(new { message = errorMessage });
+        }
+
+        return Ok(questions);
+    }
+
+    private (List<Question> Questions, string? ErrorMessage) ParseMarkdownToQuestions(string markdownText)
+    {
+
         var questions = new List<Question>();
         Question? currentQuestion = null;
 
-        var lines = request.MarkdownText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = markdownText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var line in lines)
         {
@@ -145,7 +142,7 @@ public class QuizController : ControllerBase
         // --- DOĞRULAMA (VALIDATION) KONTROLLERİ ---
         if (questions.Count == 0)
         {
-            return BadRequest(new { message = "Geçerli bir soru bulunamadı. Lütfen markdown formatını kontrol edin." });
+            return (questions, "Geçerli bir soru bulunamadı. Lütfen markdown formatını kontrol edin.");
         }
 
         for (int i = 0; i < questions.Count; i++)
@@ -153,20 +150,40 @@ public class QuizController : ControllerBase
             var q = questions[i];
             if (q.Options.Count < 2)
             {
-                return BadRequest(new { message = $"{i + 1}. soru ('{q.Text}') için en az 2 şık belirtmelisiniz." });
+                return (questions, $"{i + 1}. soru ('{q.Text}') için en az 2 şık belirtmelisiniz.");
             }
 
             if (!q.Options.Any(o => o.IsCorrect))
             {
-                return BadRequest(new { message = $"{i + 1}. soru ('{q.Text}') için doğru cevap işaretlenmemiş. Lütfen doğru şıkkın sonuna (*) ekleyin." });
+                return (questions, $"{i + 1}. soru ('{q.Text}') için doğru cevap işaretlenmemiş. Lütfen doğru şıkkın sonuna (*) ekleyin.");
             }
 
             if (q.Options.Count(o => o.IsCorrect) > 1)
             {
-                return BadRequest(new { message = $"{i + 1}. soru ('{q.Text}') için birden fazla doğru cevap işaretlenmiş. Sadece bir şıkta (*) olmalıdır." });
+                return (questions, $"{i + 1}. soru ('{q.Text}') için birden fazla doğru cevap işaretlenmiş. Sadece bir şıkta (*) olmalıdır.");
             }
         }
 
-        return Ok(questions);
+        return (questions, null);
+    }
+
+    private string GenerateHostToken(string pin)
+    {
+        var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Kritik Güvenlik Hatası: JWT Secret Key (Jwt:Key) yapılandırmalarda bulunamadı!");
+        var key = Encoding.UTF8.GetBytes(jwtKey);
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, pin), new Claim(ClaimTypes.Role, "Host") }),
+            Expires = DateTime.UtcNow.AddHours(8),
+            // GÜVENLİK ÇÖZÜMÜ: AuthController'da yaptığımız gibi Host token'ına da doğrulanabilmesi için Issuer ve Audience eklendi.
+            Issuer = _configuration["Jwt:Issuer"],
+            Audience = _configuration["Jwt:Audience"],
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
     }
 }

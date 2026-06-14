@@ -1,0 +1,9 @@
+﻿/src/KahootClone.Application/DTOs/CreateQuizRequestDto.cs
+/src/KahootClone.Application/DTOs/MarkdownRequestDto.cs
+/src/KahootClone.Application/Interfaces/IGameStateRepository.cs
+/src/KahootClone.Application/Interfaces/IMessagePublisher.cs
+/src/KahootClone.Application/Interfaces/IQuizRepository.cs
+/src/KahootClone.Application/Interfaces/IQuizService.cs
+/src/KahootClone.Application/Interfaces/IUserRepository.cs
+/src/KahootClone.Application/Services/QuizService.cs
+/src/KahootClone.Application/Utils/MarkdownQuestionParser.cs

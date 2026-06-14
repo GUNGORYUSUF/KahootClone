@@ -17,8 +17,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
     useEffect(() => {
         // Sayfa yüklendiğinde localStorage'dan oturumu kurtar
-        const storedToken = localStorage.getItem('kahoot_global_token');
-        const storedUser = localStorage.getItem('kahoot_global_user');
+        const storedToken = localStorage.getItem('quiz_global_token');
+        const storedUser = localStorage.getItem('quiz_global_user');
         if (storedToken && storedUser) {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
@@ -28,15 +28,15 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     const login = (newToken: string, newUser: User) => {
         setToken(newToken);
         setUser(newUser);
-        localStorage.setItem('kahoot_global_token', newToken);
-        localStorage.setItem('kahoot_global_user', JSON.stringify(newUser));
+        localStorage.setItem('quiz_global_token', newToken);
+        localStorage.setItem('quiz_global_user', JSON.stringify(newUser));
     };
 
     const logout = () => {
         setToken(null);
         setUser(null);
-        localStorage.removeItem('kahoot_global_token');
-        localStorage.removeItem('kahoot_global_user');
+        localStorage.removeItem('quiz_global_token');
+        localStorage.removeItem('quiz_global_user');
     };
 
     const contextValue = useMemo(() => ({ user, token, login, logout }), [user, token]);
